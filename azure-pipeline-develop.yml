@@ -2,7 +2,7 @@
 
 # Set buildnumber here
 #$(Date:yyyyMMdd).$(Rev:r)-alpha
-name: 0.0.$(Rev:r)-alpha
+name: 1.1.$(Rev:r)-alpha
 
 variables:
   solutionName: SmartDi.sln
