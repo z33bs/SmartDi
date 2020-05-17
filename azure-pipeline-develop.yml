@@ -26,7 +26,7 @@ steps:
   inputs:
     solution: '**/$(projectName)'
     configuration: 'Release'
-    msbuildArguments: '-t:restore;build;pack -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/beta'
+    msbuildArguments: '-t:restore;build;pack -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/beta --version-suffix "-beta"'
 #/p:PackageVersion=$(Build.BuildNumber)-beta
 #/p:AssemblyFileVersion=$(Build.BuildNumber)'
 
