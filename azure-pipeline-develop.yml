@@ -1,8 +1,12 @@
 # Build pipeline for Develop Branch
 
+# Set buildnumber here
+name: $(Date:yyyyMMdd).$(Rev:r)-$(test)
+
 variables:
   solutionName: SmartDi.sln
   projectName: SmartDi.csproj
+  test: '$(PackageVersion)'
 
 trigger:
 - develop
@@ -26,20 +30,9 @@ steps:
   inputs:
     solution: '**/$(projectName)'
     configuration: 'Release'
-    msbuildArguments: '-t:restore;build'
-#-p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/beta
-#/p:PackageVersion=$(Build.BuildNumber)-beta
-#/p:AssemblyFileVersion=$(Build.BuildNumber)'
+    msbuildArguments: '-t:restore;build;pack -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/alpha -p:PackageVersion=$(Build.BuildNumber)'
 
-- task: NuGetCommand@2
-  inputs:
-    command: 'pack'
-    packagesToPack: '**/$(projectName)'
-    packDestination: '$(Build.ArtifactStagingDirectory)/beta'
-    versioningScheme: 'byPrereleaseNumber'
-    majorVersion: '1'
-    minorVersion: '0'
-    patchVersion: '0'
+#/p:AssemblyFileVersion=$(Build.BuildNumber)'
 
 - task: PublishBuildArtifacts@1
   inputs:
