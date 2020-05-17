@@ -1,20 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <PackageVersion>1.0</PackageVersion>
-    <Authors>Guy Antoine</Authors>
-    <Copyright>Guy Antoine 2020</Copyright>
-    <Owners>Guy Antoine</Owners>
-    <Summary>Convenient Rapid Dependency Injection</Summary>
-    <Title>SmartDi</Title>
-    <Description>Convenient Rapid Dependency Injection</Description>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <PackageVersion>1.0</PackageVersion>
+        <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+        <Authors>Guy Antoine</Authors>
+        <Copyright>Guy Antoine 2020</Copyright>
+        <Owners>Guy Antoine</Owners>
+        <Summary>Convenient Rapid Dependency Injection</Summary>
+        <Title>SmartDi</Title>
+        <Description>Convenient Rapid Dependency Injection</Description>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
 </Project>
