@@ -2,6 +2,7 @@
 
 variables:
   solutionName: SmartDi.sln
+  projectName: SmartDi.csproj
 
 trigger:
 - develop
@@ -18,7 +19,7 @@ steps:
 
 - task: MSBuild@1
   inputs:
-    solution: '**/$(solutionName)'
+    solution: '**/$(projectName)'
     configuration: 'Release'
     msbuildArguments: '/t:restore; build; pack /p:PackageVersion=$(Build.BuildNumber)-beta /p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/beta /p:AssemblyFileVersion=$(Build.BuildNumber)'
 
