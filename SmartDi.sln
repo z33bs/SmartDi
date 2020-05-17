@@ -3,6 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDi", "src\SmartDi\SmartDi.csproj", "{C7E7F96B-8704-48E1-9C47-7AE4657E6941}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{50D907AA-FB20-47C4-88FF-4A17329332F1}"
+	ProjectSection(SolutionItems) = preProject
+		azure-pipeline-develop.yml = azure-pipeline-develop.yml
+		README.md = README.md
+		LICENSE = LICENSE
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
