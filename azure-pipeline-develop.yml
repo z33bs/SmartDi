@@ -1,12 +1,11 @@
 # Build pipeline for Develop Branch
 
 # Set buildnumber here
-name: $(Date:yyyyMMdd).$(Rev:r)-$(test)
+name: $(Date:yyyyMMdd).$(Rev:r)-alpha
 
 variables:
   solutionName: SmartDi.sln
   projectName: SmartDi.csproj
-  test: '$(PackageVersion)'
 
 trigger:
 - develop
