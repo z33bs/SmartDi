@@ -11,6 +11,11 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+- task: NuGetToolInstaller@1
+  displayName: 'Load Nuget Tool'
+  inputs:
+    versionSpec: '4.5.1'
+
 - task: NuGetCommand@2
   inputs:
     command: 'restore'
