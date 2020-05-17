@@ -26,9 +26,20 @@ steps:
   inputs:
     solution: '**/$(projectName)'
     configuration: 'Release'
-    msbuildArguments: '-t:restore;build;pack -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/beta --version-suffix "-beta"'
+    msbuildArguments: '-t:restore;build'
+#-p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/beta
 #/p:PackageVersion=$(Build.BuildNumber)-beta
 #/p:AssemblyFileVersion=$(Build.BuildNumber)'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/$(projectName)'
+    packDestination: '$(Build.ArtifactStagingDirectory)/beta'
+    versioningScheme: 'byPrereleaseNumber'
+    majorVersion: '1'
+    minorVersion: '0'
+    patchVersion: '0'
 
 - task: PublishBuildArtifacts@1
   inputs:
