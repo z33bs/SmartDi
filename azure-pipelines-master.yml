@@ -22,6 +22,7 @@ steps:
     projects: '**/$(projectName)'
     arguments: '--configuration Release'
 
+# Package with -pre version for /beta
 - task: DotNetCoreCLI@2
   inputs:
     command: 'pack'
@@ -30,9 +31,19 @@ steps:
     packDirectory: '$(Build.ArtifactStagingDirectory)/beta'
     nobuild: true
     versioningScheme: 'off'
-    buildProperties: 'PackageVersion=$(Build.BuildNumber)-beta'
+    buildProperties: 'PackageVersion=$(Build.BuildNumber)-pre'
 
-# Note, we're outputing to */alpha to differentiate pre-release
+# Package public version off same build
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/$(projectName)'
+    configuration: 'Release'
+    packDirectory: '$(Build.ArtifactStagingDirectory)/public'
+    nobuild: true
+    versioningScheme: 'off'
+    buildProperties: 'PackageVersion=$(Build.BuildNumber)'
+
 
 - task: PublishBuildArtifacts@1
   inputs:
