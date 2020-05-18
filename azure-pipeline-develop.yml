@@ -5,7 +5,6 @@ name: $(Date:yyyyMMdd).$(Rev:r)
 
 # Set project names here
 variables:
-  solutionName: SmartDi.sln
   projectName: SmartDi.csproj
 
 trigger:
@@ -15,18 +14,22 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: NuGetCommand@2
+
+# Implicit Restore run before build
+- task: DotNetCoreCLI@2
   inputs:
-    command: 'restore'
-    restoreSolution: '**/$(solutionName)'
-    feedsToUse: 'select'
+    command: 'build'
+    projects: '**/$(projectName)'
+    arguments: '--configuration Release'
 
 # Note, we're outputing to */alpha to differentiate pre-release
-- task: MSBuild@1
+- task: DotNetCoreCLI@2
   inputs:
-    solution: '**/$(projectName)'
-    configuration: 'Release'
-    msbuildArguments: '-t:restore;build;pack -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/alpha -p:PackageVersion=$(Build.BuildNumber)'
+    command: 'pack'
+    packagesToPack: '**/$(projectName)'
+    packDirectory: '$(Build.ArtifactStagingDirectory)/alpha'
+    nobuild: true
+    versioningScheme: 'byBuildNumber'
 
 - task: PublishBuildArtifacts@1
   inputs:
