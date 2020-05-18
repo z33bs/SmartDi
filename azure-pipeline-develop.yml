@@ -26,6 +26,7 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/$(projectName)'
+    configuration: 'Release'
     packDirectory: '$(Build.ArtifactStagingDirectory)/alpha'
     nobuild: true
     versioningScheme: 'byEnvVar'
