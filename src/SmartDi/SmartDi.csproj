@@ -1,13 +1,25 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <Authors>Guy Antoine</Authors>
         <Copyright>Guy Antoine 2020</Copyright>
         <Owners>Guy Antoine</Owners>
-        <Summary>Convenient Rapid Dependency Injection</Summary>
+        <Summary>Fast Friendly Dependency Injection</Summary>
         <Title>SmartDi</Title>
-        <Description>Convenient Rapid Dependency Injection</Description>
+        <Description>Fast Friendly Dependency Injection</Description>
+        <PackageProjectUrl>https://github.com/z33bs/SmartDi</PackageProjectUrl>
+        <PackageReleaseNotes>See https://github.com/z33bs/SmartDi/releases</PackageReleaseNotes>
+        <PackageTags>smartdi;di;ioc;dependencyinjection</PackageTags>
+
+        <!--        <PackageIcon>icon.png</PackageIcon>-->
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/z33bs/SmartDi</RepositoryUrl>
+        
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <LangVersion>latest</LangVersion>

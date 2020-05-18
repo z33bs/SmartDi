@@ -1,9 +1,9 @@
 # Build pipeline for Develop Branch
 
-# Set buildnumber here
-#$(Date:yyyyMMdd).$(Rev:r)-alpha
+# This sets $(Build.BuildNumber)
 name: $(Date:yyyyMMdd).$(Rev:r)
 
+# Set project names here
 variables:
   solutionName: SmartDi.sln
   projectName: SmartDi.csproj
@@ -21,6 +21,7 @@ steps:
     restoreSolution: '**/$(solutionName)'
     feedsToUse: 'select'
 
+# Note, we're outputing to */alpha to differentiate pre-release
 - task: MSBuild@1
   inputs:
     solution: '**/$(projectName)'
