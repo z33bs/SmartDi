@@ -32,13 +32,6 @@ steps:
     versionEnvVar: 'Build.BuildNumber'
 
 # Note, we're outputing to */alpha to differentiate pre-release
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'pack'
-    packagesToPack: '**/$(projectName)'
-    packDirectory: '$(Build.ArtifactStagingDirectory)/alpha'
-    nobuild: true
-    versioningScheme: 'byBuildNumber'
 
 - task: PublishBuildArtifacts@1
   inputs:
