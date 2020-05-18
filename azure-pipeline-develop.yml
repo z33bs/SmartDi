@@ -20,7 +20,16 @@ steps:
   inputs:
     command: 'build'
     projects: '**/$(projectName)'
-    arguments: '--configuration Release -p:Version=$(Build.BuildNumber)'
+    arguments: '--configuration Release'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/$(projectName)'
+    packDirectory: '$(Build.ArtifactStagingDirectory)/alpha'
+    nobuild: true
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: 'Build.BuildNumber'
 
 # Note, we're outputing to */alpha to differentiate pre-release
 - task: DotNetCoreCLI@2
