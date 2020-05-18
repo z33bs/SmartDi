@@ -1,0 +1,41 @@
+# Build pipeline for Develop Branch
+
+# This sets $(Build.BuildNumber)
+name: 1.0.$(Rev:r)
+
+# Set project names here
+variables:
+  projectName: SmartDi.csproj
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+# Implicit Restore run before build
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: '**/$(projectName)'
+    arguments: '--configuration Release'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/$(projectName)'
+    configuration: 'Release'
+    packDirectory: '$(Build.ArtifactStagingDirectory)/beta'
+    nobuild: true
+    versioningScheme: 'off'
+    buildProperties: 'PackageVersion=$(Build.BuildNumber)-beta'
+
+# Note, we're outputing to */alpha to differentiate pre-release
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
