@@ -1,4 +1,4 @@
-# Build pipeline for Develop Branch
+# Build pipeline for Master Branch
 
 # This sets $(Build.BuildNumber)
 name: 1.0.$(Rev:r)
