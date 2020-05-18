@@ -2,7 +2,7 @@
 
 # Set buildnumber here
 #$(Date:yyyyMMdd).$(Rev:r)-alpha
-name: 1.1.$(Rev:r)-alpha
+name: $(Date:yyyyMMdd).$(Rev:r)
 
 variables:
   solutionName: SmartDi.sln
@@ -15,11 +15,6 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: NuGetToolInstaller@1
-  displayName: 'Load Nuget Tool'
-  inputs:
-    versionSpec: '4.5.1'
-
 - task: NuGetCommand@2
   inputs:
     command: 'restore'
@@ -31,8 +26,6 @@ steps:
     solution: '**/$(projectName)'
     configuration: 'Release'
     msbuildArguments: '-t:restore;build;pack -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/alpha -p:PackageVersion=$(Build.BuildNumber)'
-
-#/p:AssemblyFileVersion=$(Build.BuildNumber)'
 
 - task: PublishBuildArtifacts@1
   inputs:

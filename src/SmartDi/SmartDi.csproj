@@ -2,8 +2,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <PackageVersion>1.0</PackageVersion>
-        <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
         <Authors>Guy Antoine</Authors>
         <Copyright>Guy Antoine 2020</Copyright>
         <Owners>Guy Antoine</Owners>
