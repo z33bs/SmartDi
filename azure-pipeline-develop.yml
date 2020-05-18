@@ -20,7 +20,7 @@ steps:
   inputs:
     command: 'build'
     projects: '**/$(projectName)'
-    arguments: '--configuration Release'
+    arguments: '--configuration Release -p:Version=$(Build.BuildNumber)'
 
 # Note, we're outputing to */alpha to differentiate pre-release
 - task: DotNetCoreCLI@2
