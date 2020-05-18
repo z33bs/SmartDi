@@ -1,7 +1,11 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+# Build pipeline for Develop Branch
+
+# This sets $(Build.BuildNumber)
+name: $(Date:yyyyMMdd).$(Rev:r)
+
+# Set project names here
+variables:
+  projectName: SmartDi.csproj
 
 trigger:
 - develop
@@ -10,10 +14,28 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+# Implicit Restore run before build
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: '**/$(projectName)'
+    arguments: '--configuration Release'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/$(projectName)'
+    configuration: 'Release'
+    packDirectory: '$(Build.ArtifactStagingDirectory)/alpha'
+    nobuild: true
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: 'Build.BuildNumber'
+
+# Note, we're outputing to */alpha to differentiate pre-release
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'

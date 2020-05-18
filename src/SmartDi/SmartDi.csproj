@@ -1,13 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <Authors>Guy Antoine</Authors>
+        <Copyright>Guy Antoine 2020</Copyright>
+        <Owners>Guy Antoine</Owners>
+        <Summary>Fast Friendly Dependency Injection</Summary>
+        <Title>SmartDi</Title>
+        <Description>Fast Friendly Dependency Injection</Description>
+        <PackageProjectUrl>https://github.com/z33bs/SmartDi</PackageProjectUrl>
+        <PackageReleaseNotes>See https://github.com/z33bs/SmartDi/releases</PackageReleaseNotes>
+        <PackageTags>smartdi;di;ioc;dependencyinjection</PackageTags>
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+        <!--        <PackageIcon>icon.png</PackageIcon>-->
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/z33bs/SmartDi</RepositoryUrl>
+        
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
 </Project>
