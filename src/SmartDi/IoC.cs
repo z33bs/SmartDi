@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -9,6 +9,17 @@ using System.Text;
 namespace SmartDi
 {
     public class DiContainer
+    // Use Dictionary = faster
+    //  - split singletons to speed up resolution of multi-instance ones
+    // Global = static implementation
+    //  - if nothing registered / global search is off
+    //  - allows simplification getting rid of scope overloads
+    // Don't allow dupes unless withKey
+    // Separate RegisterInstance
+    // Smartresolve stores instance
+    // Roll into one file
+    // Hide fluent-stuff from browser
+    // XFMA - Navcontroller no constructorAttribute so compatible with Autofac
 
 
 
