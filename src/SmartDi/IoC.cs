@@ -6,11 +6,9 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-//todo
-//Separate project? Same Assembly?
 namespace SmartDi
 {
-    internal sealed class Ioc : IIoc
+    public class DiContainer
 
 
 
@@ -262,7 +260,7 @@ namespace SmartDi
 
                 throw new TypeNotRegisteredException(
                     $"Could not Resolve or Create {typeToResolve.Name}" +
-                    $". It is not registered in {nameof(Ioc)}. Furthermore, " +
+                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.", ex);
             }
         }
