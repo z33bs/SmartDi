@@ -12,29 +12,29 @@ namespace SmartDi
     {
         public NewDiContainer()
         {
-            container = new ConcurrentDictionary<Tuple<Type, string>, ObjectFactory>();
+            container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public NewDiContainer(ConcurrentDictionary<Tuple<Type, string>, ObjectFactory> container)
+        public NewDiContainer(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
         {
             this.container = container;
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void SetContainer(ConcurrentDictionary<Tuple<Type, string>, ObjectFactory> container)
+        public static void SetContainer(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
             => staticContainer = container;
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void ResetContainer()
         {
-            staticContainer = new ConcurrentDictionary<Tuple<Type, string>, ObjectFactory>();
+            staticContainer = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
         }
 
-        static ConcurrentDictionary<Tuple<Type, string>, ObjectFactory> staticContainer
-            = new ConcurrentDictionary<Tuple<Type, string>, ObjectFactory>();
+        static ConcurrentDictionary<Tuple<Type, string>, MetaObject> staticContainer
+            = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
 
-        readonly ConcurrentDictionary<Tuple<Type, string>, ObjectFactory> container;
+        readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
             
 
         public static void Register<ConcreteType>()
@@ -54,7 +54,7 @@ namespace SmartDi
 
 
         static void InternalRegister(
-            ConcurrentDictionary<Tuple<Type, string>, ObjectFactory> container,
+            ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
             Type resolvedType,
             Type concreteType,
             string key,
@@ -69,7 +69,7 @@ namespace SmartDi
 
             if (!container.TryAdd(
                 containerKey,
-                new ObjectFactory(concreteType, lifeCycle)))
+                new MetaObject(concreteType, lifeCycle)))
             {
                 var builder = new StringBuilder();
                     builder.Append($"{nameof(containerKey.Item1)} is already registered");

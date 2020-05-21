@@ -7,9 +7,9 @@ using System.Reflection;
 namespace SmartDi
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public class ObjectFactory
+    public class MetaObject
     {
-        public ObjectFactory(Type concreteType, LifeCycle lifeCycle)
+        public MetaObject(Type concreteType, LifeCycle lifeCycle)
         {
             _concreteType = concreteType;
             LifeCycle = lifeCycle;
