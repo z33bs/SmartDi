@@ -37,17 +37,21 @@ namespace SmartDi
         readonly ConcurrentDictionary<Tuple<Type, string>, ObjectFactory> container;
             
 
-        public static void Register<ConcreteType>(LifeCycle lifeCycle = LifeCycle.Transient)
+        public static void Register<ConcreteType>()
             where ConcreteType : notnull
-            => InternalRegister(staticContainer, null, typeof(ConcreteType), null, lifeCycle);
-        void INewDiContainer.Register<ConcreteType>(LifeCycle lifeCycle)
-            => InternalRegister(container, null, typeof(ConcreteType), null, lifeCycle);
+            => InternalRegister(staticContainer, null, typeof(ConcreteType), null, LifeCycle.Transient);
 
-        public static void Register<ConcreteType,ResolvedType>(LifeCycle lifeCycle = LifeCycle.Singleton)
+        void INewDiContainer.Register<ConcreteType>()
+            => InternalRegister(container, null, typeof(ConcreteType), null, LifeCycle.Transient);
+
+
+        public static void Register<ConcreteType,ResolvedType>()
             where ConcreteType : ResolvedType
-            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, lifeCycle);
-        void INewDiContainer.Register<ConcreteType, ResolvedType>(LifeCycle lifeCycle)
-            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, lifeCycle);
+            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton);
+
+        void INewDiContainer.Register<ConcreteType, ResolvedType>()
+            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton);
+
 
         static void InternalRegister(
             ConcurrentDictionary<Tuple<Type, string>, ObjectFactory> container,

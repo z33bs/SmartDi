@@ -2,10 +2,10 @@
 {
     public interface INewDiContainer
     {
-        void Register<ConcreteType>(LifeCycle lifeCycle = LifeCycle.Transient)
+        void Register<ConcreteType>()
             where ConcreteType : notnull;
 
-        void Register<ConcreteType, ResolvedType>(LifeCycle lifeCycle = LifeCycle.Singleton)
+        void Register<ConcreteType, ResolvedType>()
             where ConcreteType : ResolvedType;
     }
 }

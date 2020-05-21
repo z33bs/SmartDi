@@ -19,9 +19,9 @@ namespace SmartDi
 
         object _instance;
 
-        internal LifeCycle LifeCycle { get; set; }
+        public LifeCycle LifeCycle { get; set; }
 
-        internal object GetConcreteType(params object[] args)
+        public object GetConcreteType(params object[] args)
         {
             if (LifeCycle == LifeCycle.Transient || _instance is null)
                 _instance = Activator.CreateInstance(_concreteType, args);
