@@ -3,7 +3,8 @@ using Xunit;
 using Moq;
 using SmartDi;
 using System.Collections.Concurrent;
-    
+using System.Linq;
+
 namespace SmartDiTests
 {
     public class NewDiContainerTests
@@ -11,6 +12,39 @@ namespace SmartDiTests
         interface IService { }
         class MyService : IService { }
         class ConcreteOnly { }
+        class ClassWith3Ctors
+        {
+            public IService Service { get; }
+            public ConcreteOnly Concrete { get; }
+
+            public ClassWith3Ctors() { }
+            public ClassWith3Ctors(IService service)
+            { this.Service = service; }
+            internal ClassWith3Ctors(IService service, ConcreteOnly concrete)
+            { this.Service = service; this.Concrete = concrete; }
+        }
+
+        class ClassWithFlaggedCtor
+        {
+            public IService Service { get; }
+            public ConcreteOnly Concrete { get; }
+
+            [ResolveUsing]
+            public ClassWithFlaggedCtor(IService service)
+            { this.Service = service; }
+
+            public ClassWithFlaggedCtor(IService service, ConcreteOnly concrete)
+            { this.Service = service; this.Concrete = concrete; }
+        }
+
+        class ClassThatsResolvableWithoutRegistering
+        {
+            public ConcreteOnly Concrete { get; }
+            public ClassThatsResolvableWithoutRegistering(ConcreteOnly concrete)
+            {
+                this.Concrete = concrete;
+            }
+        }
 
         [Fact]
         public void Constructor()
@@ -118,6 +152,63 @@ namespace SmartDiTests
         }
         #endregion
         #endregion
+
+        #region Resolve
+        #region Internal
+
+        [Fact]
+        public void GetConstructorParams_gt1Constructor_ReturnsFromGreediestPublic()
+        {
+            //ClassWith3Ctors has 3 constructors, two public () & (IService)
+            //and one internal (IService, ConcreteOnly)
+
+            //Expect to ignore internal, but take greediest public ctor
+            var exepectedParamters
+                = typeof(ClassWith3Ctors)
+                    .GetConstructor(new Type[] { typeof(IService) }).GetParameters();
+
+            var parameters
+                = NewDiContainer.
+                    GetConstructorParams(typeof(ClassWith3Ctors));
+
+            Assert.Equal(exepectedParamters, parameters);
+        }
+
+        [Fact]
+        public void GetConstructorParams_gt1Ctor_FlaggedCtor_ReturnsFlaggedNotGreediest()
+        {
+            //ClassWithFlaggedCtor has 2 public constructors
+            //(IService) - Flagged
+            //(IService, ConcreteOnly)
+
+            //Expect to pick flagged ctor
+            var exepectedParamters
+                = typeof(ClassWithFlaggedCtor)
+                    .GetConstructor(new Type[] { typeof(IService) }).GetParameters();
+
+            var parameters
+                = NewDiContainer.
+                    GetConstructorParams(typeof(ClassWithFlaggedCtor));
+
+            Assert.Equal(exepectedParamters, parameters);
+        }
+
+        [Fact]
+        public void ResolveDependecies()
+        {
+            //ClassWith3Ctors has 3 constructors, two public () & (IService)
+            //and one internal (IService, ConcreteOnly)
+
+            var dependencies = NewDiContainer.ResolveDependencies(
+                typeof(ClassThatsResolvableWithoutRegistering)).ToArray();
+
+            Assert.IsType<ConcreteOnly>(dependencies[0]);
+
+        }
+
+        #endregion
+        #endregion
+
         #region Exceptions
         [Fact]
         public void StaticRegisterConcreteType_Duplicate_ThrowsRegistrationException()

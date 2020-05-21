@@ -1,15 +1,22 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 // Simple
 // No key changes
 // Static / instace duplication
+[assembly: InternalsVisibleTo("SmartDiTests")]
 namespace SmartDi
 {
     public class NewDiContainer : INewDiContainer
     {
+        private static bool mustBeRegisteredToResolve = false;
+
         public NewDiContainer()
         {
             container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
@@ -35,8 +42,8 @@ namespace SmartDi
             = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
 
         readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
-            
 
+        #region Register
         public static void Register<ConcreteType>()
             where ConcreteType : notnull
             => InternalRegister(staticContainer, null, typeof(ConcreteType), null, LifeCycle.Transient);
@@ -79,5 +86,133 @@ namespace SmartDi
                 throw new RegistrationException(builder.ToString());
             }
         }
+        #endregion
+
+        #region Resolve
+
+        internal static object InnerResolve(Type resolvedType, string key)
+        {
+            //if registered
+            if (staticContainer.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
+            {
+                if (metaObject.Instance != null)
+                    return metaObject.Instance;
+                else
+                {
+                    var instance =
+                        Activator.CreateInstance(
+                            metaObject.ConcreteType,
+                            ResolveDependencies(metaObject.ConcreteType));
+
+                    if (metaObject.LifeCycle == LifeCycle.Singleton)
+                        metaObject.Instance = instance;
+
+                    return instance;
+                }
+            }
+
+            if (mustBeRegisteredToResolve)
+                throw new TypeNotRegisteredException(
+                    $"The type {resolvedType.Name} has not been registered. Either " +
+                    $"register the class, or configure {nameof(mustBeRegisteredToResolve)}.");
+
+            if(resolvedType.IsInterface || resolvedType.IsAbstract)
+                throw new TypeNotRegisteredException(
+                    $"Could not Resolve or Create {resolvedType.Name}" +
+                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
+                    $"smart resolve couldn't create an instance.");
+
+            //else try resolve concreteType anyway
+            try
+            {
+                var args = ResolveDependencies(resolvedType).ToArray();
+
+                if(args.Any())
+                    return Activator.CreateInstance(
+                        resolvedType,
+                        args);
+
+                return Activator.CreateInstance(resolvedType);
+            }
+            catch (Exception ex)
+            {
+                if (ex is TypeNotRegisteredException)
+                    throw ex;
+
+                throw new TypeNotRegisteredException(
+                    $"Could not Resolve or Create {resolvedType.Name}" +
+                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
+                    $"smart resolve couldn't create an instance.", ex);
+            }
+        }
+
+        internal static IEnumerable<object> ResolveDependencies(Type resolvedType)
+        {
+            //todo MetaObject specified?
+
+            ParameterInfo[] parameters = GetConstructorParams(resolvedType);
+
+            foreach (var parameter in parameters)
+            {
+                var namedDependencyAttribute = parameter.GetCustomAttribute<ResolveNamedAttribute>();
+                if (namedDependencyAttribute != null)
+                    yield return InnerResolve(parameter.ParameterType, namedDependencyAttribute.Key);
+                else
+                    yield return InnerResolve(parameter.ParameterType, null);
+            }
+        }
+
+        internal static ParameterInfo[] GetConstructorParams(Type resolvedType)
+        {
+            var constructors = resolvedType.
+                    GetConstructors(BindingFlags.Instance | BindingFlags.Public)
+                    .ToList();
+
+            if (constructors.Count > 1)
+            {
+                //if flagged, shorten to only flagged constructors
+                var flaggedConstructors = constructors
+                    .Where(c => c.GetCustomAttribute<ResolveUsingAttribute>() != null)
+                    .ToList();
+
+                //todo if strict mode throw if more than one
+                if (flaggedConstructors.Any())
+                    constructors = flaggedConstructors;
+
+                return constructors
+                    .Aggregate((i, j)
+                        => i.GetParameters().Count() > j.GetParameters().Count()
+                        ? i
+                        : j)
+                    .GetParameters();
+            }
+
+            return constructors[0].GetParameters();
+        }
+
+        internal static MetaObject GetMetaObject(Type resolvedType,string key)
+        {
+            if (staticContainer.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject value))
+                return value;
+
+            return null;
+        }
+
+        internal static object GetConstructorParameters()
+        {
+            return new object();
+        }
+
+        internal static object[] GetDependencies()
+        {
+            object v = new object();
+            return v as object[];
+        }
+
+        internal static object TryCreateObject()
+        {
+            return new object();
+        }
+        #endregion
     }
 }

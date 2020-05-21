@@ -11,22 +11,22 @@ namespace SmartDi
     {
         public MetaObject(Type concreteType, LifeCycle lifeCycle)
         {
-            _concreteType = concreteType;
+            ConcreteType = concreteType;
             LifeCycle = lifeCycle;
         }
 
-        readonly Type _concreteType;
+        public Type ConcreteType { get; }
 
-        object _instance;
+        public object Instance { get; set; }
 
         public LifeCycle LifeCycle { get; set; }
 
         public object GetConcreteType(params object[] args)
         {
-            if (LifeCycle == LifeCycle.Transient || _instance is null)
-                _instance = Activator.CreateInstance(_concreteType, args);
+            if (LifeCycle == LifeCycle.Transient || Instance is null)
+                Instance = Activator.CreateInstance(ConcreteType, args);
 
-            return _instance;
+            return Instance;
         }
     }
 }
