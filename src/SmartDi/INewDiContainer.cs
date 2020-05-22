@@ -14,6 +14,12 @@
         void Register<ConcreteType, ResolvedType>(string key)
             where ConcreteType : ResolvedType, new();
 
+        void RegisterInstance<ConcreteType>(ConcreteType instance)
+            where ConcreteType : new();
+
+        void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
+            where ConcreteType : ResolvedType, new();
+
         T Resolve<T>() where T : notnull;
     }
 }

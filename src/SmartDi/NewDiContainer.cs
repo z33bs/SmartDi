@@ -43,6 +43,7 @@ namespace SmartDi
 
         readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
 
+        #region Registration
         #region Register
         public static void Register<ConcreteType>()
             where ConcreteType : new()
@@ -58,8 +59,8 @@ namespace SmartDi
 
         void INewDiContainer.Register<ConcreteType, ResolvedType>()
             => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton);
-
-        #region with Key
+        #endregion
+        #region Register with Key
 
         public static void Register<ConcreteType>(string key)
             where ConcreteType : new()
@@ -77,13 +78,31 @@ namespace SmartDi
             => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton);
 
         #endregion
+        #region RegisterInstance
+        public static void RegisterInstance<ConcreteType>(ConcreteType instance)
+            where ConcreteType : new()
+            => InternalRegister(staticContainer, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+
+        void INewDiContainer.RegisterInstance<ConcreteType>(ConcreteType instance)
+            => InternalRegister(container, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+
+
+        public static void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
+            where ConcreteType : ResolvedType, new()
+            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+
+        void INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
+            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+
+        #endregion
 
         internal static void InternalRegister(
             ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
             Type resolvedType,
             Type concreteType,
             string key,
-            LifeCycle lifeCycle
+            LifeCycle lifeCycle,
+            object instance = null
             )
         {
             if (concreteType is null)
@@ -94,7 +113,7 @@ namespace SmartDi
 
             if (!container.TryAdd(
                 containerKey,
-                new MetaObject(concreteType, lifeCycle)))
+                new MetaObject(concreteType, lifeCycle, instance)))
             {
                 var builder = new StringBuilder();
                     builder.Append($"{nameof(containerKey.Item1)} is already registered");
@@ -143,7 +162,7 @@ namespace SmartDi
             if(resolvedType.IsInterface || resolvedType.IsAbstract)
                 throw new TypeNotRegisteredException(
                     $"Could not Resolve or Create {resolvedType.Name}" +
-                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
+                    $". It is not registered in {nameof(NewDiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.");
 
             //else try resolve concreteType anyway
@@ -165,7 +184,7 @@ namespace SmartDi
 
                 throw new TypeNotRegisteredException(
                     $"Could not Resolve or Create {resolvedType.Name}" +
-                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
+                    $". It is not registered in {nameof(NewDiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.", ex);
             }
         }
@@ -214,29 +233,6 @@ namespace SmartDi
             return constructors[0].GetParameters();
         }
 
-        internal static MetaObject GetMetaObject(Type resolvedType,string key)
-        {
-            if (staticContainer.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject value))
-                return value;
-
-            return null;
-        }
-
-        internal static object GetConstructorParameters()
-        {
-            return new object();
-        }
-
-        internal static object[] GetDependencies()
-        {
-            object v = new object();
-            return v as object[];
-        }
-
-        internal static object TryCreateObject()
-        {
-            return new object();
-        }
         #endregion
     }
 }
