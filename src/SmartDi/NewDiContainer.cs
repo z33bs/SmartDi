@@ -126,7 +126,7 @@ namespace SmartDi
                     var instance =
                         Activator.CreateInstance(
                             metaObject.ConcreteType,
-                            ResolveDependencies(metaObject.ConcreteType));
+                            ResolveDependencies(metaObject.ConcreteType).ToArray());
 
                     if (metaObject.LifeCycle == LifeCycle.Singleton)
                         metaObject.Instance = instance;
