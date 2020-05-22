@@ -15,7 +15,7 @@ namespace SmartDi
 {
     public class NewDiContainer : INewDiContainer
     {
-        private static bool mustBeRegisteredToResolve = false;
+        public static bool IsStrictMode { get; set; }
 
         public NewDiContainer()
         {
@@ -135,10 +135,10 @@ namespace SmartDi
                 }
             }
 
-            if (mustBeRegisteredToResolve)
+            if (IsStrictMode)
                 throw new TypeNotRegisteredException(
                     $"The type {resolvedType.Name} has not been registered. Either " +
-                    $"register the class, or configure {nameof(mustBeRegisteredToResolve)}.");
+                    $"register the class, or configure {nameof(IsStrictMode)}.");
 
             if(resolvedType.IsInterface || resolvedType.IsAbstract)
                 throw new TypeNotRegisteredException(

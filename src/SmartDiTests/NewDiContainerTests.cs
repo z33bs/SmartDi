@@ -286,6 +286,17 @@ namespace SmartDiTests
         }
 
         [Fact]
+        public void StaticResolve_IsStrictModeTrue_Unregistered_Throws()
+        {
+            NewDiContainer.IsStrictMode = true;
+            Assert.Throws<TypeNotRegisteredException>(
+                ()=>NewDiContainer.Resolve<ClassThatsResolvableWithoutRegistering>());
+
+            NewDiContainer.IsStrictMode = false;
+
+        }
+
+        [Fact]
         public void StaticResolve_KeyedDependency_Works()
         {
             NewDiContainer.Register<MyService,IService>("test");
@@ -296,6 +307,26 @@ namespace SmartDiTests
 
             NewDiContainer.ResetContainer();
         }
+
+        [Fact]
+        public void StaticResolve_SecondResolveOfSingleton_ReturnsInstance()
+        {
+            NewDiContainer.Register<MyService, IService>();
+            NewDiContainer.Resolve<IService>();
+            NewDiContainer.Resolve<IService>();
+            Assert.True(false);//todo RegisterObject so can use Moq
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void StaticResolve_InterfaceThatsNotRegistered_Throws()
+        {
+            Assert.Throws<TypeNotRegisteredException>(()=>NewDiContainer.Resolve<IService>());
+
+            NewDiContainer.ResetContainer();
+        }
+
 
         #endregion
 
