@@ -193,20 +193,17 @@ namespace SmartDiTests
             Assert.Equal(exepectedParamters, parameters);
         }
 
+        #endregion
+
         [Fact]
-        public void ResolveDependecies()
+        public void StaticResolve_Unregistered_Works()
         {
-            //ClassWith3Ctors has 3 constructors, two public () & (IService)
-            //and one internal (IService, ConcreteOnly)
+            var obj = NewDiContainer.Resolve<ClassThatsResolvableWithoutRegistering>();
 
-            var dependencies = NewDiContainer.ResolveDependencies(
-                typeof(ClassThatsResolvableWithoutRegistering)).ToArray();
-
-            Assert.IsType<ConcreteOnly>(dependencies[0]);
+            Assert.IsType<ClassThatsResolvableWithoutRegistering>(obj);
 
         }
 
-        #endregion
         #endregion
 
         #region Exceptions

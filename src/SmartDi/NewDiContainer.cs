@@ -90,6 +90,12 @@ namespace SmartDi
 
         #region Resolve
 
+        public static T Resolve<T>() where T : notnull
+            => (T)InnerResolve(typeof(T), null);
+
+        T INewDiContainer.Resolve<T>()
+            => (T)InnerResolve(typeof(T), null);
+
         internal static object InnerResolve(Type resolvedType, string key)
         {
             //if registered

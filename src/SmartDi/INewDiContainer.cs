@@ -7,5 +7,7 @@
 
         void Register<ConcreteType, ResolvedType>()
             where ConcreteType : ResolvedType;
+
+        T Resolve<T>() where T : notnull;
     }
 }
