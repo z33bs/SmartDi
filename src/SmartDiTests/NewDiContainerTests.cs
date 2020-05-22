@@ -46,6 +46,19 @@ namespace SmartDiTests
             }
         }
 
+        class ClassWithKeyedDependency
+        {
+            public IService Service { get; }
+            public ClassWithKeyedDependency()
+            {
+
+            }
+            public ClassWithKeyedDependency([ResolveNamed("test")]IService service)
+            {
+                Service = service;
+            }
+        }
+
         [Fact]
         public void Constructor()
         {
@@ -270,6 +283,18 @@ namespace SmartDiTests
 
             Assert.IsType<ClassThatsResolvableWithoutRegistering>(obj);
 
+        }
+
+        [Fact]
+        public void StaticResolve_KeyedDependency_Works()
+        {
+            NewDiContainer.Register<MyService,IService>("test");
+            NewDiContainer.Register<ClassWithKeyedDependency>();
+            var obj = NewDiContainer.Resolve<ClassWithKeyedDependency>();
+
+            Assert.IsType<ClassWithKeyedDependency>(obj);
+
+            NewDiContainer.ResetContainer();
         }
 
         #endregion
