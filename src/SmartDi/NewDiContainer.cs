@@ -59,8 +59,26 @@ namespace SmartDi
         void INewDiContainer.Register<ConcreteType, ResolvedType>()
             => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton);
 
+        #region with Key
 
-        static void InternalRegister(
+        public static void Register<ConcreteType>(string key)
+            where ConcreteType : notnull
+            => InternalRegister(staticContainer, null, typeof(ConcreteType), key, LifeCycle.Transient);
+
+        void INewDiContainer.Register<ConcreteType>(string key)
+            => InternalRegister(container, null, typeof(ConcreteType), key, LifeCycle.Transient);
+
+
+        public static void Register<ConcreteType, ResolvedType>(string key)
+            where ConcreteType : ResolvedType
+            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton);
+
+        void INewDiContainer.Register<ConcreteType, ResolvedType>(string key)
+            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton);
+
+        #endregion
+
+        internal static void InternalRegister(
             ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
             Type resolvedType,
             Type concreteType,
