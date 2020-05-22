@@ -2,16 +2,16 @@
 {
     public interface INewDiContainer
     {
-        void Register<ConcreteType>()
+        RegisterOptions Register<ConcreteType>()
             where ConcreteType : new();
 
-        void Register<ConcreteType, ResolvedType>()
+        RegisterOptions Register<ConcreteType, ResolvedType>()
             where ConcreteType : ResolvedType, new();
 
-        void Register<ConcreteType>(string key)
+        RegisterOptions Register<ConcreteType>(string key)
             where ConcreteType : new();
 
-        void Register<ConcreteType, ResolvedType>(string key)
+        RegisterOptions Register<ConcreteType, ResolvedType>(string key)
             where ConcreteType : ResolvedType, new();
 
         void RegisterInstance<ConcreteType>(ConcreteType instance)

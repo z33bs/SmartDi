@@ -164,7 +164,7 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void StaticRegisterResolvedType_RegistersAsMultiInstance()
+        public void StaticRegisterResolvedType_RegistersAsSingleInstance()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             NewDiContainer.SetContainer(mock);
@@ -177,7 +177,7 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void RegisterResolvedType_RegistersAsMultiInstance()
+        public void RegisterResolvedType_RegistersAsSingleInstance()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             INewDiContainer container = new NewDiContainer(mock);
@@ -290,7 +290,64 @@ namespace SmartDiTests
         }
 
         #endregion
+        #region RegisterOptions
+        [Fact]
+        public void StaticRegisterConcreteType_OptionsSingleInstance_RegistersAsSingleInstance()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
 
+            NewDiContainer
+                .Register<MyService>()
+                .SingleInstance();
+
+            Assert.Equal(LifeCycle.Singleton, mock[new Tuple<Type, string>(typeof(MyService), null)].LifeCycle);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterConcreteType_OptionsSingleInstance_RegistersAsSingleInstance()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container
+                .Register<MyService>()
+                .SingleInstance();
+
+            Assert.Equal(LifeCycle.Singleton, mock[new Tuple<Type, string>(typeof(MyService), null)].LifeCycle);
+        }
+
+        [Fact]
+        public void StaticRegisterResolvedType_OptionsMultiInstance_RegistersAsMultiInstance()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer
+                .Register<MyService, IService>()
+                .MultiInstance();
+
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterResolvedType_OptionsMultiInstance_RegistersAsMultiInstance()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container
+                .Register<MyService, IService>()
+                .MultiInstance();
+
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
+        }
+
+        #endregion
         #endregion
 
         #region Resolve

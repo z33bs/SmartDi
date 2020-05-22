@@ -45,37 +45,37 @@ namespace SmartDi
 
         #region Registration
         #region Register
-        public static void Register<ConcreteType>()
+        public static RegisterOptions Register<ConcreteType>()
             where ConcreteType : new()
-            => InternalRegister(staticContainer, null, typeof(ConcreteType), null, LifeCycle.Transient);
+            => new RegisterOptions(staticContainer, InternalRegister(staticContainer, null, typeof(ConcreteType), null, LifeCycle.Transient));
 
-        void INewDiContainer.Register<ConcreteType>()
-            => InternalRegister(container, null, typeof(ConcreteType), null, LifeCycle.Transient);
+        RegisterOptions INewDiContainer.Register<ConcreteType>()
+            => new RegisterOptions(container,InternalRegister(container, null, typeof(ConcreteType), null, LifeCycle.Transient));
 
 
-        public static void Register<ConcreteType,ResolvedType>()
+        public static RegisterOptions Register<ConcreteType,ResolvedType>()
             where ConcreteType : ResolvedType, new()
-            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton);
+            => new RegisterOptions(staticContainer, InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton));
 
-        void INewDiContainer.Register<ConcreteType, ResolvedType>()
-            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton);
+        RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>()
+            => new RegisterOptions(container, InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton));
         #endregion
         #region Register with Key
 
-        public static void Register<ConcreteType>(string key)
+        public static RegisterOptions Register<ConcreteType>(string key)
             where ConcreteType : new()
-            => InternalRegister(staticContainer, null, typeof(ConcreteType), key, LifeCycle.Transient);
+            => new RegisterOptions(staticContainer, InternalRegister(staticContainer, null, typeof(ConcreteType), key, LifeCycle.Transient));
 
-        void INewDiContainer.Register<ConcreteType>(string key)
-            => InternalRegister(container, null, typeof(ConcreteType), key, LifeCycle.Transient);
+        RegisterOptions INewDiContainer.Register<ConcreteType>(string key)
+            => new RegisterOptions(container ,InternalRegister(container, null, typeof(ConcreteType), key, LifeCycle.Transient));
 
 
-        public static void Register<ConcreteType, ResolvedType>(string key)
+        public static RegisterOptions Register<ConcreteType, ResolvedType>(string key)
             where ConcreteType : ResolvedType, new()
-            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton);
+            => new RegisterOptions(staticContainer ,InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton));
 
-        void INewDiContainer.Register<ConcreteType, ResolvedType>(string key)
-            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton);
+        RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>(string key)
+            => new RegisterOptions(container, InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton));
 
         #endregion
         #region RegisterInstance
@@ -96,7 +96,7 @@ namespace SmartDi
 
         #endregion
 
-        internal static void InternalRegister(
+        internal static Tuple<Type, string> InternalRegister(
             ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
             Type resolvedType,
             Type concreteType,
@@ -122,6 +122,8 @@ namespace SmartDi
                 builder.Append(".");
                 throw new RegistrationException(builder.ToString());
             }
+
+            return containerKey;
         }
         #endregion
 
@@ -234,5 +236,29 @@ namespace SmartDi
         }
 
         #endregion
+
     }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public class RegisterOptions
+    {
+        readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
+        readonly Tuple<Type, string> key;
+
+        public RegisterOptions(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Tuple<Type, string> key)
+        {
+            this.container = container;
+            this.key = key;
+        }
+        public void SingleInstance()
+        {
+            container[key].LifeCycle = LifeCycle.Singleton;
+        }
+
+        public void MultiInstance()
+        {
+            container[key].LifeCycle = LifeCycle.Transient;
+        }
+    }
+
 }
