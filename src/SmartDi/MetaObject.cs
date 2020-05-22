@@ -18,6 +18,8 @@ namespace SmartDi
         public object Instance { get; set; }
 
         public LifeCycle LifeCycle { get; set; }
+
+        public Type[] ConstructorSignature { get; set; }
     }
 }
 

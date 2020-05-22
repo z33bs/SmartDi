@@ -14,14 +14,15 @@ namespace SmartDiTests
         class ConcreteOnly { }
         class ClassWith3Ctors
         {
+            public string ConstructorUsed { get; }
             public IService Service { get; }
             public ConcreteOnly Concrete { get; }
 
             public ClassWith3Ctors(IService service)
-            { this.Service = service; }
-            public ClassWith3Ctors() { }
+            { this.Service = service; ConstructorUsed = "(IService service)"; }
+            public ClassWith3Ctors() { ConstructorUsed = "()"; }
             internal ClassWith3Ctors(IService service, ConcreteOnly concrete)
-            { this.Service = service; this.Concrete = concrete; }
+            { this.Service = service; this.Concrete = concrete; ConstructorUsed = "(IService service, ConcreteOnly concrete)"; }
         }
 
         class ClassWithFlaggedCtor
@@ -64,6 +65,21 @@ namespace SmartDiTests
             public ClassThatsUnresolvable()
             {
                 throw new Exception("Its not possible to instantiate this class");
+            }
+        }
+
+        class ClassWithInternalConstructor
+        {
+            public string ConstructorUsed { get; }
+
+            public ClassWithInternalConstructor()
+            {
+                ConstructorUsed = "public";
+            }
+
+            internal ClassWithInternalConstructor(ConcreteOnly concreteOnly)
+            {
+                ConstructorUsed = "internal";
             }
         }
 
@@ -137,6 +153,7 @@ namespace SmartDiTests
 
             Assert.Equal(LifeCycle.Transient, mock[new Tuple<Type, string>(typeof(MyService), null)].LifeCycle);
         }
+
         #endregion
         #region Register<ConcreteType,ResolvedType>()
         [Fact]
@@ -347,6 +364,59 @@ namespace SmartDiTests
             Assert.Equal(LifeCycle.Transient, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
         }
 
+        [Fact]
+        public void StaticRegisterConcreteType_UsingConstructorOption_ResolvesSpecifiedConstructor()
+        {
+            NewDiContainer.Register<MyService, IService>();
+
+            NewDiContainer
+                .Register<ClassWith3Ctors>()
+                .UsingConstructor(new Type[] { typeof(IService) });
+
+            var resolved = NewDiContainer.Resolve<ClassWith3Ctors>();
+            Assert.Equal("(IService service)", resolved.ConstructorUsed);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterConcreteType__UsingConstructorOption_ResolvesSpecifiedConstructor()
+        {
+            INewDiContainer container = new NewDiContainer();
+            container.Register<MyService, IService>();
+
+            container
+                .Register<ClassWith3Ctors>()
+                .UsingConstructor(new Type[] { typeof(IService) });
+
+            var resolved = container.Resolve<ClassWith3Ctors>();
+            Assert.Equal("(IService service)", resolved.ConstructorUsed);
+        }
+
+        [Fact]
+        public void StaticRegisterConcreteType_UsingConstructorOption_WrongCtor_ThrowsRegistrationException()
+        {
+            Assert.Throws<RegistrationException>(()=>
+                NewDiContainer
+                    .Register<ClassWith3Ctors>()
+                    .UsingConstructor(new Type[] { typeof(ConcreteOnly) }));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void StaticRegisterConcreteType_UsingConstructorOption_ResolvesInternalConstructor()
+        {
+            NewDiContainer
+                .Register<ClassWithInternalConstructor>()
+                .UsingConstructor(new Type[] { typeof(ConcreteOnly) });
+
+            var resolved = NewDiContainer.Resolve<ClassWithInternalConstructor>();
+            Assert.Equal("internal", resolved.ConstructorUsed);
+
+            NewDiContainer.ResetContainer();
+        }
+
         #endregion
         #endregion
 
@@ -485,6 +555,20 @@ namespace SmartDiTests
             NewDiContainer.Register<MyService>("test");
             Assert.Throws<RegistrationException>(() => NewDiContainer.Register<MyService>("test"));
         }
+
+        [Fact]
+        public void StaticResolveClassWithInternalConstructor_ResolvesPublicEvenThoughInternalIsGreediest()
+        {
+            NewDiContainer
+                .Register<ClassWithInternalConstructor>();
+
+            var resolved = NewDiContainer.Resolve<ClassWithInternalConstructor>();
+            Assert.Equal("public", resolved.ConstructorUsed);
+
+            NewDiContainer.ResetContainer();
+        }
+
+
 
         #endregion
 

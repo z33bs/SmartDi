@@ -20,6 +20,11 @@
         void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
             where ConcreteType : ResolvedType, new();
 
+        //todo add keyed overloads for RegisterInstance
+        //todo add Register(Func<TConcrete>)
+        //todo isRegistered & list resolutions
+        //todo destructive stuff running dispose on Instances
+
         T Resolve<T>() where T : notnull;
     }
 }
