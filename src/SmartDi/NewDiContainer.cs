@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,9 +13,25 @@ using System.Text;
 [assembly: InternalsVisibleTo("SmartDiTests")]
 namespace SmartDi
 {
+    /// <summary>
+    /// Customise behaviour. All settings default to true.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]    
+    public class Settings
+    {
+        public Settings()
+        {
+            TryResolveUnregistered = true;
+            ResolveBubblesToStaticContainer = true;
+        }
+        public bool TryResolveUnregistered { get; set; }
+        public bool ResolveBubblesToStaticContainer { get; set; }
+    }
+
     public class NewDiContainer : INewDiContainer
     {
-        public static bool IsStrictMode { get; set; }
+        public static Settings MySettings { get; } = new Settings();
+        
 
         public NewDiContainer()
         {
@@ -160,10 +176,15 @@ namespace SmartDi
                 }
             }
 
-            if (IsStrictMode)
+            if (MySettings.ResolveBubblesToStaticContainer
+                && container != staticContainer
+                && staticContainer.Any())
+                    return InnerResolve(staticContainer, resolvedType, key);
+
+            if (!MySettings.TryResolveUnregistered)
                 throw new TypeNotRegisteredException(
                     $"The type {resolvedType.Name} has not been registered. Either " +
-                    $"register the class, or configure {nameof(IsStrictMode)}.");
+                    $"register the class, or configure {nameof(MySettings)}.");
 
             if (resolvedType.IsInterface || resolvedType.IsAbstract)
                 throw new TypeNotRegisteredException(

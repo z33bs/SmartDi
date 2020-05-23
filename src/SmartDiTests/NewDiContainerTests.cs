@@ -83,6 +83,14 @@ namespace SmartDiTests
             }
         }
 
+        class ClassThatHasToBeRegistered
+        {
+            public ClassThatHasToBeRegistered(int number)
+            {
+
+            }
+        }
+
         [Fact]
         public void Constructor()
         {
@@ -483,11 +491,11 @@ namespace SmartDiTests
         [Fact]
         public void StaticResolve_IsStrictModeTrue_Unregistered_Throws()
         {
-            NewDiContainer.IsStrictMode = true;
+            NewDiContainer.MySettings.TryResolveUnregistered = false;
             Assert.Throws<TypeNotRegisteredException>(
                 ()=>NewDiContainer.Resolve<ClassThatsResolvableWithoutRegistering>());
 
-            NewDiContainer.IsStrictMode = false;
+            NewDiContainer.MySettings.TryResolveUnregistered = true;
 
         }
 
@@ -538,6 +546,34 @@ namespace SmartDiTests
                 () => NewDiContainer.Resolve<ClassThatsUnresolvable>());
         }
 
+        [Fact]
+        public void ResolveFromContainerInstance_RegisteredInStaticContainer_ResolvesFromStaticContainer()
+        {
+            var registeredObject = new ClassThatHasToBeRegistered(3);
+            NewDiContainer.RegisterInstance(registeredObject);
+
+            INewDiContainer container = new NewDiContainer();
+            var resolved = container.Resolve<ClassThatHasToBeRegistered>();
+
+            Assert.Equal(registeredObject, resolved);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void Resolve_SettingsNotBubble_RegisteredInStaticContainer_NotResolved()
+        {
+            NewDiContainer.MySettings.ResolveBubblesToStaticContainer = false;
+
+            var registeredObject = new ClassThatHasToBeRegistered(3);
+            NewDiContainer.RegisterInstance(registeredObject);
+
+            INewDiContainer container = new NewDiContainer();
+            Assert.Throws<TypeNotRegisteredException>(()=>container.Resolve<ClassThatHasToBeRegistered>());
+
+            NewDiContainer.ResetContainer();
+            NewDiContainer.MySettings.ResolveBubblesToStaticContainer = true;
+        }
 
         #endregion
 
