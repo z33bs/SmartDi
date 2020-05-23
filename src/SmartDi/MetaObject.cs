@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Reflection;
 
 namespace SmartDi
 {
@@ -19,7 +20,7 @@ namespace SmartDi
 
         public LifeCycle LifeCycle { get; set; }
 
-        public Type[] ConstructorSignature { get; set; }
+        public ParameterInfo[] ConstructorParameterCache { get; set; }
     }
 }
 

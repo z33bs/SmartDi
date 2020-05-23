@@ -420,6 +420,7 @@ namespace SmartDiTests
             NewDiContainer.ResetContainer();
         }
 
+
         [Fact]
         public void StaticRegisterConcreteType_UsingConstructorOption_ResolvesInternalConstructor()
         {

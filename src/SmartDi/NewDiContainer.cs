@@ -224,22 +224,11 @@ namespace SmartDi
 
         internal static IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
-            //todo if transient, save ctor for rapid resolution in future runs
+            if(metaObject.ConstructorParameterCache is null)
+                metaObject.ConstructorParameterCache //cycle through all ctors to choose
+                    = GetConstructorParams(metaObject.ConcreteType); 
 
-            //If specify constructor then allow NonPublic
-            ParameterInfo[] parameters
-                = metaObject.ConstructorSignature != null
-                ? metaObject
-                    .ConcreteType
-                    .GetConstructor(
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                        null,
-                        metaObject.ConstructorSignature,
-                        null)
-                    .GetParameters()
-                : GetConstructorParams(metaObject.ConcreteType);
-
-            foreach (var parameter in parameters)
+            foreach (var parameter in metaObject.ConstructorParameterCache)
             {
                 var namedDependencyAttribute = parameter.GetCustomAttribute<ResolveNamedAttribute>();
                 if (namedDependencyAttribute != null)
@@ -302,20 +291,25 @@ namespace SmartDi
 
             try
             {
+                var constructor = metaObject.ConcreteType
+                    .GetConstructor(
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                        null,
+                        args,
+                        null);
+
                 //Rather throw error on registration
-                if(metaObject.ConcreteType.GetConstructor(
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                    null,
-                    args,
-                    null) is null)
-                        throw new RegistrationException($"Could not register {metaObject.ConcreteType.Name} with specified constructor.");
+                if (constructor is null)
+                        throw new Exception($"No matching constructor found.");
+
+                //We've done the work, so cache it here
+                metaObject.ConstructorParameterCache = constructor.GetParameters();
             }
             catch(Exception ex)
             {
                 throw new RegistrationException($"Could not register {metaObject.ConcreteType.Name} with specified constructor.", ex);
             }
 
-            metaObject.ConstructorSignature = args;
             return this;
         }
 
