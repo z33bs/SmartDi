@@ -8,8 +8,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-// todo BubbleToStatic
-// todo UsingConstructor returns restricted API
 [assembly: InternalsVisibleTo("SmartDiTests")]
 namespace SmartDi
 {
@@ -274,7 +272,20 @@ namespace SmartDi
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public class RegisterOptions
+    public interface ILifeCycleOptions
+    {
+        void MultiInstance();
+        void SingleInstance();
+    }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public interface IConstructorOptions
+    {
+        ILifeCycleOptions UsingConstructor(Type[] args);
+    }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public class RegisterOptions : ILifeCycleOptions, IConstructorOptions
     {
         readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         readonly Tuple<Type, string> key;
@@ -285,7 +296,7 @@ namespace SmartDi
             this.key = key;
         }
 
-        public RegisterOptions UsingConstructor(Type[] args)
+        public ILifeCycleOptions UsingConstructor(Type[] args)
         {
             var metaObject = container[key];
 
@@ -300,12 +311,12 @@ namespace SmartDi
 
                 //Rather throw error on registration
                 if (constructor is null)
-                        throw new Exception($"No matching constructor found.");
+                    throw new Exception($"No matching constructor found.");
 
                 //We've done the work, so cache it here
                 metaObject.ConstructorParameterCache = constructor.GetParameters();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new RegistrationException($"Could not register {metaObject.ConcreteType.Name} with specified constructor.", ex);
             }
