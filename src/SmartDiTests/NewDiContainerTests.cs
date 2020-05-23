@@ -796,6 +796,44 @@ namespace SmartDiTests
 
             NewDiContainer.ResetContainer();
         }
+
+        [Fact]
+        public void StaticUnregisterAll()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.Register<MyService>();
+            NewDiContainer.Register<ConcreteOnly>();
+            NewDiContainer.Register<ClassWith3Ctors>();
+
+            Assert.Equal(3, mock.Count);
+
+            NewDiContainer.UnregisterAll();
+
+            Assert.Empty(mock);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void UnregisterAll()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.Register<MyService>();
+            container.Register<ConcreteOnly>();
+            container.Register<ClassWith3Ctors>();
+
+            Assert.Equal(3, mock.Count);
+
+            container.UnregisterAll();
+
+            Assert.Empty(mock);
+        }
+
+
         #endregion
 
         #region Exceptions

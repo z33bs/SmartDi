@@ -307,19 +307,11 @@ namespace SmartDi
         void INewDiContainer.Unregister<T>(string key)
             => InternalUnregister(container, typeof(T), key);
 
+
         static void InternalUnregister(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {
             if (container.TryRemove(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
-            {
-                try
-                {
-                    metaObject.Dispose();
-                }
-                catch(Exception ex)
-                {
-                    throw new Exception($"Error while disposing registered object of type {resolvedType.Name}",ex);
-                }
-            }
+                TryDispose(metaObject);
             else
             {
                 var builder = new StringBuilder();
@@ -329,7 +321,34 @@ namespace SmartDi
                 builder.Append(".");
                 throw new TypeNotRegisteredException(builder.ToString());
             }
+        }
 
+        public static void UnregisterAll()
+            => InternalUnregisterAll(staticContainer);
+
+        void INewDiContainer.UnregisterAll()
+            => InternalUnregisterAll(container);
+
+
+        static void InternalUnregisterAll(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
+        {
+            foreach (var registration in container)
+            {
+                TryDispose(registration.Value);
+                container.TryRemove(registration.Key, out _);
+            }
+        }
+
+        private static void TryDispose(MetaObject metaObject)
+        {
+            try
+            {
+                metaObject.Dispose();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error while disposing registered object of type {metaObject.ConcreteType.Name}", ex);
+            }
         }
         #endregion
 

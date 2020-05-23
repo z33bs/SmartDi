@@ -26,10 +26,8 @@
         void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
             where ConcreteType : notnull, ResolvedType;
 
-        //todo add keyed overloads for RegisterInstance
         //todo add Register(Func<TConcrete>)
         //todo isRegistered & list resolutions
-        //todo destructive stuff running dispose on Instances
 
         T Resolve<T>() where T : notnull;
         T Resolve<T>(string key) where T : notnull;
@@ -39,5 +37,7 @@
 
         void Unregister<T>(string key)
             where T : notnull;
+
+        void UnregisterAll();
     }
 }
