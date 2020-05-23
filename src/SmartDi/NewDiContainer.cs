@@ -308,11 +308,11 @@ namespace SmartDi
                     null,
                     args,
                     null) is null)
-                        throw new RegistrationException("Could not register with specified constructor.");
+                        throw new RegistrationException($"Could not register {metaObject.ConcreteType.Name} with specified constructor.");
             }
             catch(Exception ex)
             {
-                throw new RegistrationException("Could not register with specified constructor.", ex);
+                throw new RegistrationException($"Could not register {metaObject.ConcreteType.Name} with specified constructor.", ex);
             }
 
             metaObject.ConstructorSignature = args;
