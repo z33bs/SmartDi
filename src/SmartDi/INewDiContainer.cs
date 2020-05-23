@@ -26,5 +26,11 @@
         //todo destructive stuff running dispose on Instances
 
         T Resolve<T>() where T : notnull;
+
+        void Unregister<T>()
+            where T : notnull;
+
+        void Unregister<T>(string key)
+            where T : notnull;
     }
 }

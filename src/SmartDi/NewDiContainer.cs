@@ -14,7 +14,7 @@ namespace SmartDi
     /// <summary>
     /// Customise behaviour. All settings default to true.
     /// </summary>
-    [EditorBrowsable(EditorBrowsableState.Never)]    
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public class Settings
     {
         public Settings()
@@ -29,7 +29,7 @@ namespace SmartDi
     public class NewDiContainer : INewDiContainer
     {
         public static Settings MySettings { get; } = new Settings();
-        
+
 
         public NewDiContainer()
         {
@@ -177,7 +177,7 @@ namespace SmartDi
             if (MySettings.ResolveBubblesToStaticContainer
                 && container != staticContainer
                 && staticContainer.Any())
-                    return InnerResolve(staticContainer, resolvedType, key);
+                return InnerResolve(staticContainer, resolvedType, key);
 
             if (!MySettings.TryResolveUnregistered)
                 throw new TypeNotRegisteredException(
@@ -222,9 +222,9 @@ namespace SmartDi
 
         internal static IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
-            if(metaObject.ConstructorParameterCache is null)
+            if (metaObject.ConstructorParameterCache is null)
                 metaObject.ConstructorParameterCache //cycle through all ctors to choose
-                    = GetConstructorParams(metaObject.ConcreteType); 
+                    = GetConstructorParams(metaObject.ConcreteType);
 
             foreach (var parameter in metaObject.ConstructorParameterCache)
             {
@@ -267,6 +267,47 @@ namespace SmartDi
             return constructors[0].GetParameters();
         }
 
+        #endregion
+        #region Unregister
+        public static void Unregister<T>()
+            where T : notnull
+            => InternalUnregister(staticContainer, typeof(T), null);
+
+        void INewDiContainer.Unregister<T>()
+            => InternalUnregister(container, typeof(T), null);
+
+
+        public static void Unregister<T>(string key)
+            where T : notnull
+            => InternalUnregister(staticContainer, typeof(T), key);
+
+        void INewDiContainer.Unregister<T>(string key)
+            => InternalUnregister(container, typeof(T), key);
+
+        static void InternalUnregister(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
+        {
+            if (container.TryRemove(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
+            {
+                try
+                {
+                    metaObject.Dispose();
+                }
+                catch(Exception ex)
+                {
+                    throw new Exception($"Error while disposing registered object of type {resolvedType.Name}",ex);
+                }
+            }
+            else
+            {
+                var builder = new StringBuilder();
+                builder.Append($"Can't find {resolvedType.Name}");
+                if (!string.IsNullOrEmpty(key))
+                    builder.Append($" with key '{key}'");
+                builder.Append(".");
+                throw new TypeNotRegisteredException(builder.ToString());
+            }
+
+        }
         #endregion
 
     }

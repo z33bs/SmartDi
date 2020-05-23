@@ -99,6 +99,31 @@ namespace SmartDiTests
             }
         }
 
+        public class ClassThatThrowsOnDisposed : IDisposable
+        {
+            public void Dispose()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        class ClassThatsDisposable : DisposableBase
+        {
+            private Action _onExplicitDispose;
+            private Action _onImplicitDispose;
+
+            public ClassThatsDisposable(Action onExplicitDispose, Action onImplicitDispose)
+            {
+                _onExplicitDispose = onExplicitDispose;
+                _onImplicitDispose = onImplicitDispose;
+            }
+
+            protected override void DisposeExplicit()
+                => _onExplicitDispose?.DynamicInvoke();
+            protected override void DisposeImplicit()
+                => _onImplicitDispose?.DynamicInvoke();
+        }
+
         [Fact]
         public void Constructor()
         {
@@ -589,6 +614,115 @@ namespace SmartDiTests
         {
             NewDiContainer.Register<IService>();
             Assert.Throws<TypeNotRegisteredException>(() => NewDiContainer.Resolve<IService>());
+            NewDiContainer.ResetContainer();
+        }
+        #endregion
+
+        #region Unregister
+        [Fact]
+        public void StaticUnregister_NotRegistered_ThrowsResolutionExceptoin()
+        {
+            Assert.Throws<TypeNotRegisteredException>(() => NewDiContainer.Unregister<ConcreteOnly>());
+        }
+
+        [Fact]
+        public void StaticUnregister_ExceptionWhileDisposing_ThrowsExceptoin()
+        {
+            //Ensure MetaObject.Instance is set
+            NewDiContainer.RegisterInstance(new ClassThatThrowsOnDisposed());
+
+            Assert.Throws<Exception>(() => NewDiContainer.Unregister<ClassThatThrowsOnDisposed>());
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void StaticUnregister_Registered_IsRemoved()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.Register<ConcreteOnly>();
+
+            Assert.NotEmpty(mock);
+
+            NewDiContainer.Unregister<ConcreteOnly>();
+
+            Assert.Empty(mock);
+
+            NewDiContainer.ResetContainer();
+        }
+        [Fact]
+        public void Unregister_Registered_IsRemoved()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.Register<ConcreteOnly>();
+
+            Assert.NotEmpty(mock);
+
+            container.Unregister<ConcreteOnly>();
+
+            Assert.Empty(mock);
+        }
+        [Fact]
+        public void StaticUnregisterWithKey_Registered_IsRemoved()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.Register<ConcreteOnly>("test");
+
+            Assert.NotEmpty(mock);
+
+            NewDiContainer.Unregister<ConcreteOnly>("test");
+
+            Assert.Empty(mock);
+
+            NewDiContainer.ResetContainer();
+        }
+        [Fact]
+        public void UnregisterWithKey_Registered_IsRemoved()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.Register<ConcreteOnly>("test");
+
+            Assert.NotEmpty(mock);
+
+            container.Unregister<ConcreteOnly>("test");
+
+            Assert.Empty(mock);
+        }
+        [Fact]
+        public void StaticUnregisterWithKey_NotRegistered_ThrowsResolutionException()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.Register<ConcreteOnly>("test");
+
+            Assert.NotEmpty(mock);
+
+               Assert.Throws<TypeNotRegisteredException>(
+                   ()=>NewDiContainer.Unregister<ConcreteOnly>("wrongKey"));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void StaticUnregister_Registered_DisposeCalled()
+        {
+            bool wasDisposedExplicitly = false;
+            var disposable = new ClassThatsDisposable(() => wasDisposedExplicitly = true, () => { });
+            NewDiContainer.RegisterInstance(disposable);
+
+            NewDiContainer.Unregister<ClassThatsDisposable>();
+
+            Assert.True(wasDisposedExplicitly);
+
             NewDiContainer.ResetContainer();
         }
         #endregion
