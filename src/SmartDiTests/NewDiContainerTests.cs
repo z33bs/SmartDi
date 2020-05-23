@@ -91,6 +91,14 @@ namespace SmartDiTests
             }
         }
 
+        class ClassWithoutParamaterlessCtor
+        {
+            public ClassWithoutParamaterlessCtor(IService service)
+            {
+
+            }
+        }
+
         [Fact]
         public void Constructor()
         {
@@ -575,6 +583,13 @@ namespace SmartDiTests
             NewDiContainer.MySettings.ResolveBubblesToStaticContainer = true;
         }
 
+        [Fact]
+        public void StaticResolve_Interface_ThrowsResolutionException()
+        {
+            NewDiContainer.Register<IService>();
+            Assert.Throws<TypeNotRegisteredException>(() => NewDiContainer.Resolve<IService>());
+            NewDiContainer.ResetContainer();
+        }
         #endregion
 
         #region Exceptions

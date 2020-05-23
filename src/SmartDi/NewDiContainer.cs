@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -224,6 +224,8 @@ namespace SmartDi
 
         internal static IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
+            //todo if transient, save ctor for rapid resolution in future runs
+
             //If specify constructor then allow NonPublic
             ParameterInfo[] parameters
                 = metaObject.ConstructorSignature != null
@@ -252,6 +254,9 @@ namespace SmartDi
             var constructors = resolvedType.
                     GetConstructors(BindingFlags.Instance | BindingFlags.Public)
                     .ToList();
+
+            if (constructors.Count == 0)
+                throw new TypeNotRegisteredException($"{resolvedType.Name} can't be resolved as it has no constructors.");
 
             if (constructors.Count > 1)
             {
