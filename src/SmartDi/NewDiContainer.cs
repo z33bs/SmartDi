@@ -62,7 +62,7 @@ namespace SmartDi
         #region Registration
         #region Register
         public static RegisterOptions Register<ConcreteType>()
-            where ConcreteType : new()
+            where ConcreteType : notnull
             => new RegisterOptions(staticContainer, InternalRegister(staticContainer, null, typeof(ConcreteType), null, LifeCycle.Transient));
 
         RegisterOptions INewDiContainer.Register<ConcreteType>()
@@ -70,7 +70,7 @@ namespace SmartDi
 
 
         public static RegisterOptions Register<ConcreteType, ResolvedType>()
-            where ConcreteType : ResolvedType, new()
+            where ConcreteType : notnull, ResolvedType
             => new RegisterOptions(staticContainer, InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton));
 
         RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>()
@@ -79,7 +79,7 @@ namespace SmartDi
         #region Register with Key
 
         public static RegisterOptions Register<ConcreteType>(string key)
-            where ConcreteType : new()
+            where ConcreteType : notnull
             => new RegisterOptions(staticContainer, InternalRegister(staticContainer, null, typeof(ConcreteType), key, LifeCycle.Transient));
 
         RegisterOptions INewDiContainer.Register<ConcreteType>(string key)
@@ -87,7 +87,7 @@ namespace SmartDi
 
 
         public static RegisterOptions Register<ConcreteType, ResolvedType>(string key)
-            where ConcreteType : ResolvedType, new()
+            where ConcreteType : notnull, ResolvedType
             => new RegisterOptions(staticContainer, InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton));
 
         RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>(string key)
@@ -96,7 +96,7 @@ namespace SmartDi
         #endregion
         #region RegisterInstance
         public static void RegisterInstance<ConcreteType>(ConcreteType instance)
-            where ConcreteType : new()
+            where ConcreteType : notnull
             => InternalRegister(staticContainer, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
 
         void INewDiContainer.RegisterInstance<ConcreteType>(ConcreteType instance)
@@ -104,7 +104,7 @@ namespace SmartDi
 
 
         public static void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
-            where ConcreteType : ResolvedType, new()
+            where ConcreteType : notnull, ResolvedType
             => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
 
         void INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)

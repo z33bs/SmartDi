@@ -3,22 +3,22 @@
     public interface INewDiContainer
     {
         RegisterOptions Register<ConcreteType>()
-            where ConcreteType : new();
+            where ConcreteType : notnull;
 
         RegisterOptions Register<ConcreteType, ResolvedType>()
-            where ConcreteType : ResolvedType, new();
+            where ConcreteType : notnull, ResolvedType;
 
         RegisterOptions Register<ConcreteType>(string key)
-            where ConcreteType : new();
+            where ConcreteType : notnull;
 
         RegisterOptions Register<ConcreteType, ResolvedType>(string key)
-            where ConcreteType : ResolvedType, new();
+            where ConcreteType : notnull, ResolvedType;
 
         void RegisterInstance<ConcreteType>(ConcreteType instance)
-            where ConcreteType : new();
+            where ConcreteType : notnull;
 
         void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
-            where ConcreteType : ResolvedType, new();
+            where ConcreteType : notnull, ResolvedType;
 
         //todo add keyed overloads for RegisterInstance
         //todo add Register(Func<TConcrete>)
