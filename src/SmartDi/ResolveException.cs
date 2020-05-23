@@ -5,19 +5,19 @@ namespace SmartDi
     /// <summary>
     /// Exception thrown when <c>Resolve</c> is called for a type that has not been registered
     /// </summary>
-    public class TypeNotRegisteredException : Exception
+    public class ResolveException : Exception
     {
         /// <summary>
         /// Exception thrown when <c>Resolve</c> is called for a type that has not been registered
         /// </summary>
-        public TypeNotRegisteredException(string message)
+        public ResolveException(string message)
             : base(message)
         {
         }
         /// <summary>
         /// Exception thrown when <c>Resolve</c> is called for a type that has not been registered
         /// </summary>
-        public TypeNotRegisteredException(string message, Exception innerException)
+        public ResolveException(string message, Exception innerException)
             : base(message,innerException)
         {
         }

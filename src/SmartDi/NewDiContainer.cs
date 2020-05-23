@@ -150,7 +150,7 @@ namespace SmartDi
                 if (containerKey.Item2 != null)
                     builder.Append($" with key '{nameof(containerKey.Item2)}'");
                 builder.Append(".");
-                throw new RegistrationException(builder.ToString());
+                throw new RegisterException(builder.ToString());
             }
 
             return containerKey;
@@ -203,12 +203,12 @@ namespace SmartDi
                 return InnerResolve(staticContainer, resolvedType, key);
 
             if (!MySettings.TryResolveUnregistered)
-                throw new TypeNotRegisteredException(
+                throw new ResolveException(
                     $"The type {resolvedType.Name} has not been registered. Either " +
                     $"register the class, or configure {nameof(MySettings)}.");
 
             if (resolvedType.IsInterface || resolvedType.IsAbstract)
-                throw new TypeNotRegisteredException(
+                throw new ResolveException(
                     $"Could not Resolve or Create {resolvedType.Name}" +
                     $". It is not registered in {nameof(NewDiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.");
@@ -233,10 +233,10 @@ namespace SmartDi
             }
             catch (Exception ex)
             {
-                if (ex is TypeNotRegisteredException)
+                if (ex is ResolveException)
                     throw ex;
 
-                throw new TypeNotRegisteredException(
+                throw new ResolveException(
                     $"Could not Resolve or Create {resolvedType.Name}" +
                     $". It is not registered in {nameof(NewDiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.", ex);
@@ -266,7 +266,7 @@ namespace SmartDi
                     .ToList();
 
             if (constructors.Count == 0)
-                throw new TypeNotRegisteredException($"{resolvedType.Name} can't be resolved as it has no constructors.");
+                throw new ResolveException($"{resolvedType.Name} can't be resolved as it has no constructors.");
 
             if (constructors.Count > 1)
             {
@@ -319,7 +319,7 @@ namespace SmartDi
                 if (!string.IsNullOrEmpty(key))
                     builder.Append($" with key '{key}'");
                 builder.Append(".");
-                throw new TypeNotRegisteredException(builder.ToString());
+                throw new ResolveException(builder.ToString());
             }
         }
 
@@ -401,7 +401,7 @@ namespace SmartDi
             }
             catch (Exception ex)
             {
-                throw new RegistrationException($"Could not register {metaObject.ConcreteType.Name} with specified constructor.", ex);
+                throw new RegisterException($"Could not register {metaObject.ConcreteType.Name} with specified constructor.", ex);
             }
 
             return this;

@@ -26,8 +26,15 @@
         void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
             where ConcreteType : notnull, ResolvedType;
 
+        //todo throw if >1 flagged
+        //todo documentation
         //todo add Register(Func<TConcrete>)
-        //todo isRegistered & list resolutions
+        //todo list registrations
+        //todo autoregister (with flags like bindingflags) and exclusion like Tiny
+        //todo .Static() / Global() overload to move to Static container from local container?
+        //todo consolidate to one file
+
+
 
         T Resolve<T>() where T : notnull;
         T Resolve<T>(string key) where T : notnull;
