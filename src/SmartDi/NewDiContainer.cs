@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -107,6 +107,22 @@ namespace SmartDi
 
         void INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
             => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+
+
+        public static void RegisterInstance<ConcreteType>(ConcreteType instance, string key)
+            where ConcreteType : notnull
+            => InternalRegister(staticContainer, typeof(ConcreteType), typeof(ConcreteType), key, LifeCycle.Singleton, instance);
+
+        void INewDiContainer.RegisterInstance<ConcreteType>(ConcreteType instance, string key)
+            => InternalRegister(container, typeof(ConcreteType), typeof(ConcreteType), key, LifeCycle.Singleton, instance);
+
+
+        public static void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
+            where ConcreteType : notnull, ResolvedType
+            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton, instance);
+
+        void INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
+            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton, instance);
 
         #endregion
 

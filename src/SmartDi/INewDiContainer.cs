@@ -1,4 +1,4 @@
-namespace SmartDi
+﻿namespace SmartDi
 {
     public interface INewDiContainer
     {
@@ -18,6 +18,12 @@ namespace SmartDi
             where ConcreteType : notnull;
 
         void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
+            where ConcreteType : notnull, ResolvedType;
+
+        void RegisterInstance<ConcreteType>(ConcreteType instance, string key)
+            where ConcreteType : notnull;
+
+        void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
             where ConcreteType : notnull, ResolvedType;
 
         //todo add keyed overloads for RegisterInstance

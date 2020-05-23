@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Xunit;
 using Moq;
 using SmartDi;
@@ -346,6 +346,55 @@ namespace SmartDiTests
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), null)));
         }
+
+        [Fact]
+        public void StaticRegisterInstanceWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterInstance(new MyService(),"test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), "test")));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterInstanceWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterInstance(new MyService(),"test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), "test")));
+        }
+
+        [Fact]
+        public void StaticRegisterInstanceWithResolvedTypeWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterInstance<MyService, IService>(new MyService(),"test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterInstanceWithResolvedTypeWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterInstance<MyService, IService>(new MyService(),"test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
+        }
+
 
         #endregion
         #region RegisterOptions
