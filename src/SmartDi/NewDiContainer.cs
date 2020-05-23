@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -148,6 +148,13 @@ namespace SmartDi
 
         T INewDiContainer.Resolve<T>()
             => (T)InnerResolve(container, typeof(T), null);
+
+
+        public static T Resolve<T>(string key) where T : notnull
+            => (T)InnerResolve(staticContainer, typeof(T), key);
+
+        T INewDiContainer.Resolve<T>(string key)
+            => (T)InnerResolve(container, typeof(T), key);
 
         internal static object InnerResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {

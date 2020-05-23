@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Xunit;
 using Moq;
 using SmartDi;
@@ -616,6 +616,28 @@ namespace SmartDiTests
             Assert.Throws<TypeNotRegisteredException>(() => NewDiContainer.Resolve<IService>());
             NewDiContainer.ResetContainer();
         }
+
+        [Fact]
+        public void StaticResolveWithKey_InstanceRegistered_ReturnsInstance()
+        {
+            var instance = new MyService();
+            NewDiContainer.RegisterInstance(instance,"test");
+            var resolved = NewDiContainer.Resolve<MyService>("test");
+            Assert.Equal(instance, resolved); //exactly same object returned
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void ResolveWithKey_InstanceRegistered_ReturnsInstance()
+        {
+            var instance = new MyService();
+            INewDiContainer container = new NewDiContainer();
+            container.RegisterInstance(instance, "test");
+            var resolved = container.Resolve<MyService>("test");
+            Assert.Equal(instance, resolved); //exactly same object returned
+        }
+
         #endregion
 
         #region Unregister

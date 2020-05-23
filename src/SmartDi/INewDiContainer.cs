@@ -1,4 +1,4 @@
-﻿namespace SmartDi
+namespace SmartDi
 {
     public interface INewDiContainer
     {
@@ -26,6 +26,7 @@
         //todo destructive stuff running dispose on Instances
 
         T Resolve<T>() where T : notnull;
+        T Resolve<T>(string key) where T : notnull;
 
         void Unregister<T>()
             where T : notnull;
