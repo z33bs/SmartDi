@@ -379,7 +379,7 @@ namespace SmartDi
             this.key = key;
         }
 
-        public ILifeCycleOptions UsingConstructor(Type[] args)
+        public ILifeCycleOptions UsingConstructor(params Type[] args)
         {
             var metaObject = container[key];
 

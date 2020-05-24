@@ -461,7 +461,7 @@ namespace SmartDiTests
 
             NewDiContainer
                 .Register<ClassWith3Ctors>()
-                .UsingConstructor(new Type[] { typeof(IService) });
+                .UsingConstructor(typeof(IService));
 
             var resolved = NewDiContainer.Resolve<ClassWith3Ctors>();
             Assert.Equal("(IService service)", resolved.ConstructorUsed);
@@ -477,7 +477,7 @@ namespace SmartDiTests
 
             container
                 .Register<ClassWith3Ctors>()
-                .UsingConstructor(new Type[] { typeof(IService) });
+                .UsingConstructor(typeof(IService));
 
             var resolved = container.Resolve<ClassWith3Ctors>();
             Assert.Equal("(IService service)", resolved.ConstructorUsed);
@@ -489,7 +489,7 @@ namespace SmartDiTests
             Assert.Throws<RegisterException>(() =>
                 NewDiContainer
                     .Register<ClassWith3Ctors>()
-                    .UsingConstructor(new Type[] { typeof(ConcreteOnly) }));
+                    .UsingConstructor(typeof(ConcreteOnly)));
 
             NewDiContainer.ResetContainer();
         }
@@ -500,7 +500,7 @@ namespace SmartDiTests
         {
             NewDiContainer
                 .Register<ClassWithInternalConstructor>()
-                .UsingConstructor(new Type[] { typeof(ConcreteOnly) });
+                .UsingConstructor(typeof(ConcreteOnly));
 
             var resolved = NewDiContainer.Resolve<ClassWithInternalConstructor>();
             Assert.Equal("internal", resolved.ConstructorUsed);
