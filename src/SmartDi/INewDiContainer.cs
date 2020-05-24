@@ -26,7 +26,6 @@
         void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
             where ConcreteType : notnull, ResolvedType;
 
-        //todo throw if >1 flagged
         //todo documentation
         //todo add Register(Func<TConcrete>)
         //todo list registrations

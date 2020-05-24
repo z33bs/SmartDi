@@ -275,9 +275,12 @@ namespace SmartDi
                     .Where(c => c.GetCustomAttribute<ResolveUsingAttribute>() != null)
                     .ToList();
 
-                //todo if strict mode throw if more than one
                 if (flaggedConstructors.Any())
+                {
+                    if (flaggedConstructors.Count > 1)
+                        throw new ResolveException($"{resolvedType.Name} may only have one [ResolveUsing] attribute");
                     constructors = flaggedConstructors;
+                }
 
                 return constructors
                     .Aggregate((i, j)

@@ -38,6 +38,20 @@ namespace SmartDiTests
             { this.Service = service; this.Concrete = concrete; }
         }
 
+        class ClassWith2FlaggedCtors
+        {
+            public IService Service { get; }
+            public ConcreteOnly Concrete { get; }
+
+            [ResolveUsing]
+            public ClassWith2FlaggedCtors(IService service)
+            { this.Service = service; }
+
+            [ResolveUsing]
+            public ClassWith2FlaggedCtors(IService service, ConcreteOnly concrete)
+            { this.Service = service; this.Concrete = concrete; }
+        }
+
         class ClassThatsResolvableWithoutRegistering
         {
             public ConcreteOnly Concrete { get; }
@@ -549,6 +563,17 @@ namespace SmartDiTests
                     GetConstructorParams(typeof(ClassWithFlaggedCtor));
 
             Assert.Equal(exepectedParamters, parameters);
+        }
+
+        [Fact]
+        public void GetConstructorParams_gt1Ctor_2FlaggedCtors_ThrowsResolveException()
+        {
+            var exepectedParamters
+                = typeof(ClassWith2FlaggedCtors)
+                    .GetConstructor(new Type[] { typeof(IService) }).GetParameters();
+
+            Assert.Throws<ResolveException>(() => NewDiContainer.
+                                GetConstructorParams(typeof(ClassWith2FlaggedCtors)));
         }
 
         #endregion
