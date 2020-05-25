@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace SmartDi
@@ -7,7 +8,7 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class MetaObject : IDisposable
     {
-        public MetaObject(Type concreteType, LifeCycle lifeCycle, object instance)
+        public MetaObject(Type concreteType, LifeCycle lifeCycle, Lazy<object> instance)
         {
             ConcreteType = concreteType;
             LifeCycle = lifeCycle;
@@ -16,7 +17,7 @@ namespace SmartDi
 
         public Type ConcreteType { get; }
 
-        public object Instance { get; set; }
+        public Lazy<object> Instance { get; set; }
 
         public LifeCycle LifeCycle { get; set; }
 
@@ -24,8 +25,9 @@ namespace SmartDi
 
         public void Dispose()
         {
-            if (Instance != null && Instance is IDisposable)
-                (Instance as IDisposable).Dispose();
+            if (Instance != null
+                && Instance.Value is IDisposable disposable)
+                disposable.Dispose();
         }
     }
 }

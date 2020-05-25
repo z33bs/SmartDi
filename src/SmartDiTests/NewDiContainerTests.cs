@@ -4,6 +4,7 @@ using Moq;
 using SmartDi;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace SmartDiTests
 {
@@ -258,6 +259,7 @@ namespace SmartDiTests
 
             Assert.Equal(LifeCycle.Singleton, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
         }
+
         #endregion
         #region Register<ConcreteType>(string key)
         [Fact]
@@ -411,6 +413,36 @@ namespace SmartDiTests
 
 
         #endregion
+
+        #region Register with Delegate
+
+        [Fact]
+        public void StaticRegisterInstanceDelegate_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterInstance(()=>new MyService());
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterInstanceDelegate_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterInstance(c => new MyService());
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
+        }
+
+
+        #endregion
+
         #region RegisterOptions
         [Fact]
         public void StaticRegisterConcreteType_OptionsSingleInstance_RegistersAsSingleInstance()
@@ -710,6 +742,73 @@ namespace SmartDiTests
             container.RegisterInstance(instance, "test");
             var resolved = container.Resolve<MyService>("test");
             Assert.Equal(instance, resolved); //exactly same object returned
+        }
+
+        [Fact]
+        public void StaticResolveofSingleInstance_SecondResolve_ReturnsSavedInstance()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.Register<MyService, IService>();
+
+            Assert.Null(mock[new Tuple<Type, string>(typeof(IService), null)].Instance);
+
+            //first resolve
+            NewDiContainer.Resolve<IService>();
+
+            //not null but instance saved in simple action delegate
+            Assert.False(mock[new Tuple<Type, string>(typeof(IService), null)].Instance.IsValueCreated);
+
+            //second resolve
+            NewDiContainer.Resolve<IService>();
+
+            //Lazy has been activated
+            Assert.True(mock[new Tuple<Type, string>(typeof(IService), null)].Instance.IsValueCreated);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void StaticResolveofSingleInstance_SecondResolve_IsSameObject()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            var singleton = new MyService();
+            NewDiContainer.RegisterInstance<MyService, IService>(singleton);
+
+            //first resolve
+            Assert.Equal(singleton, NewDiContainer.Resolve<IService>());
+
+            //second resolve
+            //first resolve
+            Assert.Equal(singleton, NewDiContainer.Resolve<IService>());
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void StaticResolve_InstanceDelegateWithResolve_ReturnsInstance()
+        {
+            NewDiContainer.Register<MyService, IService>();
+            NewDiContainer.RegisterInstance(()=>new ClassWith3Ctors(NewDiContainer.Resolve<IService>()));
+
+            var resolved = NewDiContainer.Resolve<ClassWith3Ctors>();
+            Assert.IsType<ClassWith3Ctors>(resolved);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void Resolve_InstanceDelegateWithResolve_ReturnsInstance()
+        {
+            INewDiContainer container = new NewDiContainer();
+            container.Register<MyService, IService>();
+            container.RegisterInstance(c => new ClassWith3Ctors(c.Resolve<IService>()));
+
+            var resolved = container.Resolve<ClassWith3Ctors>();
+            Assert.IsType<ClassWith3Ctors>(resolved);
         }
 
         #endregion

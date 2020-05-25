@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -95,34 +96,53 @@ namespace SmartDi
         #region RegisterInstance
         public static void RegisterInstance<ConcreteType>(ConcreteType instance)
             where ConcreteType : notnull
-            => InternalRegister(staticContainer, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+            => InternalRegister(staticContainer, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, new Lazy<object>(()=>instance));
 
         void INewDiContainer.RegisterInstance<ConcreteType>(ConcreteType instance)
-            => InternalRegister(container, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+            => InternalRegister(container, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, new Lazy<object>(() => instance));
 
 
         public static void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
             where ConcreteType : notnull, ResolvedType
-            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, new Lazy<object>(() => instance));
 
         void INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
-            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, instance);
+            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, new Lazy<object>(() => instance));
 
 
         public static void RegisterInstance<ConcreteType>(ConcreteType instance, string key)
             where ConcreteType : notnull
-            => InternalRegister(staticContainer, typeof(ConcreteType), typeof(ConcreteType), key, LifeCycle.Singleton, instance);
+            => InternalRegister(staticContainer, typeof(ConcreteType), typeof(ConcreteType), key, LifeCycle.Singleton, new Lazy<object>(() => instance));
 
         void INewDiContainer.RegisterInstance<ConcreteType>(ConcreteType instance, string key)
-            => InternalRegister(container, typeof(ConcreteType), typeof(ConcreteType), key, LifeCycle.Singleton, instance);
+            => InternalRegister(container, typeof(ConcreteType), typeof(ConcreteType), key, LifeCycle.Singleton, new Lazy<object>(() => instance));
 
 
         public static void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
             where ConcreteType : notnull, ResolvedType
-            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton, instance);
+            => InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton, new Lazy<object>(() => instance));
 
         void INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
-            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton, instance);
+            => InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), key, LifeCycle.Singleton, new Lazy<object>(() => instance));
+
+        #endregion
+
+        #region Register with Delegate
+        public static RegisterOptions RegisterInstance<ConcreteType>(Func<ConcreteType> instanceDelegate)
+            where ConcreteType : notnull
+            =>new RegisterOptions(staticContainer,InternalRegister(staticContainer, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, new Lazy<object>(() => instanceDelegate())));
+
+        RegisterOptions INewDiContainer.RegisterInstance<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
+            =>new RegisterOptions(container, InternalRegister(container, typeof(ConcreteType), typeof(ConcreteType), null, LifeCycle.Singleton, new Lazy<object>(()=>instanceDelegate.Compile().Invoke(this))));
+
+
+        public static RegisterOptions RegisterInstance<ConcreteType, ResolvedType>(Func<ConcreteType> instanceDelegate)
+            where ConcreteType : notnull, ResolvedType
+            => new RegisterOptions(staticContainer, InternalRegister(staticContainer, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, new Lazy<object>(() => instanceDelegate())));
+
+        RegisterOptions INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
+            => new RegisterOptions(container, InternalRegister(container, typeof(ResolvedType), typeof(ConcreteType), null, LifeCycle.Singleton, new Lazy<object>(() => instanceDelegate.Compile().Invoke(this))));
+
 
         #endregion
 
@@ -132,7 +152,7 @@ namespace SmartDi
             Type concreteType,
             string key,
             LifeCycle lifeCycle,
-            object instance = null
+            Lazy<object> instance = null
             )
         {
             if (concreteType is null)
@@ -178,7 +198,7 @@ namespace SmartDi
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
                 if (metaObject.Instance != null)
-                    return metaObject.Instance;
+                    return metaObject.Instance.Value;
                 else
                 {
                     //NonPublic allowed if specify constructor
@@ -191,7 +211,7 @@ namespace SmartDi
                             CultureInfo.InvariantCulture);
 
                     if (metaObject.LifeCycle == LifeCycle.Singleton)
-                        metaObject.Instance = instance;
+                        metaObject.Instance = new Lazy<object>(()=>instance);
 
                     return instance;
                 }
