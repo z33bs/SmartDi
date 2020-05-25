@@ -44,6 +44,8 @@ namespace SmartDi
         void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
             where ConcreteType : notnull, ResolvedType;
 
+        //todo finalise FastOne
+        //todo No need UseCtor
         //todo documentation
         //todo list registrations
         //todo autoregister (with flags like bindingflags) and exclusion like Tiny

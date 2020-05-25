@@ -5,11 +5,27 @@ using SmartDi;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Globalization;
 
 namespace SmartDiTests
 {
     public class NewDiContainerTests
     {
+        [Fact]
+        public void Playground()
+        {
+            NewDiContainer.Register<ClassWithStringParameter>("test", typeof(string));
+        }
+
+        class ClassWithStringParameter
+        {
+            public ClassWithStringParameter(string name)
+            {
+
+            }
+        }
+
         interface IService { }
         class MyService : IService { }
         class ConcreteOnly { }
@@ -122,7 +138,11 @@ namespace SmartDiTests
             }
         }
 
-        class ClassThatsDisposable : DisposableBase
+        interface IClassThatsDisposable
+        {
+
+        }
+        class ClassThatsDisposable : DisposableBase, IClassThatsDisposable
         {
             private Action _onExplicitDispose;
             private Action _onImplicitDispose;
@@ -155,9 +175,10 @@ namespace SmartDiTests
             NewDiContainer.InternalRegister(
                 new ConcurrentDictionary<Tuple<Type, string>, MetaObject>(),
                 typeof(IService),
-                concreteType: null, //We need this at a minimum to justify registration 
                 null,
-                LifeCycle.Transient));
+                new MetaObject(concreteType: null, //We need this at a minimum to justify registration 
+                               LifeCycle.Transient)
+                ));
         }
 
         #endregion
@@ -545,8 +566,7 @@ namespace SmartDiTests
         public void StaticRegisterConcreteType_UsingConstructorOption_ResolvesInternalConstructor()
         {
             NewDiContainer
-                .Register<ClassWithInternalConstructor>()
-                .UsingConstructor(typeof(ConcreteOnly));
+                .Register<ClassWithInternalConstructor>(typeof(ConcreteOnly));
 
             var resolved = NewDiContainer.Resolve<ClassWithInternalConstructor>();
             Assert.Equal("internal", resolved.ConstructorUsed);
@@ -560,6 +580,52 @@ namespace SmartDiTests
         #region Resolve
         #region Internal
 
+        //[Fact]
+        //public void GetActivator()
+        //{
+        //    var service = new MyService();
+        //    var ctor = typeof(ClassWith3Ctors).GetConstructor(new Type[] { typeof(IService) });
+        //    var createdActivator = NewDiContainer.GetActivator(ctor);
+        //    //.1967
+        //    int i = 0;
+        //    while (i < 100000)
+        //    {
+        //        var instance = createdActivator(service);
+        //        Assert.IsType<ClassWith3Ctors>(instance);
+        //        Assert.Equal(service, (instance as ClassWith3Ctors).Service);
+        //        i++;
+        //    }
+        //}
+
+        //delegate T InstanceDelegate<T>();
+        //delegate T ObjectActivator<T>(params object[] args);
+
+
+        //[Fact]
+        //public void CreateInstance()
+        //{
+        //    var service = new MyService();
+        //    var ctor = typeof(ClassWith3Ctors).GetConstructor(new Type[] { typeof(IService) });
+
+        //    //0.399
+        //    int i = 0;
+        //    while (i < 100000)
+        //    {
+        //        var instance = (ClassWith3Ctors)Activator.CreateInstance(
+        //            typeof(ClassWith3Ctors),
+        //            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+        //            null,
+        //            new object[] { service as IService },
+        //            CultureInfo.InvariantCulture);
+
+
+        //        Assert.IsType<ClassWith3Ctors>(instance);
+        //        Assert.Equal(service, instance.Service);
+        //        i++;
+        //    }
+        //}
+
+
         [Fact]
         public void GetConstructorParams_gt1Constructor_ReturnsFromGreediestPublic()
         {
@@ -569,10 +635,12 @@ namespace SmartDiTests
             //Expect to ignore internal, but take greediest public ctor
             var exepectedParamters
                 = typeof(ClassWith3Ctors)
-                    .GetConstructor(new Type[] { typeof(IService) }).GetParameters();
+                    .GetConstructor(new Type[] { typeof(IService) });//.GetParameters();
+
+            var metaObj = new MetaObject(typeof(object),LifeCycle.Singleton);
 
             var parameters
-                = NewDiContainer.
+                = metaObj.
                     GetConstructorParams(typeof(ClassWith3Ctors));
 
             Assert.Equal(exepectedParamters, parameters);
@@ -588,10 +656,12 @@ namespace SmartDiTests
             //Expect to pick flagged ctor
             var exepectedParamters
                 = typeof(ClassWithFlaggedCtor)
-                    .GetConstructor(new Type[] { typeof(IService) }).GetParameters();
+                    .GetConstructor(new Type[] { typeof(IService) });//.GetParameters();
+
+            var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton);
 
             var parameters
-                = NewDiContainer.
+                = metaObj.
                     GetConstructorParams(typeof(ClassWithFlaggedCtor));
 
             Assert.Equal(exepectedParamters, parameters);
@@ -604,7 +674,9 @@ namespace SmartDiTests
                 = typeof(ClassWith2FlaggedCtors)
                     .GetConstructor(new Type[] { typeof(IService) }).GetParameters();
 
-            Assert.Throws<ResolveException>(() => NewDiContainer.
+            var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton);
+
+            Assert.Throws<ResolveException>(() => metaObj.
                                 GetConstructorParams(typeof(ClassWith2FlaggedCtors)));
         }
 
@@ -718,8 +790,7 @@ namespace SmartDiTests
         [Fact]
         public void StaticResolve_Interface_ThrowsResolutionException()
         {
-            NewDiContainer.Register<IService>();
-            Assert.Throws<ResolveException>(() => NewDiContainer.Resolve<IService>());
+            Assert.Throws<RegisterException>(() => NewDiContainer.Register<IService>());
             NewDiContainer.ResetContainer();
         }
 
@@ -755,16 +826,14 @@ namespace SmartDiTests
             Assert.Null(mock[new Tuple<Type, string>(typeof(IService), null)].Instance);
 
             //first resolve
-            NewDiContainer.Resolve<IService>();
+            var first = NewDiContainer.Resolve<IService>();
 
-            //not null but instance saved in simple action delegate
-            Assert.False(mock[new Tuple<Type, string>(typeof(IService), null)].Instance.IsValueCreated);
+            Assert.NotNull(mock[new Tuple<Type, string>(typeof(IService), null)].Instance);
 
             //second resolve
-            NewDiContainer.Resolve<IService>();
+            var second = NewDiContainer.Resolve<IService>();
 
-            //Lazy has been activated
-            Assert.True(mock[new Tuple<Type, string>(typeof(IService), null)].Instance.IsValueCreated);
+            Assert.Equal(first,second);
 
             NewDiContainer.ResetContainer();
         }
@@ -821,10 +890,12 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void StaticUnregister_ExceptionWhileDisposing_ThrowsExceptoin()
+        public void StaticUnregister_ExceptionWhileDisposing_ThrowsException()
         {
             //Ensure MetaObject.Instance is set
-            NewDiContainer.RegisterInstance(new ClassThatThrowsOnDisposed());
+            NewDiContainer.Register<ClassThatThrowsOnDisposed>().SingleInstance();
+
+            NewDiContainer.Resolve<ClassThatThrowsOnDisposed>();
 
             Assert.Throws<Exception>(() => NewDiContainer.Unregister<ClassThatThrowsOnDisposed>());
 
@@ -912,9 +983,11 @@ namespace SmartDiTests
         {
             bool wasDisposedExplicitly = false;
             var disposable = new ClassThatsDisposable(() => wasDisposedExplicitly = true, () => { });
-            NewDiContainer.RegisterInstance(disposable);
+            //todo when done refactoring ensure no confustion, not possible to RegisterInstance<IClassThatsDisposable>(disposable);
+            NewDiContainer.RegisterInstance<ClassThatsDisposable,IClassThatsDisposable>(disposable);
+            NewDiContainer.Resolve<IClassThatsDisposable>();
 
-            NewDiContainer.Unregister<ClassThatsDisposable>();
+            NewDiContainer.Unregister<IClassThatsDisposable>();
 
             Assert.True(wasDisposedExplicitly);
 
