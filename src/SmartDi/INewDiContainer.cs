@@ -5,6 +5,9 @@ namespace SmartDi
 {
     public interface INewDiContainer
     {
+        //RegisterType
+        RegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
+
         //Register
         RegisterOptions Register<ConcreteType>()
             where ConcreteType : notnull;

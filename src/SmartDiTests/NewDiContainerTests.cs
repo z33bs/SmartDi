@@ -182,13 +182,13 @@ namespace SmartDiTests
         [Fact]
         public void MetaObjectCtor_InstanceDelegateNull_Throws()
         {
-            Assert.Throws<ArgumentNullException>(() => new MetaObject(typeof(ConcreteOnly),LifeCycle.Transient,instanceDelegate:null));
+            Assert.Throws<ArgumentNullException>(() => new MetaObject(typeof(ConcreteOnly), LifeCycle.Transient, instanceDelegate: null));
         }
 
         [Fact]
         public void MetaObject_UsingConstructor_TypeHasNoConstructor_Throws()
         {
-            Assert.Throws<RegisterException>(()=>new MetaObject(typeof(ClassThatsUnresolvable), LifeCycle.Singleton, typeof(MyService)));
+            Assert.Throws<RegisterException>(() => new MetaObject(typeof(ClassThatsUnresolvable), LifeCycle.Singleton, typeof(MyService)));
         }
 
         [Fact]
@@ -477,7 +477,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             NewDiContainer.SetContainer(mock);
 
-            NewDiContainer.RegisterExpression(()=>new MyService());
+            NewDiContainer.RegisterExpression(() => new MyService());
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
 
@@ -501,7 +501,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             NewDiContainer.SetContainer(mock);
 
-            NewDiContainer.RegisterExpression<IService>(()=>new MyService());
+            NewDiContainer.RegisterExpression<IService>(() => new MyService());
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), null)));
 
@@ -525,7 +525,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             NewDiContainer.SetContainer(mock);
 
-            NewDiContainer.RegisterExpression(()=>new MyService(), "test");
+            NewDiContainer.RegisterExpression(() => new MyService(), "test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), "test")));
 
@@ -538,7 +538,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             INewDiContainer container = new NewDiContainer(mock);
 
-            container.RegisterExpression(c=>new MyService(), "test");
+            container.RegisterExpression(c => new MyService(), "test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), "test")));
         }
@@ -549,7 +549,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             NewDiContainer.SetContainer(mock);
 
-            NewDiContainer.RegisterExpression<IService>(()=>new MyService(), "test");
+            NewDiContainer.RegisterExpression<IService>(() => new MyService(), "test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
 
@@ -562,11 +562,109 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             INewDiContainer container = new NewDiContainer(mock);
 
-            container.RegisterExpression<IService>(c=>new MyService(), "test");
+            container.RegisterExpression<IService>(c => new MyService(), "test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
         }
 
+        #endregion
+
+        #region RegisterType
+        [Fact]
+        public void StaticRegisterType_Defaults_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterType(typeof(MyService));
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterType_Defaults_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterType(typeof(MyService));
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
+        }
+
+        [Fact]
+        public void StaticRegisterType_ResolvedType_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterType(typeof(MyService),typeof(IService));
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), null)));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterType_ResolvedType_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterType(typeof(MyService), typeof(IService));
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), null)));
+        }
+
+        [Fact]
+        public void StaticRegisterType_ResolvedTypeWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterType(typeof(MyService), typeof(IService), "test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterType_ResolvedTypeWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterType(typeof(MyService), typeof(IService), "test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
+        }
+
+        [Fact]
+        public void StaticRegisterType_WithConstructorParams_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterType(typeof(ClassWith3Ctors),null,null,typeof(IService),typeof(ConcreteOnly));
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(ClassWith3Ctors),null)));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterType_WithConstructorParams_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterType(typeof(ClassWith3Ctors), null, null, typeof(IService), typeof(ConcreteOnly));
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(ClassWith3Ctors), null)));
+        }
         #endregion
 
         #region RegisterOptions

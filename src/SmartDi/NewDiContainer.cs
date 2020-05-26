@@ -258,6 +258,28 @@ namespace SmartDi
 
         #endregion
 
+        #region Register Type
+        public static RegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters)
+            => new RegisterOptions(
+                staticContainer,
+                InternalRegister(staticContainer, resolvedType, key,
+                    new MetaObject(
+                        concreteType,
+                        resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton,
+                        constructorParameters)));
+
+        RegisterOptions INewDiContainer.RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters)
+            => new RegisterOptions(
+                container,
+                InternalRegister(container, resolvedType, key,
+                    new MetaObject(
+                        concreteType,
+                        resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton,
+                        constructorParameters)));
+
+
+        #endregion
+
         internal static Tuple<Type, string> InternalRegister(
             ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
             Type resolvedType,
