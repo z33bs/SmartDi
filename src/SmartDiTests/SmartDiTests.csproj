@@ -22,10 +22,4 @@
   <ItemGroup>
     <None Remove="TestResults\**" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="DiContainerTests.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="DiContainerTests.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-  </ItemGroup>
 </Project>
