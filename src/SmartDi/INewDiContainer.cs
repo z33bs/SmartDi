@@ -5,6 +5,7 @@ namespace SmartDi
 {
     public interface INewDiContainer
     {
+        //Register
         RegisterOptions Register<ConcreteType>()
             where ConcreteType : notnull;
 
@@ -16,6 +17,21 @@ namespace SmartDi
 
         RegisterOptions Register<ConcreteType, ResolvedType>(string key)
             where ConcreteType : notnull, ResolvedType;
+
+        //... with Ctor
+        RegisterOptions Register<ConcreteType>(params Type[] constructorParameters)
+            where ConcreteType : notnull;
+
+        RegisterOptions Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
+            where ConcreteType : notnull, ResolvedType;
+
+        RegisterOptions Register<ConcreteType>(string key, params Type[] constructorParameters)
+            where ConcreteType : notnull;
+
+        RegisterOptions Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
+            where ConcreteType : notnull, ResolvedType;
+
+
         // Delegate
 
         RegisterOptions RegisterInstance<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)

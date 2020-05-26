@@ -64,57 +64,89 @@ namespace SmartDi
 
         #region Registration
         #region Register
+
         public static RegisterOptions Register<ConcreteType>()
             where ConcreteType : notnull
             => Register<ConcreteType>(Type.EmptyTypes);
 
-        public static RegisterOptions Register<ConcreteType>(params Type[] args)
+        RegisterOptions INewDiContainer.Register<ConcreteType>()
+            => (this as INewDiContainer).Register<ConcreteType>(Type.EmptyTypes);
+
+        public static RegisterOptions Register<ConcreteType>(params Type[] constructorParameters)
             where ConcreteType : notnull
             => new RegisterOptions(
                 staticContainer,
-                InternalRegister(staticContainer, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, args)));
+                InternalRegister(staticContainer, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
 
-        RegisterOptions INewDiContainer.Register<ConcreteType>()
+        RegisterOptions INewDiContainer.Register<ConcreteType>(params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient)));
+                InternalRegister(container, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
+
 
 
         public static RegisterOptions Register<ConcreteType, ResolvedType>()
             where ConcreteType : notnull, ResolvedType
-            => new RegisterOptions(
-                staticContainer,
-                InternalRegister(staticContainer, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton)));
+            => Register<ConcreteType, ResolvedType>(Type.EmptyTypes);
 
         RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>()
+            => (this as INewDiContainer).Register<ConcreteType, ResolvedType>(Type.EmptyTypes);
+
+        public static RegisterOptions Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
+            where ConcreteType : notnull, ResolvedType
+            => new RegisterOptions(
+                staticContainer,
+                InternalRegister(staticContainer, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
+
+        RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton)));
+                InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
+
+
+
         #endregion
         #region Register with Key
 
-        public static RegisterOptions Register<ConcreteType>(string key, params Type[] args)
+        public static RegisterOptions Register<ConcreteType>(string key)
+            where ConcreteType : notnull
+            => Register<ConcreteType>(key, Type.EmptyTypes);
+
+        RegisterOptions INewDiContainer.Register<ConcreteType>(string key)
+            => (this as INewDiContainer).Register<ConcreteType>(key, Type.EmptyTypes);
+
+        public static RegisterOptions Register<ConcreteType>(string key, params Type[] constructorParameters)
             where ConcreteType : notnull
             => new RegisterOptions(
                 staticContainer,
-                InternalRegister(staticContainer, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, args)));
+                InternalRegister(staticContainer, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
 
-        RegisterOptions INewDiContainer.Register<ConcreteType>(string key)
+        RegisterOptions INewDiContainer.Register<ConcreteType>(string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient)));
+                InternalRegister(container, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
+
 
 
         public static RegisterOptions Register<ConcreteType, ResolvedType>(string key)
             where ConcreteType : notnull, ResolvedType
-            => new RegisterOptions(
-                staticContainer,
-                InternalRegister(staticContainer, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton)));
+            => Register<ConcreteType, ResolvedType>(key, Type.EmptyTypes);
 
         RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>(string key)
+            => (this as INewDiContainer).Register<ConcreteType, ResolvedType>(key, Type.EmptyTypes);
+
+        public static RegisterOptions Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
+            where ConcreteType : notnull, ResolvedType
+            => new RegisterOptions(
+                staticContainer,
+                InternalRegister(staticContainer, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
+
+        RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton)));
+                InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
+
+
 
         #endregion
         #region RegisterInstance
