@@ -9,7 +9,7 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class MetaObject : IDisposable
     {
-
+        #region Constructors
         public MetaObject(object instance) : this(instance?.GetType(),LifeCycle.Singleton)
         {
             //this( ctor will throw if instance is null
@@ -21,16 +21,17 @@ namespace SmartDi
             if (instanceDelegate is null)
                 throw new ArgumentNullException(nameof(instanceDelegate));
 
+            //todo Increase performance by passing compiled expression
             ObjectActivator = (args) => instanceDelegate();
         }
 
         public MetaObject(Type concreteType, LifeCycle lifeCycle, params Type[] args) : this(concreteType, lifeCycle)
         {
-            ConstructorParameterCache = args != Type.EmptyTypes
-                    ? UsingConstructor(args)
-                    : GetConstructorParams(concreteType);
+            ConstructorCache = args != Type.EmptyTypes
+                    ? GetSpecificConstructor(concreteType, args)
+                    : GetBestConstructor(concreteType);
 
-            ObjectActivator = GetActivator(ConstructorParameterCache);
+            ObjectActivator = GetActivator(ConstructorCache);
         }
 
         private MetaObject(Type concreteType, LifeCycle lifeCycle)
@@ -38,7 +39,9 @@ namespace SmartDi
             ConcreteType = concreteType ?? throw new ArgumentNullException(nameof(concreteType));
             LifeCycle = lifeCycle;
         }
+        #endregion
 
+        #region Properties
         public Type ConcreteType { get; }
 
         object instance;
@@ -71,15 +74,18 @@ namespace SmartDi
             }
         }
 
-        public ConstructorInfo ConstructorParameterCache { get; }
+        public ConstructorInfo ConstructorCache { get; }
 
         public ObjectActivator ObjectActivator { get; }
 
-        internal ConstructorInfo UsingConstructor(params Type[] args)
+        #endregion
+
+        #region Internal methods
+        internal ConstructorInfo GetSpecificConstructor(Type concreteType, params Type[] args)
         {
             try
             {
-                var constructor = ConcreteType
+                var constructor = concreteType
                     .GetConstructor(
                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                         null,
@@ -98,14 +104,14 @@ namespace SmartDi
             }
         }
 
-        internal ConstructorInfo GetConstructorParams(Type resolvedType)
+        internal ConstructorInfo GetBestConstructor(Type concreteType)
         {
-            var constructors = resolvedType.
+            var constructors = concreteType.
                     GetConstructors(BindingFlags.Instance | BindingFlags.Public)
                     .ToList();
 
             if (constructors.Count == 0)
-                throw new RegisterException($"{resolvedType.Name} won't be resolved as it has no constructors.");
+                throw new RegisterException($"{concreteType.Name} won't be resolved as it has no constructors.");
 
             if (constructors.Count > 1)
             {
@@ -117,7 +123,7 @@ namespace SmartDi
                 if (flaggedConstructors.Any())
                 {
                     if (flaggedConstructors.Count > 1)
-                        throw new ResolveException($"{resolvedType.Name} may only have one [ResolveUsing] attribute");
+                        throw new ResolveException($"{concreteType.Name} may only have one [ResolveUsing] attribute");
                     constructors = flaggedConstructors;
                 }
 
@@ -126,36 +132,34 @@ namespace SmartDi
                         => i.GetParameters().Count() > j.GetParameters().Count()
                         ? i
                         : j);
-                //.GetParameters();
             }
 
-            return constructors[0];//.GetParameters();
+            return constructors[0];
         }
 
         internal ObjectActivator GetActivator
             (ConstructorInfo ctor)
         {
-            //Type type = ctor.DeclaringType;
-            ParameterInfo[] paramsInfo = ctor.GetParameters();
+            var paramsInfo = ctor.GetParameters();
 
             //create a single param of type object[]
-            ParameterExpression param =
+            var param =
                 Expression.Parameter(typeof(object[]), "args");
 
-            Expression[] argsExp =
+            var argsExp =
                 new Expression[paramsInfo.Length];
 
             //pick each arg from the params array 
             //and create a typed expression of them
             for (int i = 0; i < paramsInfo.Length; i++)
             {
-                Expression index = Expression.Constant(i);
-                Type paramType = paramsInfo[i].ParameterType;
+                var index = Expression.Constant(i);
+                var paramType = paramsInfo[i].ParameterType;
 
-                Expression paramAccessorExp =
+                var paramAccessorExp =
                     Expression.ArrayIndex(param, index);
 
-                Expression paramCastExp =
+                var paramCastExp =
                     Expression.Convert(paramAccessorExp, paramType);
 
                 argsExp[i] = paramCastExp;
@@ -163,11 +167,11 @@ namespace SmartDi
 
             //make a NewExpression that calls the
             //ctor with the args we just created
-            NewExpression newExp = Expression.New(ctor, argsExp);
+            var newExp = Expression.New(ctor, argsExp);
 
             //create a lambda with the New
             //Expression as body and our param object[] as arg
-            LambdaExpression lambda =
+            var lambda =
                 Expression.Lambda(typeof(ObjectActivator), newExp, param);
 
             //compile it
@@ -175,6 +179,7 @@ namespace SmartDi
             return compiled;
         }
 
+        #endregion
 
         public void Dispose()
         {

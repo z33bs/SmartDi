@@ -846,7 +846,7 @@ namespace SmartDiTests
 
             var parameters
                 = metaObj.
-                    GetConstructorParams(typeof(ClassWith3Ctors));
+                    GetBestConstructor(typeof(ClassWith3Ctors));
 
             Assert.Equal(exepectedParamters, parameters);
         }
@@ -867,7 +867,7 @@ namespace SmartDiTests
 
             var parameters
                 = metaObj.
-                    GetConstructorParams(typeof(ClassWithFlaggedCtor));
+                    GetBestConstructor(typeof(ClassWithFlaggedCtor));
 
             Assert.Equal(exepectedParamters, parameters);
         }
@@ -882,7 +882,7 @@ namespace SmartDiTests
             var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton);
 
             Assert.Throws<ResolveException>(() => metaObj.
-                                GetConstructorParams(typeof(ClassWith2FlaggedCtors)));
+                                GetBestConstructor(typeof(ClassWith2FlaggedCtors)));
         }
 
         #endregion

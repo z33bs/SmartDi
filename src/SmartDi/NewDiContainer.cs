@@ -2,12 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using System.Text;
 
 [assembly: InternalsVisibleTo("SmartDiTests")]
@@ -165,19 +163,6 @@ namespace SmartDi
 
 
 
-        //public static RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<ConcreteType>> instanceDelegate)
-        //    where ConcreteType : notnull, ResolvedType
-        //    => new RegisterOptions(
-        //        staticContainer,
-        //        InternalRegister(staticContainer, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke())));
-
-        //RegisterOptions INewDiContainer.RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
-        //    => new RegisterOptions(
-        //        container,
-        //        InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke(this))));
-
-
-
         public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<ResolvedType>> instanceDelegate, string key)
             where ResolvedType : notnull
             => new RegisterOptions(
@@ -188,19 +173,6 @@ namespace SmartDi
             => new RegisterOptions(
                 container,
                 InternalRegister(container, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
-
-
-
-        //public static RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<ConcreteType>> instanceDelegate, string key)
-        //    where ConcreteType : notnull, ResolvedType
-        //    => new RegisterOptions(
-        //        staticContainer,
-        //        InternalRegister(staticContainer, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke())));
-
-        //RegisterOptions INewDiContainer.RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
-        //    => new RegisterOptions(
-        //        container,
-        //        InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke(this))));
 
         #endregion
 
@@ -290,7 +262,7 @@ namespace SmartDi
             var containerKey = new Tuple<Type, string>(
                 resolvedType ?? metaObject.ConcreteType, key);
 
-            if (!container.TryAdd(containerKey,metaObject))
+            if (!container.TryAdd(containerKey, metaObject))
             {
                 var builder = new StringBuilder();
                 builder.Append($"{nameof(containerKey.Item1)} is already registered");
@@ -307,53 +279,39 @@ namespace SmartDi
         #region Resolve
 
         public static T Resolve<T>() where T : notnull
-            => (T)InnerResolve(staticContainer, typeof(T), null);
+            => (T)InternalResolve(staticContainer, typeof(T), null);
 
         T INewDiContainer.Resolve<T>()
-            => (T)InnerResolve(container, typeof(T), null);
+            => (T)InternalResolve(container, typeof(T), null);
 
 
         public static T Resolve<T>(string key) where T : notnull
-            => (T)InnerResolve(staticContainer, typeof(T), key);
+            => (T)InternalResolve(staticContainer, typeof(T), key);
 
         T INewDiContainer.Resolve<T>(string key)
-            => (T)InnerResolve(container, typeof(T), key);
+            => (T)InternalResolve(container, typeof(T), key);
 
         public static object Resolve(Type type)
-            => InnerResolve(staticContainer, type, null);
+            => InternalResolve(staticContainer, type, null);
 
         object INewDiContainer.Resolve(Type type)
-            => InnerResolve(container, type, null);
+            => InternalResolve(container, type, null);
 
         public static object Resolve(Type type, string key)
-            => InnerResolve(staticContainer, type, key);
+            => InternalResolve(staticContainer, type, key);
 
         object INewDiContainer.Resolve(Type type, string key)
-            => InnerResolve(container, type, key);
+            => InternalResolve(container, type, key);
 
-        internal static object InnerResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
+        internal static object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {
-            //todo try https://rogerjohansson.blog/2008/02/28/linq-expressions-creating-objects/
             //if registered
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
                 if (metaObject.Instance != null) //Will only be the case if Singleton
                     return metaObject.Instance;
 
-                //object instance;
-
-                //if (metaObject.InstanceDelegate != null)
-                //    instance = (object)metaObject.InstanceDelegate.Invoke();
-                //else
-                    var instance = metaObject.ObjectActivator(ResolveDependencies(container, metaObject).ToArray());
-
-                    //instance = //NonPublic Ctor allowed if specify constructor
-                    //    Activator.CreateInstance(
-                    //        metaObject.ConcreteType,
-                    //        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                    //        null,
-                    //        ResolveDependencies(container, metaObject).ToArray(),
-                    //        CultureInfo.InvariantCulture);
+                var instance = metaObject.ObjectActivator(ResolveDependencies(container, metaObject).ToArray());
 
                 if (metaObject.LifeCycle == LifeCycle.Singleton)
                     metaObject.Instance = instance; //Cache if singleton
@@ -364,7 +322,7 @@ namespace SmartDi
             if (MySettings.ResolveBubblesToStaticContainer
                 && container != staticContainer
                 && staticContainer.Any())
-                return InnerResolve(staticContainer, resolvedType, key);
+                return InternalResolve(staticContainer, resolvedType, key);
 
             if (!MySettings.TryResolveUnregistered)
                 throw new ResolveException(
@@ -380,21 +338,6 @@ namespace SmartDi
             //else try resolve concreteType anyway
             try
             {
-                //todo Via MetaObject -> if success then store in dictionary
-                //var args = ResolveDependencies(container,
-                //        metaObject
-                //        ?? new MetaObject(
-                //            resolvedType,
-                //            LifeCycle.Transient,
-                //            null)
-                //        ).ToArray();
-
-                //if (args.Any())
-                //    return Activator.CreateInstance(
-                //        resolvedType,
-                //        args);
-
-                //return Activator.CreateInstance(resolvedType);
                 var tryMetaObject = new MetaObject(resolvedType, LifeCycle.Transient);
                 var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
                 //if success then add registration
@@ -415,24 +358,18 @@ namespace SmartDi
 
         internal static IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
-            //if (metaObject.ConstructorParameterCache is null)
-            //    metaObject.ConstructorParameterCache //cycle through all ctors to choose
-            //        = GetConstructorParams(metaObject.ConcreteType);
-            if (metaObject.ConstructorParameterCache != null) //null if instanceDelegate was passed
+            if (metaObject.ConstructorCache != null) //null if instanceDelegate was passed
             {
-                foreach (var parameter in metaObject.ConstructorParameterCache.GetParameters())
+                foreach (var parameter in metaObject.ConstructorCache.GetParameters())
                 {
                     var namedDependencyAttribute = parameter.GetCustomAttribute<ResolveNamedAttribute>();
                     if (namedDependencyAttribute != null)
-                        yield return InnerResolve(container, parameter.ParameterType, namedDependencyAttribute.Key);
+                        yield return InternalResolve(container, parameter.ParameterType, namedDependencyAttribute.Key);
                     else
-                        yield return InnerResolve(container, parameter.ParameterType, null);
+                        yield return InternalResolve(container, parameter.ParameterType, null);
                 }
             }
         }
-
-
-
 
         #endregion
         #region Unregister
