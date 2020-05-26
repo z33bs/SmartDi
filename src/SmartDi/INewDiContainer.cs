@@ -32,21 +32,21 @@ namespace SmartDi
             where ConcreteType : notnull, ResolvedType;
 
 
-        // Delegate
+        // RegisterExpression
 
-        RegisterOptions RegisterInstance<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
+        RegisterOptions RegisterExpression<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
             where ConcreteType : notnull;
 
-        RegisterOptions RegisterInstance<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
+        RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
             where ConcreteType : notnull, ResolvedType;
 
-        //RegisterOptions RegisterInstance<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
-        //    where ConcreteType : notnull;
+        RegisterOptions RegisterExpression<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
+            where ConcreteType : notnull;
 
-        //RegisterOptions RegisterInstance<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
-        //    where ConcreteType : notnull, ResolvedType;
+        RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
+            where ConcreteType : notnull, ResolvedType;
 
-
+        // RegisterInstance
 
         void RegisterInstance<ConcreteType>(ConcreteType instance)
             where ConcreteType : notnull;
@@ -60,7 +60,6 @@ namespace SmartDi
         void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
             where ConcreteType : notnull, ResolvedType;
 
-        //todo finalise FastOne
         //todo No need UseCtor
         //todo documentation
         //todo list registrations

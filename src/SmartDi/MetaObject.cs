@@ -9,6 +9,13 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class MetaObject : IDisposable
     {
+
+        public MetaObject(object instance) : this(instance?.GetType(),LifeCycle.Singleton)
+        {
+            //this( ctor will throw if instance is null
+            Instance = instance;
+        }
+
         public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<object> instanceDelegate) : this(concreteType, lifeCycle)
         {
             if (instanceDelegate is null)
@@ -47,8 +54,6 @@ namespace SmartDi
         }
 
         public Type ConcreteType { get; }
-
-        public Func<object> InstanceDelegate { get; }
 
         object instance;
         public object Instance

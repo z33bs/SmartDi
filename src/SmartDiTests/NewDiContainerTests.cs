@@ -29,7 +29,13 @@ namespace SmartDiTests
         interface IService { }
         class MyService : IService { }
         class ConcreteOnly { }
-        class ClassWith3Ctors
+
+        interface IClassWith3Ctors {
+            string ConstructorUsed { get; }
+            IService Service { get; }
+            ConcreteOnly Concrete { get; }
+        }
+        class ClassWith3Ctors : IClassWith3Ctors
         {
             public string ConstructorUsed { get; }
             public IService Service { get; }
@@ -164,6 +170,34 @@ namespace SmartDiTests
         {
             Assert.IsAssignableFrom<INewDiContainer>(new NewDiContainer());
         }
+
+        #region MetaObject
+
+        [Fact]
+        public void MetaObjectCtor_InstanceNull_Throws()
+        {
+            Assert.Throws<ArgumentNullException>(() => new MetaObject(null));
+        }
+
+        [Fact]
+        public void MetaObjectCtor_InstanceDelegateNull_Throws()
+        {
+            Assert.Throws<ArgumentNullException>(() => new MetaObject(typeof(ConcreteOnly),LifeCycle.Transient,instanceDelegate:null));
+        }
+
+        [Fact]
+        public void MetaObject_UsingConstructor_TypeHasNoConstructor_Throws()
+        {
+            Assert.Throws<RegisterException>(()=>new MetaObject(typeof(ClassThatsUnresolvable), LifeCycle.Singleton, typeof(MyService)));
+        }
+
+        [Fact]
+        public void MetaObject_UsingConstructor_NoMatchFound_Throws()
+        {
+            Assert.Throws<RegisterException>(() => new MetaObject(typeof(ConcreteOnly), LifeCycle.Singleton, typeof(MyService)));
+        }
+
+        #endregion
 
         #region Registration
         #region internal
@@ -435,15 +469,15 @@ namespace SmartDiTests
 
         #endregion
 
-        #region Register with Delegate
+        #region RegisterExpression
 
         [Fact]
-        public void StaticRegisterInstanceDelegate_RegistersWithExpectedKey()
+        public void StaticRegisterExpression_RegistersWithExpectedKey()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             NewDiContainer.SetContainer(mock);
 
-            NewDiContainer.RegisterInstance(()=>new MyService());
+            NewDiContainer.RegisterExpression(()=>new MyService());
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
 
@@ -451,16 +485,87 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void RegisterInstanceDelegate_RegistersWithExpectedKey()
+        public void RegisterExpression_RegistersWithExpectedKey()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             INewDiContainer container = new NewDiContainer(mock);
 
-            container.RegisterInstance(c => new MyService());
+            container.RegisterExpression(c => new MyService());
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
         }
 
+        [Fact]
+        public void StaticRegisterExpressionWithResolvedType_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterExpression<MyService, IService>(()=>new MyService());
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), null)));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterExpressionWithResolvedType_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterExpression<MyService, IService>(c => new MyService());
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), null)));
+        }
+
+        [Fact]
+        public void StaticRegisterExpressionWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterExpression(()=>new MyService(), "test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), "test")));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterExpressionWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterExpression(c=>new MyService(), "test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), "test")));
+        }
+
+        [Fact]
+        public void StaticRegisterExpressionWithResolvedTypeWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            NewDiContainer.SetContainer(mock);
+
+            NewDiContainer.RegisterExpression<MyService, IService>(()=>new MyService(), "test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterExpressionWithResolvedTypeWithKey_RegistersWithExpectedKey()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            INewDiContainer container = new NewDiContainer(mock);
+
+            container.RegisterExpression<MyService, IService>(c=>new MyService(), "test");
+
+            Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
+        }
 
         #endregion
 
@@ -688,6 +793,8 @@ namespace SmartDiTests
             var obj = NewDiContainer.Resolve<ClassThatsResolvableWithoutRegistering>();
 
             Assert.IsType<ClassThatsResolvableWithoutRegistering>(obj);
+
+            NewDiContainer.ResetContainer();
         }
 
         [Fact]
@@ -857,11 +964,12 @@ namespace SmartDiTests
             NewDiContainer.ResetContainer();
         }
 
+        #region Resolve from RegisterExpression
         [Fact]
-        public void StaticResolve_InstanceDelegateWithResolve_ReturnsInstance()
+        public void StaticResolve_Expression_ReturnsInstance()
         {
             NewDiContainer.Register<MyService, IService>();
-            NewDiContainer.RegisterInstance(()=>new ClassWith3Ctors(NewDiContainer.Resolve<IService>()));
+            NewDiContainer.RegisterExpression(()=>new ClassWith3Ctors(NewDiContainer.Resolve<IService>()));
 
             var resolved = NewDiContainer.Resolve<ClassWith3Ctors>();
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -870,16 +978,87 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void Resolve_InstanceDelegateWithResolve_ReturnsInstance()
+        public void Resolve_Expression_ReturnsInstance()
         {
             INewDiContainer container = new NewDiContainer();
             container.Register<MyService, IService>();
-            container.RegisterInstance(c => new ClassWith3Ctors(c.Resolve<IService>()));
+            container.RegisterExpression(c => new ClassWith3Ctors(c.Resolve<IService>()));
 
             var resolved = container.Resolve<ClassWith3Ctors>();
             Assert.IsType<ClassWith3Ctors>(resolved);
         }
 
+        [Fact]
+        public void StaticResolve_ExpressionWithResolveType_ReturnsInstance()
+        {
+            NewDiContainer.Register<MyService, IService>();
+            NewDiContainer.RegisterExpression<ClassWith3Ctors,IClassWith3Ctors>(() => new ClassWith3Ctors(NewDiContainer.Resolve<IService>()));
+
+            var resolved = NewDiContainer.Resolve<IClassWith3Ctors>();
+            Assert.IsType<ClassWith3Ctors>(resolved);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void Resolve_ExpressionWithResolveType_ReturnsInstance()
+        {
+            INewDiContainer container = new NewDiContainer();
+            container.Register<MyService, IService>();
+            container.RegisterExpression<ClassWith3Ctors,IClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()));
+
+            var resolved = container.Resolve<IClassWith3Ctors>();
+            Assert.IsType<ClassWith3Ctors>(resolved);
+        }
+
+
+        [Fact]
+        public void StaticResolve_ExpressionWithKey_ReturnsInstance()
+        {
+            NewDiContainer.Register<MyService, IService>();
+            NewDiContainer.RegisterExpression(() => new ClassWith3Ctors(NewDiContainer.Resolve<IService>()),"test");
+
+            var resolved = NewDiContainer.Resolve<ClassWith3Ctors>("test");
+            Assert.IsType<ClassWith3Ctors>(resolved);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void Resolve_ExpressionWithKey_ReturnsInstance()
+        {
+            INewDiContainer container = new NewDiContainer();
+            container.Register<MyService, IService>();
+            container.RegisterExpression(c => new ClassWith3Ctors(c.Resolve<IService>()),"test");
+
+            var resolved = container.Resolve<ClassWith3Ctors>("test");
+            Assert.IsType<ClassWith3Ctors>(resolved);
+        }
+
+        [Fact]
+        public void StaticResolve_ExpressionWithResolveTypeWithKey_ReturnsInstance()
+        {
+            NewDiContainer.Register<MyService, IService>();
+            NewDiContainer.RegisterExpression<ClassWith3Ctors, IClassWith3Ctors>(() => new ClassWith3Ctors(NewDiContainer.Resolve<IService>()),"test");
+
+            var resolved = NewDiContainer.Resolve<IClassWith3Ctors>("test");
+            Assert.IsType<ClassWith3Ctors>(resolved);
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void Resolve_ExpressionWithResolveTypeWithKey_ReturnsInstance()
+        {
+            INewDiContainer container = new NewDiContainer();
+            container.Register<MyService, IService>();
+            container.RegisterExpression<ClassWith3Ctors, IClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()),"test");
+
+            var resolved = container.Resolve<IClassWith3Ctors>("test");
+            Assert.IsType<ClassWith3Ctors>(resolved);
+        }
+
+        #endregion
         #endregion
 
         #region Unregister
