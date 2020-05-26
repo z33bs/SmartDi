@@ -27,20 +27,4 @@
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
-    <ItemGroup>
-      <Compile Remove="IoC.cs" />
-      <Compile Remove="ConfigOptions.cs" />
-      <Compile Remove="IIoc.cs" />
-      <Compile Remove="IIocContainer.cs" />
-      <Compile Remove="RegisteredObject.cs" />
-      <Compile Remove="Settings.cs" />
-    </ItemGroup>
-    <ItemGroup>
-      <None Include="IoC.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-      <None Include="ConfigOptions.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-      <None Include="IIoc.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-      <None Include="IIocContainer.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-      <None Include="RegisteredObject.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-      <None Include="Settings.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    </ItemGroup>
 </Project>
