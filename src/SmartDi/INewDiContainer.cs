@@ -61,12 +61,11 @@ namespace SmartDi
         void RegisterInstance<ResolvedType>(object instance, string key)
             where ResolvedType : notnull;
 
-        //todo No need UseCtor
+        //todo consolidate to one file
         //todo documentation
         //todo list registrations
         //todo autoregister (with flags like bindingflags) and exclusion like Tiny
         //todo .Static() / Global() overload to move to Static container from local container?
-        //todo consolidate to one file
         //todo pass settings to instance version
 
 

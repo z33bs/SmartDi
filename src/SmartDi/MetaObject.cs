@@ -32,25 +32,11 @@ namespace SmartDi
 
             ObjectActivator = GetActivator(ConstructorParameterCache);
         }
-        //todo perhaps separate into 3 different constructors?
-        private MetaObject(Type concreteType, LifeCycle lifeCycle)//, Func<object> instanceDelegate, params Type[] args)
+
+        private MetaObject(Type concreteType, LifeCycle lifeCycle)
         {
             ConcreteType = concreteType ?? throw new ArgumentNullException(nameof(concreteType));
             LifeCycle = lifeCycle;
-            ////Instance = instance;
-            //if (instanceDelegate != null)
-            //{
-            //    ObjectActivator = (args) => instanceDelegate();
-            //}
-            ////InstanceDelegate = instanceDelegate;
-            //else
-            //{
-            //    ConstructorParameterCache = args != Type.EmptyTypes
-            //            ? UsingConstructor(args)
-            //            : GetConstructorParams(concreteType);
-
-            //    ObjectActivator = GetActivator(ConstructorParameterCache);
-            //}            
         }
 
         public Type ConcreteType { get; }
@@ -72,7 +58,18 @@ namespace SmartDi
             }
         }
 
-        public LifeCycle LifeCycle { get; set; }
+        LifeCycle lifeCycle;
+        public LifeCycle LifeCycle
+        {
+            get => lifeCycle;
+            set
+            {
+                if (value is LifeCycle.Transient)
+                    instance = null; //Can only have instance if Singleton
+
+                lifeCycle = value;
+            }
+        }
 
         public ConstructorInfo ConstructorParameterCache { get; }
 
