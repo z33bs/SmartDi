@@ -34,31 +34,29 @@ namespace SmartDi
 
         // RegisterExpression
 
-        RegisterOptions RegisterExpression<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
-            where ConcreteType : notnull;
+        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<INewDiContainer, ResolvedType>> instanceDelegate)
+            where ResolvedType : notnull;
 
-        RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
-            where ConcreteType : notnull, ResolvedType;
+        //RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
+        //    where ConcreteType : notnull, ResolvedType;
 
-        RegisterOptions RegisterExpression<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
-            where ConcreteType : notnull;
+        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<INewDiContainer, ResolvedType>> instanceDelegate, string key)
+            where ResolvedType : notnull;
 
-        RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
-            where ConcreteType : notnull, ResolvedType;
+        //RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
+        //    where ConcreteType : notnull, ResolvedType;
 
         // RegisterInstance
 
-        void RegisterInstance<ConcreteType>(ConcreteType instance)
-            where ConcreteType : notnull;
+        void RegisterInstance(object instance);
 
-        void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
-            where ConcreteType : notnull, ResolvedType;
+        void RegisterInstance<ResolvedType>(object instance)
+            where ResolvedType : notnull;
 
-        void RegisterInstance<ConcreteType>(ConcreteType instance, string key)
-            where ConcreteType : notnull;
+        void RegisterInstance(object instance, string key);
 
-        void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
-            where ConcreteType : notnull, ResolvedType;
+        void RegisterInstance<ResolvedType>(object instance, string key)
+            where ResolvedType : notnull;
 
         //todo No need UseCtor
         //todo documentation

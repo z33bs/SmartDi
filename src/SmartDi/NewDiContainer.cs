@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -152,106 +152,104 @@ namespace SmartDi
 
         #region RegisterExpression
 
-        public static RegisterOptions RegisterExpression<ConcreteType>(Expression<Func<ConcreteType>> instanceDelegate)
-            where ConcreteType : notnull
+        public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<ResolvedType>> instanceDelegate)
+            where ResolvedType : notnull
             => new RegisterOptions(
                 staticContainer,
-                InternalRegister(staticContainer, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke())));
+                InternalRegister(staticContainer, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke())));
 
-        RegisterOptions INewDiContainer.RegisterExpression<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
+        RegisterOptions INewDiContainer.RegisterExpression<ResolvedType>(Expression<Func<INewDiContainer, ResolvedType>> instanceDelegate)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
+                InternalRegister(container, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
 
 
 
-        public static RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<ConcreteType>> instanceDelegate)
-            where ConcreteType : notnull, ResolvedType
+        //public static RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<ConcreteType>> instanceDelegate)
+        //    where ConcreteType : notnull, ResolvedType
+        //    => new RegisterOptions(
+        //        staticContainer,
+        //        InternalRegister(staticContainer, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke())));
+
+        //RegisterOptions INewDiContainer.RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
+        //    => new RegisterOptions(
+        //        container,
+        //        InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke(this))));
+
+
+
+        public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<ResolvedType>> instanceDelegate, string key)
+            where ResolvedType : notnull
             => new RegisterOptions(
                 staticContainer,
-                InternalRegister(staticContainer, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke())));
+                InternalRegister(staticContainer, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke())));
 
-        RegisterOptions INewDiContainer.RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate)
+        RegisterOptions INewDiContainer.RegisterExpression<ResolvedType>(Expression<Func<INewDiContainer, ResolvedType>> instanceDelegate, string key)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke(this))));
+                InternalRegister(container, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
 
 
 
-        public static RegisterOptions RegisterExpression<ConcreteType>(Expression<Func<ConcreteType>> instanceDelegate, string key)
-            where ConcreteType : notnull
-            => new RegisterOptions(
-                staticContainer,
-                InternalRegister(staticContainer, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke())));
+        //public static RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<ConcreteType>> instanceDelegate, string key)
+        //    where ConcreteType : notnull, ResolvedType
+        //    => new RegisterOptions(
+        //        staticContainer,
+        //        InternalRegister(staticContainer, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke())));
 
-        RegisterOptions INewDiContainer.RegisterExpression<ConcreteType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
-            => new RegisterOptions(
-                container,
-                InternalRegister(container, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
-
-
-
-        public static RegisterOptions RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<ConcreteType>> instanceDelegate, string key)
-            where ConcreteType : notnull, ResolvedType
-            => new RegisterOptions(
-                staticContainer,
-                InternalRegister(staticContainer, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke())));
-
-        RegisterOptions INewDiContainer.RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
-            => new RegisterOptions(
-                container,
-                InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke(this))));
+        //RegisterOptions INewDiContainer.RegisterExpression<ConcreteType, ResolvedType>(Expression<Func<INewDiContainer, ConcreteType>> instanceDelegate, string key)
+        //    => new RegisterOptions(
+        //        container,
+        //        InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, () => instanceDelegate.Compile().Invoke(this))));
 
         #endregion
 
         #region Register Instance
 
-        public static void RegisterInstance<ConcreteType>(ConcreteType instance)
-            where ConcreteType : notnull
+        public static void RegisterInstance(object instance)
             => new RegisterOptions(
                 staticContainer
                 , InternalRegister(staticContainer, null, null, new MetaObject(instance)));
 
-        void INewDiContainer.RegisterInstance<ConcreteType>(ConcreteType instance)
+        void INewDiContainer.RegisterInstance(object instance)
             => new RegisterOptions(
                 container
                 , InternalRegister(container, null, null, new MetaObject(instance)));
 
 
 
-        public static void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
-            where ConcreteType : notnull, ResolvedType
+        public static void RegisterInstance<ResolvedType>(object instance)
+            where ResolvedType : notnull
             => new RegisterOptions(
                 staticContainer
                 , InternalRegister(staticContainer, typeof(ResolvedType), null, new MetaObject(instance)));
 
-        void INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance)
+        void INewDiContainer.RegisterInstance<ResolvedType>(object instance)
             => new RegisterOptions(
                 container
                 , InternalRegister(container, typeof(ResolvedType), null, new MetaObject(instance)));
 
 
 
-        public static void RegisterInstance<ConcreteType>(ConcreteType instance, string key)
-            where ConcreteType : notnull
+        public static void RegisterInstance(object instance, string key)
             => new RegisterOptions(
                 staticContainer
                 , InternalRegister(staticContainer, null, key, new MetaObject(instance)));
 
-        void INewDiContainer.RegisterInstance<ConcreteType>(ConcreteType instance, string key)
+        void INewDiContainer.RegisterInstance(object instance, string key)
             => new RegisterOptions(
                 container
                 , InternalRegister(container, null, key, new MetaObject(instance)));
 
 
 
-        public static void RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
-            where ConcreteType : notnull, ResolvedType
+        public static void RegisterInstance<ResolvedType>(object instance, string key)
+            where ResolvedType : notnull
             => new RegisterOptions(
                 staticContainer
                 , InternalRegister(staticContainer, typeof(ResolvedType), key, new MetaObject(instance)));
 
-        void INewDiContainer.RegisterInstance<ConcreteType, ResolvedType>(ConcreteType instance, string key)
+        void INewDiContainer.RegisterInstance<ResolvedType>(object instance, string key)
             => new RegisterOptions(
                 container
                 , InternalRegister(container, typeof(ResolvedType), key, new MetaObject(instance)));
