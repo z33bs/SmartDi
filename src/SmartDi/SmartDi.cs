@@ -29,14 +29,11 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public delegate object ObjectActivator(params object[] args);
 
-    //todo consolidate to one file
     //todo documentation
     //todo list registrations
     //todo autoregister (with flags like bindingflags) and exclusion like Tiny
-    //todo .Static() / Global() overload to move to Static container from local container?
-    //todo pass settings to instance version
 
-    public interface INewDiContainer
+    public interface IDiContainer
     {
         //RegisterType
         RegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
@@ -69,10 +66,10 @@ namespace SmartDi
 
         // ... Expression
 
-        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<INewDiContainer, ResolvedType>> instanceDelegate)
+        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, ResolvedType>> instanceDelegate)
             where ResolvedType : notnull;
 
-        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<INewDiContainer, ResolvedType>> instanceDelegate, string key)
+        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, ResolvedType>> instanceDelegate, string key)
             where ResolvedType : notnull;
 
         // ... Instance
@@ -107,18 +104,18 @@ namespace SmartDi
     }
 
 
-    public class NewDiContainer : INewDiContainer
+    public class DiContainer : IDiContainer
     {
         public static Settings MySettings { get; } = new Settings();
 
 
-        public NewDiContainer()
+        public DiContainer()
         {
             container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public NewDiContainer(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
+        public DiContainer(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
         {
             this.container = container;
         }
@@ -145,8 +142,8 @@ namespace SmartDi
             where ConcreteType : notnull
             => Register<ConcreteType>(Type.EmptyTypes);
 
-        RegisterOptions INewDiContainer.Register<ConcreteType>()
-            => (this as INewDiContainer).Register<ConcreteType>(Type.EmptyTypes);
+        RegisterOptions IDiContainer.Register<ConcreteType>()
+            => (this as IDiContainer).Register<ConcreteType>(Type.EmptyTypes);
 
         public static RegisterOptions Register<ConcreteType>(params Type[] constructorParameters)
             where ConcreteType : notnull
@@ -154,7 +151,7 @@ namespace SmartDi
                 staticContainer,
                 InternalRegister(staticContainer, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
 
-        RegisterOptions INewDiContainer.Register<ConcreteType>(params Type[] constructorParameters)
+        RegisterOptions IDiContainer.Register<ConcreteType>(params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
                 InternalRegister(container, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
@@ -165,8 +162,8 @@ namespace SmartDi
             where ConcreteType : notnull, ResolvedType
             => Register<ConcreteType, ResolvedType>(Type.EmptyTypes);
 
-        RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>()
-            => (this as INewDiContainer).Register<ConcreteType, ResolvedType>(Type.EmptyTypes);
+        RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>()
+            => (this as IDiContainer).Register<ConcreteType, ResolvedType>(Type.EmptyTypes);
 
         public static RegisterOptions Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
             where ConcreteType : notnull, ResolvedType
@@ -174,7 +171,7 @@ namespace SmartDi
                 staticContainer,
                 InternalRegister(staticContainer, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
 
-        RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
+        RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
                 InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
@@ -188,8 +185,8 @@ namespace SmartDi
             where ConcreteType : notnull
             => Register<ConcreteType>(key, Type.EmptyTypes);
 
-        RegisterOptions INewDiContainer.Register<ConcreteType>(string key)
-            => (this as INewDiContainer).Register<ConcreteType>(key, Type.EmptyTypes);
+        RegisterOptions IDiContainer.Register<ConcreteType>(string key)
+            => (this as IDiContainer).Register<ConcreteType>(key, Type.EmptyTypes);
 
         public static RegisterOptions Register<ConcreteType>(string key, params Type[] constructorParameters)
             where ConcreteType : notnull
@@ -197,7 +194,7 @@ namespace SmartDi
                 staticContainer,
                 InternalRegister(staticContainer, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
 
-        RegisterOptions INewDiContainer.Register<ConcreteType>(string key, params Type[] constructorParameters)
+        RegisterOptions IDiContainer.Register<ConcreteType>(string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
                 InternalRegister(container, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
@@ -208,8 +205,8 @@ namespace SmartDi
             where ConcreteType : notnull, ResolvedType
             => Register<ConcreteType, ResolvedType>(key, Type.EmptyTypes);
 
-        RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>(string key)
-            => (this as INewDiContainer).Register<ConcreteType, ResolvedType>(key, Type.EmptyTypes);
+        RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>(string key)
+            => (this as IDiContainer).Register<ConcreteType, ResolvedType>(key, Type.EmptyTypes);
 
         public static RegisterOptions Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
             where ConcreteType : notnull, ResolvedType
@@ -217,7 +214,7 @@ namespace SmartDi
                 staticContainer,
                 InternalRegister(staticContainer, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
 
-        RegisterOptions INewDiContainer.Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
+        RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
                 InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
@@ -234,7 +231,7 @@ namespace SmartDi
                 staticContainer,
                 InternalRegister(staticContainer, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke())));
 
-        RegisterOptions INewDiContainer.RegisterExpression<ResolvedType>(Expression<Func<INewDiContainer, ResolvedType>> instanceDelegate)
+        RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, ResolvedType>> instanceDelegate)
             => new RegisterOptions(
                 container,
                 InternalRegister(container, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
@@ -247,7 +244,7 @@ namespace SmartDi
                 staticContainer,
                 InternalRegister(staticContainer, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke())));
 
-        RegisterOptions INewDiContainer.RegisterExpression<ResolvedType>(Expression<Func<INewDiContainer, ResolvedType>> instanceDelegate, string key)
+        RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, ResolvedType>> instanceDelegate, string key)
             => new RegisterOptions(
                 container,
                 InternalRegister(container, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
@@ -261,7 +258,7 @@ namespace SmartDi
                 staticContainer
                 , InternalRegister(staticContainer, null, null, new MetaObject(instance)));
 
-        void INewDiContainer.RegisterInstance(object instance)
+        void IDiContainer.RegisterInstance(object instance)
             => new RegisterOptions(
                 container
                 , InternalRegister(container, null, null, new MetaObject(instance)));
@@ -274,7 +271,7 @@ namespace SmartDi
                 staticContainer
                 , InternalRegister(staticContainer, typeof(ResolvedType), null, new MetaObject(instance)));
 
-        void INewDiContainer.RegisterInstance<ResolvedType>(object instance)
+        void IDiContainer.RegisterInstance<ResolvedType>(object instance)
             => new RegisterOptions(
                 container
                 , InternalRegister(container, typeof(ResolvedType), null, new MetaObject(instance)));
@@ -286,7 +283,7 @@ namespace SmartDi
                 staticContainer
                 , InternalRegister(staticContainer, null, key, new MetaObject(instance)));
 
-        void INewDiContainer.RegisterInstance(object instance, string key)
+        void IDiContainer.RegisterInstance(object instance, string key)
             => new RegisterOptions(
                 container
                 , InternalRegister(container, null, key, new MetaObject(instance)));
@@ -299,7 +296,7 @@ namespace SmartDi
                 staticContainer
                 , InternalRegister(staticContainer, typeof(ResolvedType), key, new MetaObject(instance)));
 
-        void INewDiContainer.RegisterInstance<ResolvedType>(object instance, string key)
+        void IDiContainer.RegisterInstance<ResolvedType>(object instance, string key)
             => new RegisterOptions(
                 container
                 , InternalRegister(container, typeof(ResolvedType), key, new MetaObject(instance)));
@@ -318,7 +315,7 @@ namespace SmartDi
                         resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton,
                         constructorParameters)));
 
-        RegisterOptions INewDiContainer.RegisterType(Type concreteType, Type resolvedType, string key, params Type[] constructorParameters)
+        RegisterOptions IDiContainer.RegisterType(Type concreteType, Type resolvedType, string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
                 InternalRegister(container, resolvedType, key,
@@ -359,26 +356,26 @@ namespace SmartDi
         public static T Resolve<T>() where T : notnull
             => (T)InternalResolve(staticContainer, typeof(T), null);
 
-        T INewDiContainer.Resolve<T>()
+        T IDiContainer.Resolve<T>()
             => (T)InternalResolve(container, typeof(T), null);
 
 
         public static T Resolve<T>(string key) where T : notnull
             => (T)InternalResolve(staticContainer, typeof(T), key);
 
-        T INewDiContainer.Resolve<T>(string key)
+        T IDiContainer.Resolve<T>(string key)
             => (T)InternalResolve(container, typeof(T), key);
 
         public static object Resolve(Type type)
             => InternalResolve(staticContainer, type, null);
 
-        object INewDiContainer.Resolve(Type type)
+        object IDiContainer.Resolve(Type type)
             => InternalResolve(container, type, null);
 
         public static object Resolve(Type type, string key)
             => InternalResolve(staticContainer, type, key);
 
-        object INewDiContainer.Resolve(Type type, string key)
+        object IDiContainer.Resolve(Type type, string key)
             => InternalResolve(container, type, key);
 
         internal static object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
@@ -410,7 +407,7 @@ namespace SmartDi
             if (resolvedType.IsInterface || resolvedType.IsAbstract)
                 throw new ResolveException(
                     $"Could not Resolve or Create {resolvedType.Name}" +
-                    $". It is not registered in {nameof(NewDiContainer)}. Furthermore, " +
+                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.");
 
             //else try resolve concreteType anyway
@@ -429,7 +426,7 @@ namespace SmartDi
 
                 throw new ResolveException(
                     $"Could not Resolve or Create {resolvedType.Name}" +
-                    $". It is not registered in {nameof(NewDiContainer)}. Furthermore, " +
+                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.", ex);
             }
         }
@@ -455,7 +452,7 @@ namespace SmartDi
             where T : notnull
             => InternalUnregister(staticContainer, typeof(T), null);
 
-        void INewDiContainer.Unregister<T>()
+        void IDiContainer.Unregister<T>()
             => InternalUnregister(container, typeof(T), null);
 
 
@@ -463,7 +460,7 @@ namespace SmartDi
             where T : notnull
             => InternalUnregister(staticContainer, typeof(T), key);
 
-        void INewDiContainer.Unregister<T>(string key)
+        void IDiContainer.Unregister<T>(string key)
             => InternalUnregister(container, typeof(T), key);
 
 
@@ -485,7 +482,7 @@ namespace SmartDi
         public static void UnregisterAll()
             => InternalUnregisterAll(staticContainer);
 
-        void INewDiContainer.UnregisterAll()
+        void IDiContainer.UnregisterAll()
             => InternalUnregisterAll(container);
 
 
@@ -557,7 +554,6 @@ namespace SmartDi
             if (instanceDelegate is null)
                 throw new ArgumentNullException(nameof(instanceDelegate));
 
-            //todo Increase performance by passing compiled expression
             ObjectActivator = (args) => instanceDelegate();
         }
 
