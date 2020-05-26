@@ -268,7 +268,7 @@ namespace SmartDi
                         resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton,
                         constructorParameters)));
 
-        RegisterOptions INewDiContainer.RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters)
+        RegisterOptions INewDiContainer.RegisterType(Type concreteType, Type resolvedType, string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
                 InternalRegister(container, resolvedType, key,
@@ -318,6 +318,18 @@ namespace SmartDi
 
         T INewDiContainer.Resolve<T>(string key)
             => (T)InnerResolve(container, typeof(T), key);
+
+        public static object Resolve(Type type)
+            => InnerResolve(staticContainer, type, null);
+
+        object INewDiContainer.Resolve(Type type)
+            => InnerResolve(container, type, null);
+
+        public static object Resolve(Type type, string key)
+            => InnerResolve(staticContainer, type, key);
+
+        object INewDiContainer.Resolve(Type type, string key)
+            => InnerResolve(container, type, key);
 
         internal static object InnerResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {

@@ -1,12 +1,7 @@
 ﻿using System;
 using Xunit;
-using Moq;
 using SmartDi;
 using System.Collections.Concurrent;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Globalization;
 
 namespace SmartDiTests
 {
@@ -197,7 +192,17 @@ namespace SmartDiTests
             Assert.Throws<RegisterException>(() => new MetaObject(typeof(ConcreteOnly), LifeCycle.Singleton, typeof(MyService)));
         }
 
-        #endregion
+#if DEBUG
+        [Fact]
+        public void MetaObject_RegisteredTransient_SetInstance_Throws()
+        {
+            var metaObject = new MetaObject(typeof(ConcreteOnly), LifeCycle.Transient);
+            Assert.Throws<Exception>(()=>metaObject.Instance = new ConcreteOnly());
+
+        }
+#endif
+
+#endregion
 
         #region Registration
         #region internal
@@ -1157,6 +1162,52 @@ namespace SmartDiTests
         }
 
         #endregion
+
+        #region Resolve(Type) overloads
+        [Fact]
+        public void StaticResolveType_InstanceRegistered_ReturnsInstance()
+        {
+            var instance = new MyService();
+            NewDiContainer.RegisterInstance(instance);
+            var resolved = NewDiContainer.Resolve(typeof(MyService));
+            Assert.Equal(instance, resolved); //exactly same object returned
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void ResolveType_InstanceRegistered_ReturnsInstance()
+        {
+            var instance = new MyService();
+            INewDiContainer container = new NewDiContainer();
+            container.RegisterInstance(instance);
+            var resolved = container.Resolve(typeof(MyService));
+            Assert.Equal(instance, resolved); //exactly same object returned
+        }
+
+        [Fact]
+        public void StaticResolveTypeWithKey_InstanceRegistered_ReturnsInstance()
+        {
+            var instance = new MyService();
+            NewDiContainer.RegisterInstance(instance,"test");
+            var resolved = NewDiContainer.Resolve(typeof(MyService),"test");
+            Assert.Equal(instance, resolved); //exactly same object returned
+
+            NewDiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void ResolveTypeWithKey_InstanceRegistered_ReturnsInstance()
+        {
+            var instance = new MyService();
+            INewDiContainer container = new NewDiContainer();
+            container.RegisterInstance(instance,"test");
+            var resolved = container.Resolve(typeof(MyService),"test");
+            Assert.Equal(instance, resolved); //exactly same object returned
+        }
+
+        #endregion
+
         #endregion
 
         #region Unregister

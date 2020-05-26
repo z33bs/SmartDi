@@ -74,6 +74,9 @@ namespace SmartDi
         T Resolve<T>() where T : notnull;
         T Resolve<T>(string key) where T : notnull;
 
+        object Resolve(Type type);
+        object Resolve(Type type, string key);
+
         void Unregister<T>()
             where T : notnull;
 
