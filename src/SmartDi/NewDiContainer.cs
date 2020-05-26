@@ -506,13 +506,7 @@ namespace SmartDi
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public interface IConstructorOptions
-    {
-        ILifeCycleOptions UsingConstructor(Type[] args);
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public class RegisterOptions : ILifeCycleOptions, IConstructorOptions
+    public class RegisterOptions : ILifeCycleOptions
     {
         readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         readonly Tuple<Type, string> key;
@@ -521,34 +515,6 @@ namespace SmartDi
         {
             this.container = container;
             this.key = key;
-        }
-
-        public ILifeCycleOptions UsingConstructor(params Type[] args)
-        {
-            var metaObject = container[key];
-
-            try
-            {
-                var constructor = metaObject.ConcreteType
-                    .GetConstructor(
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                        null,
-                        args,
-                        null);
-
-                //Rather throw error on registration
-                if (constructor is null)
-                    throw new Exception($"No matching constructor found.");
-
-                ////We've done the work, so cache it here
-                //metaObject.ConstructorParameterCache = constructor;//.GetParameters();
-            }
-            catch (Exception ex)
-            {
-                throw new RegisterException($"Could not register {metaObject.ConcreteType.Name} with specified constructor.", ex);
-            }
-
-            return this;
         }
 
         public void SingleInstance()
