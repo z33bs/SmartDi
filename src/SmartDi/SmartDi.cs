@@ -66,10 +66,10 @@ namespace SmartDi
 
         // ... Expression
 
-        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, ResolvedType>> instanceDelegate)
+        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate)
             where ResolvedType : notnull;
 
-        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, ResolvedType>> instanceDelegate, string key)
+        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate, string key)
             where ResolvedType : notnull;
 
         // ... Instance
@@ -225,29 +225,29 @@ namespace SmartDi
 
         #region RegisterExpression
 
-        public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<ResolvedType>> instanceDelegate)
+        public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<object>> instanceDelegate)
             where ResolvedType : notnull
             => new RegisterOptions(
                 staticContainer,
-                InternalRegister(staticContainer, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke())));
+                InternalRegister(staticContainer, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile() )));
 
-        RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, ResolvedType>> instanceDelegate)
+        RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
+                InternalRegister(container, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile())));
 
 
 
-        public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<ResolvedType>> instanceDelegate, string key)
+        public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<object>> instanceDelegate, string key)
             where ResolvedType : notnull
             => new RegisterOptions(
                 staticContainer,
-                InternalRegister(staticContainer, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke())));
+                InternalRegister(staticContainer, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile())));
 
-        RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, ResolvedType>> instanceDelegate, string key)
+        RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate, string key)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, () => instanceDelegate.Compile().Invoke(this))));
+                InternalRegister(container, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile())));
 
         #endregion
 
@@ -357,28 +357,28 @@ namespace SmartDi
             => (T)InternalResolve(staticContainer, typeof(T), null);
 
         T IDiContainer.Resolve<T>()
-            => (T)InternalResolve(container, typeof(T), null);
+            => (T)InternalResolve(container, typeof(T), null, this);
 
 
         public static T Resolve<T>(string key) where T : notnull
             => (T)InternalResolve(staticContainer, typeof(T), key);
 
         T IDiContainer.Resolve<T>(string key)
-            => (T)InternalResolve(container, typeof(T), key);
+            => (T)InternalResolve(container, typeof(T), key, this);
 
         public static object Resolve(Type type)
             => InternalResolve(staticContainer, type, null);
 
         object IDiContainer.Resolve(Type type)
-            => InternalResolve(container, type, null);
+            => InternalResolve(container, type, null, this);
 
         public static object Resolve(Type type, string key)
             => InternalResolve(staticContainer, type, key);
 
         object IDiContainer.Resolve(Type type, string key)
-            => InternalResolve(container, type, key);
+            => InternalResolve(container, type, key, this);
 
-        internal static object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
+        internal static object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key, IDiContainer smartDiInstance = null)
         {
             //if registered
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
@@ -386,7 +386,13 @@ namespace SmartDi
                 if (metaObject.Instance != null) //Will only be the case if Singleton
                     return metaObject.Instance;
 
-                var instance = metaObject.ObjectActivator(ResolveDependencies(container, metaObject).ToArray());
+                object instance;
+                if (metaObject.ActivationExpression != null)
+                    instance = metaObject.ActivationExpression(smartDiInstance);
+                else if (metaObject.StaticActivationExpression != null)
+                    instance = metaObject.StaticActivationExpression();
+                else
+                    instance = metaObject.ObjectActivator(ResolveDependencies(container, metaObject).ToArray());
 
                 if (metaObject.LifeCycle == LifeCycle.Singleton)
                     metaObject.Instance = instance; //Cache if singleton
@@ -549,12 +555,20 @@ namespace SmartDi
             Instance = instance;
         }
 
-        public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<object> instanceDelegate) : this(concreteType, lifeCycle)
+        public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<object> staticInstanceDelegate) : this(concreteType, lifeCycle)
+        {
+            if (staticInstanceDelegate is null)
+                throw new ArgumentNullException(nameof(staticInstanceDelegate));
+
+            StaticActivationExpression = staticInstanceDelegate;
+        }
+
+        public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<IDiContainer,object> instanceDelegate) : this(concreteType, lifeCycle)
         {
             if (instanceDelegate is null)
                 throw new ArgumentNullException(nameof(instanceDelegate));
 
-            ObjectActivator = (args) => instanceDelegate();
+            ActivationExpression = instanceDelegate;
         }
 
         public MetaObject(Type concreteType, LifeCycle lifeCycle, params Type[] args) : this(concreteType, lifeCycle)
@@ -609,6 +623,10 @@ namespace SmartDi
         public ConstructorInfo ConstructorCache { get; }
 
         public ObjectActivator ObjectActivator { get; }
+
+        public Func<object> StaticActivationExpression { get; }
+
+        public Func<IDiContainer,object> ActivationExpression { get; }
 
         #endregion
 
