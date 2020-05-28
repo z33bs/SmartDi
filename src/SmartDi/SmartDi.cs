@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -144,6 +145,7 @@ namespace SmartDi
 
         readonly ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> openGenericContainer;
 
+        static ConcurrentDictionary<Type, List<string>> staticEnumerableLookup = new ConcurrentDictionary<Type, List<string>>();
 
         #region Registration
         #region Register
@@ -239,7 +241,7 @@ namespace SmartDi
             where ResolvedType : notnull
             => new RegisterOptions(
                 staticContainer,
-                InternalRegister(staticContainer, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile() )));
+                InternalRegister(staticContainer, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile())));
 
         RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate)
             => new RegisterOptions(
@@ -363,11 +365,19 @@ namespace SmartDi
             if (!container.TryAdd(containerKey, metaObject))
             {
                 var builder = new StringBuilder();
-                builder.Append($"{nameof(containerKey.Item1)} is already registered");
+                builder.Append($"{containerKey.Item1.Name} is already registered");
                 if (containerKey.Item2 != null)
                     builder.Append($" with key '{nameof(containerKey.Item2)}'");
                 builder.Append(".");
                 throw new RegisterException(builder.ToString());
+            }
+
+            //the way its setup resolved type should only be interface / abstract
+            if(resolvedType != null && (resolvedType.IsInterface || resolvedType.IsAbstract))
+            {
+                //staticEnumerableLookup.AddOrUpdate(resolvedType, new List<string>() { key }, (k, oldvalue) => { oldvalue.Add(key); return oldvalue; });
+                if (!staticEnumerableLookup.TryAdd(resolvedType, new List<string> { key }))
+                    staticEnumerableLookup[resolvedType].Add(key);
             }
 
             return containerKey;
@@ -449,27 +459,62 @@ namespace SmartDi
                 return instance;
             }
 
+            if (resolvedType.IsGenericType)
+            {
+                //todo move to register with ActivationExpression
+                if (resolvedType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                {
+                    var resolvableType = resolvedType.GetGenericArguments()[0];
+
+                    if(staticEnumerableLookup.TryGetValue(resolvableType, out List<string> implementations))
+                    {
+                        var metainstance = EnumerateFromRegistrations(container, resolvableType, implementations);
+                        
+                        var instance = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(resolvableType));
+                        foreach (var item in metainstance)
+                        {
+                            instance.Add(item);
+                        }
+
+                        //todo if success, add to container
+                        if(!container.TryAdd(new Tuple<Type, string>(resolvedType, null), new MetaObject(instance)))
+                        {
+#if DEBUG
+                            throw new ResolveException("Debugging exception: Unextpected behaviour. Should have found listing");
+#endif
+                        }
+                        return instance;
+                    }
+
+                    throw new ResolveException(
+                        $"Could not Resolve or Create {resolvedType.Name}" +
+                        $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
+                        $"smart resolve couldn't create an instance.");
+
+
+                }
+                if (resolvedType.IsConstructedGenericType)
+                {
+                    //todo need to replicate for instance
+                    if (staticOpenGenericContainer.TryGetValue(new Tuple<string, string>(resolvedType.Name, key), out GenericMetaObject genericMetaObject))
+                    {
+                        Type[] closedTypeArgs = resolvedType.GetGenericArguments();
+                        Type resolvableType = genericMetaObject.ConcreteType.MakeGenericType(closedTypeArgs);
+
+                        //todo code repetition
+                        var tryMetaObject = new MetaObject(resolvableType, genericMetaObject.LifeCycle);
+                        var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
+                        //if success then add registration
+                        container.TryAdd(new Tuple<Type, string>(resolvedType, key), tryMetaObject);
+                        return instance;
+                    }
+                }
+            }
+
             if (MySettings.ResolveBubblesToStaticContainer
                 && container != staticContainer
                 && staticContainer.Any())
                 return InternalResolve(staticContainer, resolvedType, key);
-
-            if(resolvedType.IsConstructedGenericType)
-            {
-                //todo need to replicate for instance
-                if (staticOpenGenericContainer.TryGetValue(new Tuple<string, string>(resolvedType.Name, key), out GenericMetaObject genericMetaObject))
-                {
-                    Type[] closedTypeArgs = resolvedType.GetGenericArguments();
-                    Type resolvableType = genericMetaObject.ConcreteType.MakeGenericType(closedTypeArgs);
-
-                    //todo code repetition
-                    var tryMetaObject = new MetaObject(resolvableType, genericMetaObject.LifeCycle);
-                    var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
-                    //if success then add registration
-                    container.TryAdd(new Tuple<Type, string>(resolvedType, key), tryMetaObject);
-                    return instance;
-                }
-            }
 
             if (!MySettings.TryResolveUnregistered)
                 throw new ResolveException(
@@ -500,6 +545,14 @@ namespace SmartDi
                     $"Could not Resolve or Create {resolvedType.Name}" +
                     $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.", ex);
+            }
+        }
+
+        private static IEnumerable<object> EnumerateFromRegistrations(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,Type resolvedType, List<string> implementations)
+        {
+            foreach (var implementation in implementations)
+            {
+                yield return InternalResolve(container, resolvedType, implementation);
             }
         }
 
@@ -629,7 +682,7 @@ namespace SmartDi
             StaticActivationExpression = staticInstanceDelegate;
         }
 
-        public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<IDiContainer,object> instanceDelegate) : this(concreteType, lifeCycle)
+        public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<IDiContainer, object> instanceDelegate) : this(concreteType, lifeCycle)
         {
             if (instanceDelegate is null)
                 throw new ArgumentNullException(nameof(instanceDelegate));
@@ -692,7 +745,7 @@ namespace SmartDi
 
         public Func<object> StaticActivationExpression { get; }
 
-        public Func<IDiContainer,object> ActivationExpression { get; }
+        public Func<IDiContainer, object> ActivationExpression { get; }
 
         #endregion
 
