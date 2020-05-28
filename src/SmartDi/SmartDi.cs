@@ -38,6 +38,8 @@ namespace SmartDi
         //RegisterType
         RegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
 
+        void RegisterOpenGeneric(Type concreteType, Type resolvedType = null, string key = null);
+
         //Register
         RegisterOptions Register<ConcreteType>()
             where ConcreteType : notnull;
@@ -112,12 +114,14 @@ namespace SmartDi
         public DiContainer()
         {
             container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            openGenericContainer = new ConcurrentDictionary<Tuple<string, string>, GenericMetaObject>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public DiContainer(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
         {
             this.container = container;
+            //todo add openGeneric subs
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -134,6 +138,12 @@ namespace SmartDi
             = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
 
         readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
+
+        static ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> staticOpenGenericContainer
+            = new ConcurrentDictionary<Tuple<string, string>, GenericMetaObject>();
+
+        readonly ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> openGenericContainer;
+
 
         #region Registration
         #region Register
@@ -324,6 +334,19 @@ namespace SmartDi
                         resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton,
                         constructorParameters)));
 
+        //todo validatee resolvedType:ConcreteType
+        //todo investigate possibility of ctor params
+        public static void RegisterOpenGeneric(Type concreteType, Type resolvedType = null, string key = null)
+            => InternalRegisterOpenGeneric(staticOpenGenericContainer, resolvedType, key,
+                    new GenericMetaObject(
+                        concreteType,
+                        resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton));
+
+        void IDiContainer.RegisterOpenGeneric(Type concreteType, Type resolvedType, string key)
+            => InternalRegisterOpenGeneric(openGenericContainer, resolvedType, key,
+                    new GenericMetaObject(
+                        concreteType,
+                        resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton));
 
         #endregion
 
@@ -349,11 +372,37 @@ namespace SmartDi
 
             return containerKey;
         }
-        #endregion
 
-        #region Resolve
+        //todo only diff is the Tuple - any such thing as a generic Tuple?
+        internal static Tuple<string, string> InternalRegisterOpenGeneric(
+            ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container,
+            Type resolvedType,
+            string key,
+            GenericMetaObject metaObject
+            )
+        {
+            var containerKey = new Tuple<string, string>(
+                resolvedType?.Name ?? metaObject.ConcreteType.Name, key);
 
-        public static T Resolve<T>() where T : notnull
+            if (!container.TryAdd(containerKey, metaObject))
+            {
+                var builder = new StringBuilder();
+                builder.Append($"{nameof(containerKey.Item1)} is already registered");
+                if (containerKey.Item2 != null)
+                    builder.Append($" with key '{nameof(containerKey.Item2)}'");
+                builder.Append(".");
+                throw new RegisterException(builder.ToString());
+            }
+
+            return containerKey;
+        }
+
+
+            #endregion
+
+            #region Resolve
+
+            public static T Resolve<T>() where T : notnull
             => (T)InternalResolve(staticContainer, typeof(T), null);
 
         T IDiContainer.Resolve<T>()
@@ -404,6 +453,23 @@ namespace SmartDi
                 && container != staticContainer
                 && staticContainer.Any())
                 return InternalResolve(staticContainer, resolvedType, key);
+
+            if(resolvedType.IsConstructedGenericType)
+            {
+                //todo need to replicate for instance
+                if (staticOpenGenericContainer.TryGetValue(new Tuple<string, string>(resolvedType.Name, key), out GenericMetaObject genericMetaObject))
+                {
+                    Type[] closedTypeArgs = resolvedType.GetGenericArguments();
+                    Type resolvableType = genericMetaObject.ConcreteType.MakeGenericType(closedTypeArgs);
+
+                    //todo code repetition
+                    var tryMetaObject = new MetaObject(resolvableType, genericMetaObject.LifeCycle);
+                    var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
+                    //if success then add registration
+                    container.TryAdd(new Tuple<Type, string>(resolvedType, key), tryMetaObject);
+                    return instance;
+                }
+            }
 
             if (!MySettings.TryResolveUnregistered)
                 throw new ResolveException(
@@ -737,6 +803,30 @@ namespace SmartDi
                 && Instance is IDisposable disposable)
                 disposable.Dispose();
         }
+    }
+
+    //todo can derive from a common abstractType
+    public class GenericMetaObject
+    {
+        public GenericMetaObject(Type concreteType, LifeCycle lifeCycle)
+        {
+            if (!concreteType.IsGenericTypeDefinition)
+            {
+                var builder = new StringBuilder();
+                builder.Append($"{concreteType.Name} is not an open (unbound) generic type.");
+                if (concreteType.IsConstructedGenericType)
+                    builder.Append("Register using standard Register options.");
+
+                throw new RegisterException(builder.ToString());
+            }
+
+            this.ConcreteType = concreteType;
+            this.LifeCycle = lifeCycle;
+        }
+
+        public LifeCycle LifeCycle { get; set; }
+        public Type ConcreteType { get; }
+
     }
     /// <summary>
     /// Lifecycle of the registered object
