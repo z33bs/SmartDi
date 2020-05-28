@@ -34,7 +34,7 @@ namespace SmartDi
     //todo list registrations
     //todo autoregister (with flags like bindingflags) and exclusion like Tiny
 
-    public interface IDiContainer
+    public interface IDiContainer : IDisposable
     {
         //RegisterType
         RegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
@@ -633,6 +633,10 @@ namespace SmartDi
         }
         #endregion
 
+        void IDisposable.Dispose()
+        {
+            InternalUnregisterAll(container);
+        }
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
