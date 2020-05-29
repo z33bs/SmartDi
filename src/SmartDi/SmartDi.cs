@@ -241,7 +241,7 @@ namespace SmartDi
         #endregion
 
         #region RegisterExpression
-
+        //todo Wrong! Fix this
         public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate)
             where ResolvedType : notnull
             => (Instance as IDiContainer).RegisterExpression<ResolvedType>(instanceDelegate);
@@ -449,8 +449,8 @@ namespace SmartDi
                 object instance;
                 if (metaObject.ActivationExpression != null)
                     instance = metaObject.ActivationExpression(smartDiInstance);
-                else if (metaObject.StaticActivationExpression != null)
-                    instance = metaObject.StaticActivationExpression();
+                //else if (metaObject.StaticActivationExpression != null)
+                //    instance = metaObject.StaticActivationExpression();
                 else
                     instance = metaObject.ObjectActivator(ResolveDependencies(container, metaObject).ToArray());
 
@@ -677,13 +677,13 @@ namespace SmartDi
             Instance = instance;
         }
 
-        public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<object> staticInstanceDelegate) : this(concreteType, lifeCycle)
-        {
-            if (staticInstanceDelegate is null)
-                throw new ArgumentNullException(nameof(staticInstanceDelegate));
+        //public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<object> staticInstanceDelegate) : this(concreteType, lifeCycle)
+        //{
+        //    if (staticInstanceDelegate is null)
+        //        throw new ArgumentNullException(nameof(staticInstanceDelegate));
 
-            StaticActivationExpression = staticInstanceDelegate;
-        }
+        //    StaticActivationExpression = staticInstanceDelegate;
+        //}
 
         public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<IDiContainer, object> instanceDelegate) : this(concreteType, lifeCycle)
         {
@@ -744,9 +744,10 @@ namespace SmartDi
 
         public ConstructorInfo ConstructorCache { get; }
 
+        //todo can we translate this into an ActivationExpression?
         public ObjectActivator ObjectActivator { get; }
 
-        public Func<object> StaticActivationExpression { get; }
+        //public Func<object> StaticActivationExpression { get; }
 
         public Func<IDiContainer, object> ActivationExpression { get; }
 
