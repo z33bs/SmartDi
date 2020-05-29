@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-
+//todo Default to Transient
 [assembly: InternalsVisibleTo("SmartDiTests")]
 namespace SmartDi
 {
@@ -107,8 +107,15 @@ namespace SmartDi
     }
 
 
+
     public class DiContainer : IDiContainer
     {
+        class EnumerableBinding
+        {
+            public List<string> Implementations { get; } = new List<string>();
+            public LifeCycle LifeCycle { get; set; } = LifeCycle.Transient;
+        }
+
         public static Settings MySettings { get; } = new Settings();
 
 
@@ -145,7 +152,7 @@ namespace SmartDi
 
         readonly ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> openGenericContainer;
 
-        static ConcurrentDictionary<Type, List<string>> staticEnumerableLookup = new ConcurrentDictionary<Type, List<string>>();
+        static ConcurrentDictionary<Type, EnumerableBinding> staticEnumerableLookup = new ConcurrentDictionary<Type, EnumerableBinding>();
 
         #region Registration
         #region Register
@@ -350,6 +357,15 @@ namespace SmartDi
                         concreteType,
                         resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton));
 
+        public static void EnumerableBindingLifeCycle<T>(LifeCycle lifeCycle) where T : notnull
+        {
+            if (staticEnumerableLookup.TryGetValue(typeof(T), out EnumerableBinding binding))
+                binding.LifeCycle = lifeCycle;
+            else
+                staticEnumerableLookup.TryAdd(typeof(T), new EnumerableBinding());
+            //staticEnumerableLookup[typeof(T)].Item2 = lifeCycle;
+        }
+
         #endregion
 
         internal static Tuple<Type, string> InternalRegister(
@@ -373,11 +389,11 @@ namespace SmartDi
             }
 
             //the way its setup resolved type should only be interface / abstract
-            if(resolvedType != null && (resolvedType.IsInterface || resolvedType.IsAbstract))
+            if (resolvedType != null && (resolvedType.IsInterface || resolvedType.IsAbstract))
             {
                 //staticEnumerableLookup.AddOrUpdate(resolvedType, new List<string>() { key }, (k, oldvalue) => { oldvalue.Add(key); return oldvalue; });
-                if (!staticEnumerableLookup.TryAdd(resolvedType, new List<string> { key }))
-                    staticEnumerableLookup[resolvedType].Add(key);
+                staticEnumerableLookup.TryAdd(resolvedType, new EnumerableBinding());
+                staticEnumerableLookup[resolvedType].Implementations.Add(key);
             }
 
             return containerKey;
@@ -408,12 +424,12 @@ namespace SmartDi
         }
 
 
-            #endregion
+        #endregion
 
-            #region Resolve
+        #region Resolve
 
-            public static T Resolve<T>() where T : notnull
-            => (T)InternalResolve(staticContainer, typeof(T), null);
+        public static T Resolve<T>() where T : notnull
+        => (T)InternalResolve(staticContainer, typeof(T), null);
 
         T IDiContainer.Resolve<T>()
             => (T)InternalResolve(container, typeof(T), null, this);
@@ -466,10 +482,10 @@ namespace SmartDi
                 {
                     var resolvableType = resolvedType.GetGenericArguments()[0];
 
-                    if(staticEnumerableLookup.TryGetValue(resolvableType, out List<string> implementations))
+                    if (staticEnumerableLookup.TryGetValue(resolvableType, out EnumerableBinding enumerableBinding))
                     {
-                        var metainstance = EnumerateFromRegistrations(container, resolvableType, implementations);
-                        
+                        var metainstance = EnumerateFromRegistrations(container, resolvableType, enumerableBinding.Implementations);
+
                         var instance = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(resolvableType));
                         foreach (var item in metainstance)
                         {
@@ -477,7 +493,7 @@ namespace SmartDi
                         }
 
                         //todo if success, add to container
-                        if(!container.TryAdd(new Tuple<Type, string>(resolvedType, null), new MetaObject(instance)))
+                        if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<Type, string>(resolvedType, null), new MetaObject(instance)))
                         {
 #if DEBUG
                             throw new ResolveException("Debugging exception: Unextpected behaviour. Should have found listing");
@@ -548,7 +564,7 @@ namespace SmartDi
             }
         }
 
-        private static IEnumerable<object> EnumerateFromRegistrations(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,Type resolvedType, List<string> implementations)
+        private static IEnumerable<object> EnumerateFromRegistrations(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, List<string> implementations)
         {
             foreach (var implementation in implementations)
             {
