@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.ComponentModel.Composition;
+//
 
 namespace IocPerformance.Classes.Multiple
 {
-    //[Export(typeof(ImportMultiple1)), PartCreationPolicy(CreationPolicy.NonShared)]
-    //[System.Composition.Export(typeof(ImportMultiple1))]
+    //
+    //
     public class ImportMultiple1
     {
         protected static int counter;
 
-        //[ImportingConstructor]
-        //[System.Composition.ImportingConstructor]
+        //
+        //
         public ImportMultiple1(
             //[ImportMany]
-            //[System.Composition.ImportMany]
+            //
             IEnumerable<ISimpleAdapter> adapters)
         {
             if (adapters == null)
@@ -52,17 +52,17 @@ namespace IocPerformance.Classes.Multiple
         }
     }
 
-    //[Export(typeof(ImportMultiple2)), PartCreationPolicy(CreationPolicy.NonShared)]
-    //[System.Composition.Export(typeof(ImportMultiple2))]
+    //
+    //
     public class ImportMultiple2
     {
         protected static int counter;
 
-        //[ImportingConstructor]
-        //[System.Composition.ImportingConstructor]
+        //
+        //
         public ImportMultiple2(
             //[ImportMany]
-            //[System.Composition.ImportMany]
+            //
             IEnumerable<ISimpleAdapter> adapters)
         {
             if (adapters == null)
@@ -100,17 +100,17 @@ namespace IocPerformance.Classes.Multiple
         }
     }
 
-    //[Export(typeof(ImportMultiple3)), PartCreationPolicy(CreationPolicy.NonShared)]
-    //[System.Composition.Export(typeof(ImportMultiple3))]
+    //
+    //
     public class ImportMultiple3
     {
         protected static int counter;
 
-        //[ImportingConstructor]
-        //[System.Composition.ImportingConstructor]
+        //
+        //
         public ImportMultiple3(
             //[ImportMany]
-            //[System.Composition.ImportMany]
+            //
             IEnumerable<ISimpleAdapter> adapters)
         {
             if (adapters == null)
