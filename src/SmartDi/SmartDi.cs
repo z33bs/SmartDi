@@ -33,7 +33,7 @@ namespace SmartDi
     //todo documentation
     //todo list registrations
     //todo autoregister (with flags like bindingflags) and exclusion like Tiny
-
+    //todo refactor to TConcrete etc
     public interface IDiContainer : IDisposable
     {
         //RegisterType
@@ -68,15 +68,21 @@ namespace SmartDi
             where ConcreteType : notnull, ResolvedType;
 
         // ... Expression
+        //todo Try refactor to just Register?
+        RegisterOptions RegisterExpression<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
+            where TConcrete : notnull;
 
-        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate)
-            where ResolvedType : notnull;
+        RegisterOptions RegisterExpression<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
+            where TConcrete : notnull, TResolved;
 
-        RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate, string key)
-            where ResolvedType : notnull;
+        RegisterOptions RegisterExpression<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
+            where TConcrete : notnull;
+
+        RegisterOptions RegisterExpression<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
+            where TConcrete : notnull, TResolved;
 
         // ... Instance
-
+        //todo This must be typed! See tests - are there any? Did they work?
         void RegisterInstance(object instance);
 
         void RegisterInstance<ResolvedType>(object instance)
@@ -241,33 +247,60 @@ namespace SmartDi
         #endregion
 
         #region RegisterExpression
-        //todo Wrong! Fix this
-        public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate)
-            where ResolvedType : notnull
-            => (Instance as IDiContainer).RegisterExpression<ResolvedType>(instanceDelegate);
-            //=> new RegisterOptions(
-            //    staticContainer,
-            //    InternalRegister(staticContainer, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile())));
+        Expression<Func<TInput, object>> CastToUntypedOutput<TInput, TOutput>
+                (Expression<Func<TInput, TOutput>> expression)
+        {
+            // Add the boxing operation, but get a weakly typed expression
+            Expression converted = Expression.Convert
+                 (expression.Body, typeof(object));
+            // Use Expression.Lambda to get back to strong typing
+            return Expression.Lambda<Func<TInput, object>>
+                 (converted, expression.Parameters);
+        }
 
-        RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate)
+
+
+        public static RegisterOptions RegisterExpression<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
+            where TConcrete : notnull
+            => (Instance as IDiContainer).RegisterExpression<TConcrete>(instanceDelegate);
+
+        RegisterOptions IDiContainer.RegisterExpression<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, null, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile())));
+                InternalRegister(container, null, null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate).Compile())));
 
 
 
-        public static RegisterOptions RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>>
+        public static RegisterOptions RegisterExpression<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
+            where TConcrete : notnull, TResolved
+            => (Instance as IDiContainer).RegisterExpression<TConcrete, TResolved>(instanceDelegate);
+
+        RegisterOptions IDiContainer.RegisterExpression<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
+            => new RegisterOptions(
+                container,
+                InternalRegister(container, typeof(TResolved), null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate).Compile())));
+
+
+
+        public static RegisterOptions RegisterExpression<TConcrete>(Expression<Func<IDiContainer, TConcrete>>
  instanceDelegate, string key)
-            where ResolvedType : notnull
-                => (Instance as IDiContainer).RegisterExpression<ResolvedType>(instanceDelegate, key);
-            //=> new RegisterOptions(
-            //    staticContainer,
-            //    InternalRegister(staticContainer, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile())));
+            where TConcrete : notnull
+                => (Instance as IDiContainer).RegisterExpression<TConcrete>(instanceDelegate, key);
 
-        RegisterOptions IDiContainer.RegisterExpression<ResolvedType>(Expression<Func<IDiContainer, object>> instanceDelegate, string key)
+        RegisterOptions IDiContainer.RegisterExpression<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, key, new MetaObject(typeof(ResolvedType), LifeCycle.Transient, instanceDelegate.Compile())));
+                InternalRegister(container, null, key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate).Compile())));
+
+        public static RegisterOptions RegisterExpression<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>>
+ instanceDelegate, string key)
+            where TConcrete : notnull, TResolved
+                => (Instance as IDiContainer).RegisterExpression<TConcrete, TResolved>(instanceDelegate, key);
+
+        RegisterOptions IDiContainer.RegisterExpression<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
+            => new RegisterOptions(
+                container,
+                InternalRegister(container, typeof(TResolved), key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate).Compile())));
 
         #endregion
 

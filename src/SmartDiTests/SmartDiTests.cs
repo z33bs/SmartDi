@@ -1105,7 +1105,7 @@ namespace SmartDiTests
         public void StaticResolve_Expression_ReturnsInstance()
         {
             DiContainer.Register<MyService, IService>();
-            DiContainer.RegisterExpression<MyService>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()));
+            DiContainer.RegisterExpression<ClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()));
 
             var resolved = DiContainer.Resolve<ClassWith3Ctors>();
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1152,7 +1152,7 @@ namespace SmartDiTests
         public void StaticResolve_ExpressionWithKey_ReturnsInstance()
         {
             DiContainer.Register<MyService, IService>();
-            DiContainer.RegisterExpression<MyService>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()), "test");
+            DiContainer.RegisterExpression<ClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()), "test");
 
             var resolved = DiContainer.Resolve<ClassWith3Ctors>("test");
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1165,7 +1165,7 @@ namespace SmartDiTests
         {
             IDiContainer container = new DiContainer();
             container.Register<MyService, IService>();
-            container.RegisterExpression<MyService>(c => new ClassWith3Ctors(c.Resolve<IService>()), "test");
+            container.RegisterExpression<ClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()), "test");
 
             var resolved = container.Resolve<ClassWith3Ctors>("test");
             Assert.IsType<ClassWith3Ctors>(resolved);
