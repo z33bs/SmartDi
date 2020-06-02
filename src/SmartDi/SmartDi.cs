@@ -29,7 +29,6 @@ namespace SmartDi
     //todo documentation
     //todo list registrations
     //todo autoregister (with flags like bindingflags) and exclusion like Tiny
-    //todo refactor to TConcrete etc
     public interface IDiContainer : IDisposable
     {
         //RegisterType
@@ -38,30 +37,30 @@ namespace SmartDi
         void RegisterOpenGeneric(Type concreteType, Type resolvedType = null, string key = null);
 
         //Register
-        RegisterOptions Register<ConcreteType>()
-            where ConcreteType : notnull;
+        RegisterOptions Register<TConcrete>()
+            where TConcrete : notnull;
 
-        RegisterOptions Register<ConcreteType, ResolvedType>()
-            where ConcreteType : notnull, ResolvedType;
+        RegisterOptions Register<TConcrete, TResolved>()
+            where TConcrete : notnull, TResolved;
 
-        RegisterOptions Register<ConcreteType>(string key)
-            where ConcreteType : notnull;
+        RegisterOptions Register<TConcrete>(string key)
+            where TConcrete : notnull;
 
-        RegisterOptions Register<ConcreteType, ResolvedType>(string key)
-            where ConcreteType : notnull, ResolvedType;
+        RegisterOptions Register<TConcrete, TResolved>(string key)
+            where TConcrete : notnull, TResolved;
 
         //... with Ctor
-        RegisterOptions Register<ConcreteType>(params Type[] constructorParameters)
-            where ConcreteType : notnull;
+        RegisterOptions Register<TConcrete>(params Type[] constructorParameters)
+            where TConcrete : notnull;
 
-        RegisterOptions Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
-            where ConcreteType : notnull, ResolvedType;
+        RegisterOptions Register<TConcrete, TResolved>(params Type[] constructorParameters)
+            where TConcrete : notnull, TResolved;
 
-        RegisterOptions Register<ConcreteType>(string key, params Type[] constructorParameters)
-            where ConcreteType : notnull;
+        RegisterOptions Register<TConcrete>(string key, params Type[] constructorParameters)
+            where TConcrete : notnull;
 
-        RegisterOptions Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
-            where ConcreteType : notnull, ResolvedType;
+        RegisterOptions Register<TConcrete, TResolved>(string key, params Type[] constructorParameters)
+            where TConcrete : notnull, TResolved;
 
         // ... Expression
         //todo Try refactor to just Register?
@@ -78,16 +77,15 @@ namespace SmartDi
             where TConcrete : notnull, TResolved;
 
         // ... Instance
-        //todo This must be typed! See tests - are there any? Did they work?
         void RegisterInstance(object instance);
 
-        void RegisterInstance<ResolvedType>(object instance)
-            where ResolvedType : notnull;
+        void RegisterInstance<TResolved>(object instance)
+            where TResolved : notnull;
 
         void RegisterInstance(object instance, string key);
 
-        void RegisterInstance<ResolvedType>(object instance, string key)
-            where ResolvedType : notnull;
+        void RegisterInstance<TResolved>(object instance, string key)
+            where TResolved : notnull;
 
         // Resolve
 
@@ -165,78 +163,78 @@ namespace SmartDi
         #region Registration
         #region Register
 
-        public static RegisterOptions Register<ConcreteType>()
-            where ConcreteType : notnull
-            => (Instance as IDiContainer).Register<ConcreteType>(Type.EmptyTypes);
+        public static RegisterOptions Register<TConcrete>()
+            where TConcrete : notnull
+            => (Instance as IDiContainer).Register<TConcrete>(Type.EmptyTypes);
 
-        RegisterOptions IDiContainer.Register<ConcreteType>()
-            => (this as IDiContainer).Register<ConcreteType>(Type.EmptyTypes);
+        RegisterOptions IDiContainer.Register<TConcrete>()
+            => (this as IDiContainer).Register<TConcrete>(Type.EmptyTypes);
 
-        public static RegisterOptions Register<ConcreteType>(params Type[] constructorParameters)
-            where ConcreteType : notnull
-            => (Instance as IDiContainer).Register<ConcreteType>(constructorParameters);
+        public static RegisterOptions Register<TConcrete>(params Type[] constructorParameters)
+            where TConcrete : notnull
+            => (Instance as IDiContainer).Register<TConcrete>(constructorParameters);
 
-        RegisterOptions IDiContainer.Register<ConcreteType>(params Type[] constructorParameters)
+        RegisterOptions IDiContainer.Register<TConcrete>(params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
+                InternalRegister(container, null, null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, constructorParameters)));
 
 
 
-        public static RegisterOptions Register<ConcreteType, ResolvedType>()
-            where ConcreteType : notnull, ResolvedType
-            => (Instance as IDiContainer).Register<ConcreteType, ResolvedType>(Type.EmptyTypes);
+        public static RegisterOptions Register<TConcrete, TResolved>()
+            where TConcrete : notnull, TResolved
+            => (Instance as IDiContainer).Register<TConcrete, TResolved>(Type.EmptyTypes);
 
-        RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>()
-            => (this as IDiContainer).Register<ConcreteType, ResolvedType>(Type.EmptyTypes);
+        RegisterOptions IDiContainer.Register<TConcrete, TResolved>()
+            => (this as IDiContainer).Register<TConcrete, TResolved>(Type.EmptyTypes);
 
-        public static RegisterOptions Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
-            where ConcreteType : notnull, ResolvedType
-            => (Instance as IDiContainer).Register<ConcreteType, ResolvedType>(constructorParameters);
+        public static RegisterOptions Register<TConcrete, TResolved>(params Type[] constructorParameters)
+            where TConcrete : notnull, TResolved
+            => (Instance as IDiContainer).Register<TConcrete, TResolved>(constructorParameters);
 
-        RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
+        RegisterOptions IDiContainer.Register<TConcrete, TResolved>(params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
+                InternalRegister(container, typeof(TResolved), null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, constructorParameters)));
 
 
 
         #endregion
         #region Register with Key
 
-        public static RegisterOptions Register<ConcreteType>(string key)
-            where ConcreteType : notnull
-            => (Instance as IDiContainer).Register<ConcreteType>(key, Type.EmptyTypes);
+        public static RegisterOptions Register<TConcrete>(string key)
+            where TConcrete : notnull
+            => (Instance as IDiContainer).Register<TConcrete>(key, Type.EmptyTypes);
 
-        RegisterOptions IDiContainer.Register<ConcreteType>(string key)
-            => (this as IDiContainer).Register<ConcreteType>(key, Type.EmptyTypes);
+        RegisterOptions IDiContainer.Register<TConcrete>(string key)
+            => (this as IDiContainer).Register<TConcrete>(key, Type.EmptyTypes);
 
-        public static RegisterOptions Register<ConcreteType>(string key, params Type[] constructorParameters)
-            where ConcreteType : notnull
-            => (Instance as IDiContainer).Register<ConcreteType>(key, constructorParameters);
+        public static RegisterOptions Register<TConcrete>(string key, params Type[] constructorParameters)
+            where TConcrete : notnull
+            => (Instance as IDiContainer).Register<TConcrete>(key, constructorParameters);
 
-        RegisterOptions IDiContainer.Register<ConcreteType>(string key, params Type[] constructorParameters)
+        RegisterOptions IDiContainer.Register<TConcrete>(string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
+                InternalRegister(container, null, key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, constructorParameters)));
 
 
 
-        public static RegisterOptions Register<ConcreteType, ResolvedType>(string key)
-            where ConcreteType : notnull, ResolvedType
-            => (Instance as IDiContainer).Register<ConcreteType, ResolvedType>(key, Type.EmptyTypes);
+        public static RegisterOptions Register<TConcrete, TResolved>(string key)
+            where TConcrete : notnull, TResolved
+            => (Instance as IDiContainer).Register<TConcrete, TResolved>(key, Type.EmptyTypes);
 
-        RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>(string key)
-            => (this as IDiContainer).Register<ConcreteType, ResolvedType>(key, Type.EmptyTypes);
+        RegisterOptions IDiContainer.Register<TConcrete, TResolved>(string key)
+            => (this as IDiContainer).Register<TConcrete, TResolved>(key, Type.EmptyTypes);
 
-        public static RegisterOptions Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
-            where ConcreteType : notnull, ResolvedType
-            => (Instance as IDiContainer).Register<ConcreteType, ResolvedType>(key, constructorParameters);
+        public static RegisterOptions Register<TConcrete, TResolved>(string key, params Type[] constructorParameters)
+            where TConcrete : notnull, TResolved
+            => (Instance as IDiContainer).Register<TConcrete, TResolved>(key, constructorParameters);
 
-        RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
+        RegisterOptions IDiContainer.Register<TConcrete, TResolved>(string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
+                InternalRegister(container, typeof(TResolved), key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, constructorParameters)));
 
 
 
@@ -312,14 +310,14 @@ namespace SmartDi
 
 
 
-        public static void RegisterInstance<ResolvedType>(object instance)
-            where ResolvedType : notnull
-            => (Instance as IDiContainer).RegisterInstance<ResolvedType>(instance);
-
-        void IDiContainer.RegisterInstance<ResolvedType>(object instance)
+        public static void RegisterInstance<TResolved>(object instance)
+            where TResolved : notnull
+            => (Instance as IDiContainer).RegisterInstance<TResolved>(instance);
+        //todo Validate TResolved : TConcrete - perhaps bring type conversion forward to here : Can return typeof(TResolved to fit into one method call)
+        void IDiContainer.RegisterInstance<TResolved>(object instance)
             => new RegisterOptions(
                 container
-                , InternalRegister(container, typeof(ResolvedType), null, new MetaObject(instance)));
+                , InternalRegister(container, typeof(TResolved), null, new MetaObject(instance)));
 
 
 
@@ -333,14 +331,14 @@ namespace SmartDi
 
 
 
-        public static void RegisterInstance<ResolvedType>(object instance, string key)
-            where ResolvedType : notnull
-            => (Instance as IDiContainer).RegisterInstance<ResolvedType>(instance, key);
+        public static void RegisterInstance<TResolved>(object instance, string key)
+            where TResolved : notnull
+            => (Instance as IDiContainer).RegisterInstance<TResolved>(instance, key);
 
-        void IDiContainer.RegisterInstance<ResolvedType>(object instance, string key)
+        void IDiContainer.RegisterInstance<TResolved>(object instance, string key)
             => new RegisterOptions(
                 container
-                , InternalRegister(container, typeof(ResolvedType), key, new MetaObject(instance)));
+                , InternalRegister(container, typeof(TResolved), key, new MetaObject(instance)));
 
 
 
@@ -359,7 +357,7 @@ namespace SmartDi
                         LifeCycle.Transient,
                         constructorParameters)));
 
-        //todo validatee resolvedType:ConcreteType
+        //todo validatee resolvedType:TConcrete
         //todo investigate possibility of ctor params
         public static void RegisterOpenGeneric(Type concreteType, Type resolvedType = null, string key = null)
             => (Instance as IDiContainer).RegisterOpenGeneric(concreteType, resolvedType, key);
@@ -370,7 +368,7 @@ namespace SmartDi
                         concreteType,
                         LifeCycle.Transient));
 
-        //todo ?should be nonstatic now?
+        //todo Rather rely on explicit registration which will set lifecycle ?should be nonstatic now?
         public void EnumerableBindingLifeCycle<T>(LifeCycle lifeCycle) where T : notnull
         {
             if (enumerableLookup.TryGetValue(typeof(T), out EnumerableBinding binding))
@@ -390,7 +388,7 @@ namespace SmartDi
             )
         {
             var containerKey = new Tuple<Type, string>(
-                resolvedType ?? metaObject.ConcreteType, key);
+                resolvedType ?? metaObject.TConcrete, key);
 
             if (!container.TryAdd(containerKey, metaObject))
             {
@@ -422,7 +420,7 @@ namespace SmartDi
             )
         {
             var containerKey = new Tuple<string, string>(
-                resolvedType?.Name ?? metaObject.ConcreteType.Name, key);
+                resolvedType?.Name ?? metaObject.TConcrete.Name, key);
 
             if (!container.TryAdd(containerKey, metaObject))
             {
@@ -529,7 +527,7 @@ namespace SmartDi
                     if (openGenericContainer.TryGetValue(new Tuple<string, string>(resolvedType.Name, key), out GenericMetaObject genericMetaObject))
                     {
                         Type[] closedTypeArgs = resolvedType.GetGenericArguments();
-                        Type resolvableType = genericMetaObject.ConcreteType.MakeGenericType(closedTypeArgs);
+                        Type resolvableType = genericMetaObject.TConcrete.MakeGenericType(closedTypeArgs);
 
                         //todo code repetition
                         var tryMetaObject = new MetaObject(resolvableType, genericMetaObject.LifeCycle);
@@ -656,7 +654,7 @@ namespace SmartDi
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error while disposing registered object of type {metaObject.ConcreteType.Name}", ex);
+                throw new Exception($"Error while disposing registered object of type {metaObject.TConcrete.Name}", ex);
             }
         }
         #endregion
@@ -727,13 +725,13 @@ namespace SmartDi
 
         private MetaObject(Type concreteType, LifeCycle lifeCycle)
         {
-            ConcreteType = concreteType ?? throw new ArgumentNullException(nameof(concreteType));
+            TConcrete = concreteType ?? throw new ArgumentNullException(nameof(concreteType));
             LifeCycle = lifeCycle;
         }
         #endregion
 
         #region Properties
-        public Type ConcreteType { get; }
+        public Type TConcrete { get; }
 
         object instance;
         public object Instance
@@ -796,7 +794,7 @@ namespace SmartDi
             }
             catch (Exception ex)
             {
-                throw new RegisterException($"Could not register {ConcreteType.Name} with specified constructor.", ex);
+                throw new RegisterException($"Could not register {TConcrete.Name} with specified constructor.", ex);
             }
         }
 
@@ -900,12 +898,12 @@ namespace SmartDi
                 throw new RegisterException(builder.ToString());
             }
 
-            this.ConcreteType = concreteType;
+            this.TConcrete = concreteType;
             this.LifeCycle = lifeCycle;
         }
 
         public LifeCycle LifeCycle { get; set; }
-        public Type ConcreteType { get; }
+        public Type TConcrete { get; }
 
     }
     /// <summary>
