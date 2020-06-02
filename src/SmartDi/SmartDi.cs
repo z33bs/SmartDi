@@ -19,10 +19,8 @@ namespace SmartDi
         public Settings()
         {
             TryResolveUnregistered = true;
-            ResolveBubblesToStaticContainer = true;
         }
         public bool TryResolveUnregistered { get; set; }
-        public bool ResolveBubblesToStaticContainer { get; set; }
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]

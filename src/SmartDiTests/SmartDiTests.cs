@@ -1013,20 +1013,6 @@ namespace SmartDiTests
         //    DiContainer.ResetContainer();
         //}
 
-        [Fact]
-        public void Resolve_SettingsNotBubble_RegisteredInStaticContainer_NotResolved()
-        {
-            DiContainer.Settings.ResolveBubblesToStaticContainer = false;
-
-            var registeredObject = new ClassThatHasToBeRegistered(3);
-            DiContainer.RegisterInstance(registeredObject);
-
-            IDiContainer container = new DiContainer();
-            Assert.Throws<ResolveException>(() => container.Resolve<ClassThatHasToBeRegistered>());
-
-            DiContainer.ResetContainer();
-            DiContainer.Settings.ResolveBubblesToStaticContainer = true;
-        }
 
         [Fact]
         public void StaticResolve_Interface_ThrowsResolutionException()
