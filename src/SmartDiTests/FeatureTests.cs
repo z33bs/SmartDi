@@ -40,16 +40,16 @@ namespace SmartDiTests
 
         private void RegisterDummies()
         {
-            DiContainer.Register<DummyOne, IDummyOne>().MultiInstance();
-            DiContainer.Register<DummyTwo, IDummyTwo>().MultiInstance();
-            DiContainer.Register<DummyThree, IDummyThree>().MultiInstance();
-            DiContainer.Register<DummyFour, IDummyFour>().MultiInstance();
-            DiContainer.Register<DummyFive, IDummyFive>().MultiInstance();
-            DiContainer.Register<DummySix, IDummySix>().MultiInstance();
-            DiContainer.Register<DummySeven, IDummySeven>().MultiInstance();
-            DiContainer.Register<DummyEight, IDummyEight>().MultiInstance();
-            DiContainer.Register<DummyNine, IDummyNine>().MultiInstance();
-            DiContainer.Register<DummyTen, IDummyTen>().MultiInstance();
+            DiContainer.Register<DummyOne, IDummyOne>();
+            DiContainer.Register<DummyTwo, IDummyTwo>();
+            DiContainer.Register<DummyThree, IDummyThree>();
+            DiContainer.Register<DummyFour, IDummyFour>();
+            DiContainer.Register<DummyFive, IDummyFive>();
+            DiContainer.Register<DummySix, IDummySix>();
+            DiContainer.Register<DummySeven, IDummySeven>();
+            DiContainer.Register<DummyEight, IDummyEight>();
+            DiContainer.Register<DummyNine, IDummyNine>();
+            DiContainer.Register<DummyTen, IDummyTen>();
         }
 
         private void RegisterStandard()
@@ -58,13 +58,13 @@ namespace SmartDiTests
             DiContainer.Register<Singleton2, ISingleton2>();
             DiContainer.Register<Singleton3, ISingleton3>();
 
-            DiContainer.Register<Transient1, ITransient1>().MultiInstance();
-            DiContainer.Register<Transient2, ITransient2>().MultiInstance();
-            DiContainer.Register<Transient3, ITransient3>().MultiInstance();
+            DiContainer.Register<Transient1, ITransient1>();
+            DiContainer.Register<Transient2, ITransient2>();
+            DiContainer.Register<Transient3, ITransient3>();
 
-            DiContainer.RegisterExpression<ICombined1>(c => new Combined1(DiContainer.Resolve<ISingleton1>(), DiContainer.Resolve<ITransient1>())).MultiInstance();
-            DiContainer.RegisterExpression<ICombined2>(c => new Combined2(DiContainer.Resolve<ISingleton2>(), DiContainer.Resolve<ITransient2>())).MultiInstance();
-            DiContainer.RegisterExpression<ICombined3>(c => new Combined3(DiContainer.Resolve<ISingleton3>(), DiContainer.Resolve<ITransient3>())).MultiInstance();
+            DiContainer.RegisterExpression<ICombined1>(c => new Combined1(DiContainer.Resolve<ISingleton1>(), DiContainer.Resolve<ITransient1>()));
+            DiContainer.RegisterExpression<ICombined2>(c => new Combined2(DiContainer.Resolve<ISingleton2>(), DiContainer.Resolve<ITransient2>()));
+            DiContainer.RegisterExpression<ICombined3>(c => new Combined3(DiContainer.Resolve<ISingleton3>(), DiContainer.Resolve<ITransient3>()));
         }
 
         private void RegisterComplexObject()
@@ -73,13 +73,13 @@ namespace SmartDiTests
             DiContainer.Register<SecondService, ISecondService>();
             DiContainer.Register<ThirdService, IThirdService>();
 
-            DiContainer.RegisterExpression<ISubObjectOne>(c => new SubObjectOne(DiContainer.Resolve<IFirstService>())).MultiInstance();
-            DiContainer.RegisterExpression<ISubObjectTwo>(c => new SubObjectTwo(DiContainer.Resolve<ISecondService>())).MultiInstance();
-            DiContainer.RegisterExpression<ISubObjectThree>(c => new SubObjectThree(DiContainer.Resolve<IThirdService>())).MultiInstance();
+            DiContainer.RegisterExpression<ISubObjectOne>(c => new SubObjectOne(DiContainer.Resolve<IFirstService>()));
+            DiContainer.RegisterExpression<ISubObjectTwo>(c => new SubObjectTwo(DiContainer.Resolve<ISecondService>()));
+            DiContainer.RegisterExpression<ISubObjectThree>(c => new SubObjectThree(DiContainer.Resolve<IThirdService>()));
 
-            DiContainer.RegisterExpression<IComplex1>(c => new Complex1(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>())).MultiInstance();
-            DiContainer.RegisterExpression<IComplex2>(c => new Complex2(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>())).MultiInstance();
-            DiContainer.RegisterExpression<IComplex3>(c => new Complex3(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>())).MultiInstance();
+            DiContainer.RegisterExpression<IComplex1>(c => new Complex1(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
+            DiContainer.RegisterExpression<IComplex2>(c => new Complex2(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
+            DiContainer.RegisterExpression<IComplex3>(c => new Complex3(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
         }
 
         private void RegisterPropertyInjection()

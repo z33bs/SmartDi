@@ -332,27 +332,27 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void StaticRegisterResolvedType_RegistersAsSingleInstance()
+        public void StaticRegisterResolvedType_Default_RegistersAsMultiInstance()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             DiContainer.SetContainer(mock);
 
             DiContainer.Register<MyService, IService>();
 
-            Assert.Equal(LifeCycle.Singleton, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
 
             DiContainer.ResetContainer();
         }
 
         [Fact]
-        public void RegisterResolvedType_RegistersAsSingleInstance()
+        public void RegisterResolvedType_Default_RegistersAsMultiInstance()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             IDiContainer container = new DiContainer(mock);
 
             container.Register<MyService, IService>();
 
-            Assert.Equal(LifeCycle.Singleton, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
         }
 
         #endregion
@@ -737,14 +737,13 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void StaticRegisterResolvedType_OptionsMultiInstance_RegistersAsMultiInstance()
+        public void StaticRegisterResolvedType_RegistersAsMultiInstance()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             DiContainer.SetContainer(mock);
 
             DiContainer
-                .Register<MyService, IService>()
-                .MultiInstance();
+                .Register<MyService, IService>();
 
             Assert.Equal(LifeCycle.Transient, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
 
@@ -752,14 +751,13 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void RegisterResolvedType_OptionsMultiInstance_RegistersAsMultiInstance()
+        public void RegisterResolvedType_RegistersAsMultiInstance()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             IDiContainer container = new DiContainer(mock);
 
             container
-                .Register<MyService, IService>()
-                .MultiInstance();
+                .Register<MyService, IService>();
 
             Assert.Equal(LifeCycle.Transient, mock[new Tuple<Type, string>(typeof(IService), null)].LifeCycle);
         }
@@ -1064,7 +1062,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             DiContainer.SetContainer(mock);
 
-            DiContainer.Register<MyService, IService>();
+            DiContainer.Register<MyService, IService>().SingleInstance();
 
             Assert.Null(mock[new Tuple<Type, string>(typeof(IService), null)].Instance);
 

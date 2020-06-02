@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-//todo Default to Transient
+
 [assembly: InternalsVisibleTo("SmartDiTests")]
 namespace SmartDi
 {
@@ -201,7 +201,7 @@ namespace SmartDi
         RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>(params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
+                InternalRegister(container, typeof(ResolvedType), null, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
 
 
 
@@ -240,7 +240,7 @@ namespace SmartDi
         RegisterOptions IDiContainer.Register<ConcreteType, ResolvedType>(string key, params Type[] constructorParameters)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Singleton, constructorParameters)));
+                InternalRegister(container, typeof(ResolvedType), key, new MetaObject(typeof(ConcreteType), LifeCycle.Transient, constructorParameters)));
 
 
 
@@ -360,7 +360,7 @@ namespace SmartDi
                 InternalRegister(container, resolvedType, key,
                     new MetaObject(
                         concreteType,
-                        resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton,
+                        LifeCycle.Transient,
                         constructorParameters)));
 
         //todo validatee resolvedType:ConcreteType
@@ -372,7 +372,7 @@ namespace SmartDi
             => InternalRegisterOpenGeneric(openGenericContainer, resolvedType, key,
                     new GenericMetaObject(
                         concreteType,
-                        resolvedType == null ? LifeCycle.Transient : LifeCycle.Singleton));
+                        LifeCycle.Transient));
 
         //todo ?should be nonstatic now?
         public void EnumerableBindingLifeCycle<T>(LifeCycle lifeCycle) where T : notnull
@@ -674,7 +674,6 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public interface ILifeCycleOptions
     {
-        void MultiInstance();
         void SingleInstance();
     }
 
@@ -693,11 +692,6 @@ namespace SmartDi
         public void SingleInstance()
         {
             container[key].LifeCycle = LifeCycle.Singleton;
-        }
-
-        public void MultiInstance()
-        {
-            container[key].LifeCycle = LifeCycle.Transient;
         }
     }
     [EditorBrowsable(EditorBrowsableState.Never)]
