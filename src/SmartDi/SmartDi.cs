@@ -6,10 +6,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 
-[assembly: InternalsVisibleTo("SmartDiTests")]
 namespace SmartDi
 {
     /// <summary>
