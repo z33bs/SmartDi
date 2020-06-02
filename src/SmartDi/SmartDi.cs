@@ -120,7 +120,7 @@ namespace SmartDi
             public LifeCycle LifeCycle { get; set; } = LifeCycle.Transient;
         }
 
-        public static Settings MySettings { get; } = new Settings();
+        public static Settings Settings { get; } = new Settings();
 
 
         public DiContainer()
@@ -546,10 +546,10 @@ namespace SmartDi
             if (ParentContainer != null)
                 return InternalResolve(ParentContainer, resolvedType, key);
 
-            if (!MySettings.TryResolveUnregistered)
+            if (!Settings.TryResolveUnregistered)
                 throw new ResolveException(
                     $"The type {resolvedType.Name} has not been registered. Either " +
-                    $"register the class, or configure {nameof(MySettings)}.");
+                    $"register the class, or configure {nameof(Settings)}.");
 
             if (resolvedType.IsInterface || resolvedType.IsAbstract)
                 throw new ResolveException(

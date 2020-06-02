@@ -943,11 +943,11 @@ namespace SmartDiTests
         [Fact]
         public void StaticResolve_IsStrictModeTrue_Unregistered_Throws()
         {
-            DiContainer.MySettings.TryResolveUnregistered = false;
+            DiContainer.Settings.TryResolveUnregistered = false;
             Assert.Throws<ResolveException>(
                 () => DiContainer.Resolve<ClassThatsResolvableWithoutRegistering>());
 
-            DiContainer.MySettings.TryResolveUnregistered = true;
+            DiContainer.Settings.TryResolveUnregistered = true;
 
         }
 
@@ -1016,7 +1016,7 @@ namespace SmartDiTests
         [Fact]
         public void Resolve_SettingsNotBubble_RegisteredInStaticContainer_NotResolved()
         {
-            DiContainer.MySettings.ResolveBubblesToStaticContainer = false;
+            DiContainer.Settings.ResolveBubblesToStaticContainer = false;
 
             var registeredObject = new ClassThatHasToBeRegistered(3);
             DiContainer.RegisterInstance(registeredObject);
@@ -1025,7 +1025,7 @@ namespace SmartDiTests
             Assert.Throws<ResolveException>(() => container.Resolve<ClassThatHasToBeRegistered>());
 
             DiContainer.ResetContainer();
-            DiContainer.MySettings.ResolveBubblesToStaticContainer = true;
+            DiContainer.Settings.ResolveBubblesToStaticContainer = true;
         }
 
         [Fact]
