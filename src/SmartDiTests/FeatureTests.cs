@@ -62,9 +62,9 @@ namespace SmartDiTests
             DiContainer.Register<Transient2, ITransient2>();
             DiContainer.Register<Transient3, ITransient3>();
 
-            DiContainer.RegisterExpression<ICombined1>(c => new Combined1(DiContainer.Resolve<ISingleton1>(), DiContainer.Resolve<ITransient1>()));
-            DiContainer.RegisterExpression<ICombined2>(c => new Combined2(DiContainer.Resolve<ISingleton2>(), DiContainer.Resolve<ITransient2>()));
-            DiContainer.RegisterExpression<ICombined3>(c => new Combined3(DiContainer.Resolve<ISingleton3>(), DiContainer.Resolve<ITransient3>()));
+            DiContainer.RegisterExplicit<ICombined1>(c => new Combined1(DiContainer.Resolve<ISingleton1>(), DiContainer.Resolve<ITransient1>()));
+            DiContainer.RegisterExplicit<ICombined2>(c => new Combined2(DiContainer.Resolve<ISingleton2>(), DiContainer.Resolve<ITransient2>()));
+            DiContainer.RegisterExplicit<ICombined3>(c => new Combined3(DiContainer.Resolve<ISingleton3>(), DiContainer.Resolve<ITransient3>()));
         }
 
         private void RegisterComplexObject()
@@ -73,26 +73,26 @@ namespace SmartDiTests
             DiContainer.Register<SecondService, ISecondService>();
             DiContainer.Register<ThirdService, IThirdService>();
 
-            DiContainer.RegisterExpression<ISubObjectOne>(c => new SubObjectOne(DiContainer.Resolve<IFirstService>()));
-            DiContainer.RegisterExpression<ISubObjectTwo>(c => new SubObjectTwo(DiContainer.Resolve<ISecondService>()));
-            DiContainer.RegisterExpression<ISubObjectThree>(c => new SubObjectThree(DiContainer.Resolve<IThirdService>()));
+            DiContainer.RegisterExplicit<ISubObjectOne>(c => new SubObjectOne(DiContainer.Resolve<IFirstService>()));
+            DiContainer.RegisterExplicit<ISubObjectTwo>(c => new SubObjectTwo(DiContainer.Resolve<ISecondService>()));
+            DiContainer.RegisterExplicit<ISubObjectThree>(c => new SubObjectThree(DiContainer.Resolve<IThirdService>()));
 
-            DiContainer.RegisterExpression<IComplex1>(c => new Complex1(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
-            DiContainer.RegisterExpression<IComplex2>(c => new Complex2(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
-            DiContainer.RegisterExpression<IComplex3>(c => new Complex3(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
+            DiContainer.RegisterExplicit<IComplex1>(c => new Complex1(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
+            DiContainer.RegisterExplicit<IComplex2>(c => new Complex2(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
+            DiContainer.RegisterExplicit<IComplex3>(c => new Complex3(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
         }
 
         private void RegisterPropertyInjection()
         {
-            DiContainer.RegisterExpression<IServiceA>(c => new ServiceA()).SingleInstance();
-            DiContainer.RegisterExpression<IServiceB>(c => new ServiceB()).SingleInstance();
-            DiContainer.RegisterExpression<IServiceC>(c => new ServiceC()).SingleInstance();
+            DiContainer.RegisterExplicit<IServiceA>(c => new ServiceA()).SingleInstance();
+            DiContainer.RegisterExplicit<IServiceB>(c => new ServiceB()).SingleInstance();
+            DiContainer.RegisterExplicit<IServiceC>(c => new ServiceC()).SingleInstance();
 
-            DiContainer.RegisterExpression<ISubObjectA>(c => new SubObjectA { ServiceA = DiContainer.Resolve<IServiceA>() });
-            DiContainer.RegisterExpression<ISubObjectB>(c => new SubObjectB { ServiceB = DiContainer.Resolve<IServiceB>() });
-            DiContainer.RegisterExpression<ISubObjectC>(c => new SubObjectC { ServiceC = DiContainer.Resolve<IServiceC>() });
+            DiContainer.RegisterExplicit<ISubObjectA>(c => new SubObjectA { ServiceA = DiContainer.Resolve<IServiceA>() });
+            DiContainer.RegisterExplicit<ISubObjectB>(c => new SubObjectB { ServiceB = DiContainer.Resolve<IServiceB>() });
+            DiContainer.RegisterExplicit<ISubObjectC>(c => new SubObjectC { ServiceC = DiContainer.Resolve<IServiceC>() });
 
-            DiContainer.RegisterExpression<IComplexPropertyObject1>(c => new ComplexPropertyObject1
+            DiContainer.RegisterExplicit<IComplexPropertyObject1>(c => new ComplexPropertyObject1
             {
                 ServiceA = DiContainer.Resolve<IServiceA>(),
                 ServiceB = DiContainer.Resolve<IServiceB>(),
@@ -103,7 +103,7 @@ namespace SmartDiTests
             });
 
 
-            DiContainer.RegisterExpression<IComplexPropertyObject2>(c => new ComplexPropertyObject2
+            DiContainer.RegisterExplicit<IComplexPropertyObject2>(c => new ComplexPropertyObject2
             {
                 ServiceA = DiContainer.Resolve<IServiceA>(),
                 ServiceB = DiContainer.Resolve<IServiceB>(),
@@ -113,7 +113,7 @@ namespace SmartDiTests
                 SubObjectC = DiContainer.Resolve<ISubObjectC>()
             });
 
-            DiContainer.RegisterExpression<IComplexPropertyObject3>(c => new ComplexPropertyObject3
+            DiContainer.RegisterExplicit<IComplexPropertyObject3>(c => new ComplexPropertyObject3
             {
                 ServiceA = DiContainer.Resolve<IServiceA>(),
                 ServiceB = DiContainer.Resolve<IServiceB>(),
@@ -141,9 +141,9 @@ namespace SmartDiTests
             //todo make alternative
             //DiContainer.EnumerableBindingLifeCycle<ISimpleAdapter>(LifeCycle.Singleton);
 
-            DiContainer.RegisterExpression<ImportMultiple1>(c => new ImportMultiple1(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-            DiContainer.RegisterExpression<ImportMultiple2>(c => new ImportMultiple2(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-            DiContainer.RegisterExpression<ImportMultiple3>(c => new ImportMultiple3(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
+            DiContainer.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
+            DiContainer.RegisterExplicit<ImportMultiple2>(c => new ImportMultiple2(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
+            DiContainer.RegisterExplicit<ImportMultiple3>(c => new ImportMultiple3(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
         }
 
         private void RegisterConditional()
@@ -152,9 +152,9 @@ namespace SmartDiTests
             DiContainer.Register<ExportConditionalObject2, IExportConditionInterface>("ExportConditionalObject2");
             DiContainer.Register<ExportConditionalObject3, IExportConditionInterface>("ExportConditionalObject3");
 
-            DiContainer.RegisterExpression<ImportConditionObject1>(c => new ImportConditionObject1(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject1")));
-            DiContainer.RegisterExpression<ImportConditionObject2>(c => new ImportConditionObject2(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject2")));
-            DiContainer.RegisterExpression<ImportConditionObject3>(c => new ImportConditionObject3(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject3")));
+            DiContainer.RegisterExplicit<ImportConditionObject1>(c => new ImportConditionObject1(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject1")));
+            DiContainer.RegisterExplicit<ImportConditionObject2>(c => new ImportConditionObject2(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject2")));
+            DiContainer.RegisterExplicit<ImportConditionObject3>(c => new ImportConditionObject3(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject3")));
         }
 
         private readonly ITestOutputHelper output;
@@ -182,9 +182,9 @@ namespace SmartDiTests
             DiContainer.Register<SimpleAdapterFive, ISimpleAdapter>("5");
             //DiContainer.Register<IEnumerable<ISimpleAdapter>>();
 
-            DiContainer.RegisterExpression<ImportMultiple1>(c => new ImportMultiple1(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-            DiContainer.RegisterExpression<ImportMultiple2>(c => new ImportMultiple2(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-            DiContainer.RegisterExpression<ImportMultiple3>(c => new ImportMultiple3(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
+            DiContainer.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
+            DiContainer.RegisterExplicit<ImportMultiple2>(c => new ImportMultiple2(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
+            DiContainer.RegisterExplicit<ImportMultiple3>(c => new ImportMultiple3(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
 
 
             var importMultiple1 = (ImportMultiple1)DiContainer.Resolve(typeof(ImportMultiple1));
@@ -206,9 +206,9 @@ namespace SmartDiTests
             container.Register<SimpleAdapterFive, ISimpleAdapter>("5");
             //DiContainer.Register<IEnumerable<ISimpleAdapter>>();
 
-            container.RegisterExpression<ImportMultiple1>(c => new ImportMultiple1(c.Resolve<IEnumerable<ISimpleAdapter>>()));
-            container.RegisterExpression<ImportMultiple2>(c => new ImportMultiple2(c.Resolve<IEnumerable<ISimpleAdapter>>()));
-            container.RegisterExpression<ImportMultiple3>(c => new ImportMultiple3(c.Resolve<IEnumerable<ISimpleAdapter>>()));
+            container.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(c.Resolve<IEnumerable<ISimpleAdapter>>()));
+            container.RegisterExplicit<ImportMultiple2>(c => new ImportMultiple2(c.Resolve<IEnumerable<ISimpleAdapter>>()));
+            container.RegisterExplicit<ImportMultiple3>(c => new ImportMultiple3(c.Resolve<IEnumerable<ISimpleAdapter>>()));
 
 
             var importMultiple1 = (ImportMultiple1)container.Resolve(typeof(ImportMultiple1));
