@@ -32,9 +32,7 @@ namespace SmartDi
     public interface IDiContainer : IDisposable
     {
         //RegisterType
-        RegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
-
-        void RegisterOpenGeneric(Type concreteType, Type resolvedType = null, string key = null);
+        IRegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
 
         //Register
         RegisterOptions Register<TConcrete>()
@@ -150,6 +148,7 @@ namespace SmartDi
 
         public ConcurrentDictionary<Tuple<Type, string>, MetaObject> ParentContainer { get; set; }
 
+        //todo if key is string, string - don't need separate generic container
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         internal readonly ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> openGenericContainer;
         internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
@@ -344,28 +343,29 @@ namespace SmartDi
         #endregion
 
         #region Register Type
-        public static RegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters)
+        public static IRegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters)
             => (Instance as IDiContainer).RegisterType(concreteType, resolvedType, key, constructorParameters);
 
-        RegisterOptions IDiContainer.RegisterType(Type concreteType, Type resolvedType, string key, params Type[] constructorParameters)
-            => new RegisterOptions(
+        IRegisterOptions IDiContainer.RegisterType(Type concreteType, Type resolvedType, string key, params Type[] constructorParameters)
+        {
+            if(concreteType.IsGenericTypeDefinition)
+                return new GenericRegisterOptions(
+                    openGenericContainer,
+                    InternalRegisterOpenGeneric(openGenericContainer, resolvedType, key,
+                        new GenericMetaObject(
+                            concreteType,
+                            LifeCycle.Transient)));
+            else
+            return new RegisterOptions(
                 container,
                 InternalRegister(container, resolvedType, key,
                     new MetaObject(
                         concreteType,
                         LifeCycle.Transient,
-                        constructorParameters)));
+                        constructorParameters))); }
 
         //todo validatee resolvedType:TConcrete
         //todo investigate possibility of ctor params
-        public static void RegisterOpenGeneric(Type concreteType, Type resolvedType = null, string key = null)
-            => (Instance as IDiContainer).RegisterOpenGeneric(concreteType, resolvedType, key);
-
-        void IDiContainer.RegisterOpenGeneric(Type concreteType, Type resolvedType, string key)
-            => InternalRegisterOpenGeneric(openGenericContainer, resolvedType, key,
-                    new GenericMetaObject(
-                        concreteType,
-                        LifeCycle.Transient));
 
         //todo Rather rely on explicit registration which will set lifecycle ?should be nonstatic now?
         public void EnumerableBindingLifeCycle<T>(LifeCycle lifeCycle) where T : notnull
@@ -411,7 +411,7 @@ namespace SmartDi
         }
 
         //todo only diff is the Tuple - any such thing as a generic Tuple?
-        internal static Tuple<string, string> InternalRegisterOpenGeneric(
+        internal Tuple<string, string> InternalRegisterOpenGeneric(
             ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container,
             Type resolvedType,
             string key,
@@ -503,7 +503,7 @@ namespace SmartDi
                             instance.Add(item);
                         }
 
-                        //todo if success, add to container
+                        //todo if success, add to container (with activationExpression)
                         if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<Type, string>(resolvedType, null), new MetaObject(instance)))
                         {
 #if DEBUG
@@ -665,13 +665,20 @@ namespace SmartDi
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
+    public interface IRegisterOptions : ILifeCycleOptions
+    {
+        void SingleInstance();
+    }
+
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public interface ILifeCycleOptions
     {
         void SingleInstance();
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public class RegisterOptions : ILifeCycleOptions
+    public class RegisterOptions : IRegisterOptions
     {
         readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         readonly Tuple<Type, string> key;
@@ -687,6 +694,25 @@ namespace SmartDi
             container[key].LifeCycle = LifeCycle.Singleton;
         }
     }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public class GenericRegisterOptions : IRegisterOptions
+    {
+        readonly ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container;
+        readonly Tuple<string, string> key;
+
+        public GenericRegisterOptions(ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container, Tuple<string, string> key)
+        {
+            this.container = container;
+            this.key = key;
+        }
+
+        public void SingleInstance()
+        {
+            container[key].LifeCycle = LifeCycle.Singleton;
+        }
+    }
+
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class MetaObject : IDisposable
     {
@@ -803,6 +829,7 @@ namespace SmartDi
                     GetConstructors(BindingFlags.Instance | BindingFlags.Public)
                     .ToList();
 
+            //todo can trigger IEnumerable logic here
             if (constructors.Count == 0)
                 throw new RegisterException($"{concreteType.Name} won't be resolved as it has no constructors.");
 

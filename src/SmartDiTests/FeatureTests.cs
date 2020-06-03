@@ -126,8 +126,8 @@ namespace SmartDiTests
 
         private void RegisterOpenGeneric()
         {
-            DiContainer.RegisterOpenGeneric(typeof(GenericExport<>), typeof(IGenericInterface<>)); //todo should be multi
-            DiContainer.RegisterOpenGeneric(typeof(ImportGeneric<>));
+            DiContainer.RegisterType(typeof(GenericExport<>), typeof(IGenericInterface<>)); //todo should be multi
+            DiContainer.RegisterType(typeof(ImportGeneric<>));
         }
 
         private void RegisterMultiple()
@@ -221,8 +221,8 @@ namespace SmartDiTests
         public void RegisterGenericForReal()
         {
             DiContainer.ResetContainer();
-            DiContainer.RegisterOpenGeneric(typeof(GenericExport<>), typeof(IGenericInterface<>));
-            DiContainer.RegisterOpenGeneric(typeof(ImportGeneric<>));
+            DiContainer.RegisterType(typeof(GenericExport<>), typeof(IGenericInterface<>));
+            DiContainer.RegisterType(typeof(ImportGeneric<>));
 
             DiContainer.Resolve<ImportGeneric<int>>();
             Assert.IsType<ImportGeneric<int>>(DiContainer.Resolve(typeof(ImportGeneric<int>)));

@@ -2,6 +2,8 @@
 using Xunit;
 using SmartDi;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using IocPerformance.Classes.Multiple;
 
 namespace SmartDiTests
 {
@@ -11,7 +13,7 @@ namespace SmartDiTests
         [Fact]
         public void Playground()
         {
-            DiContainer.Register<ClassWithStringParameter>("test", typeof(string));
+            //DiContainer.RegisterType(typeof(IEnumerable<ISimpleAdapter>)).SingleInstance();
         }
 
         public abstract class DisposableBase : IDisposable
