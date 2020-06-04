@@ -27,4 +27,7 @@
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="System.Linq.Dynamic.Core" Version="1.1.2" />
+    </ItemGroup>
 </Project>

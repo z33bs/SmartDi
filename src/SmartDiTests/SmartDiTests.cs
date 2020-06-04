@@ -14,6 +14,7 @@ namespace SmartDiTests
         public void Playground()
         {
             //DiContainer.RegisterType(typeof(IEnumerable<ISimpleAdapter>)).SingleInstance();
+            DiContainer.Register<ClassWith3Ctors>();
         }
 
         public abstract class DisposableBase : IDisposable
