@@ -350,7 +350,7 @@ namespace SmartDi
 
         IRegisterOptions IDiContainer.RegisterType(Type concreteType, Type resolvedType, string key, params Type[] constructorParameters)
         {
-            if(concreteType.IsGenericTypeDefinition)
+            if (concreteType.IsGenericTypeDefinition)
                 return new GenericRegisterOptions(
                     openGenericContainer,
                     InternalRegisterOpenGeneric(openGenericContainer, resolvedType, key,
@@ -358,13 +358,14 @@ namespace SmartDi
                             concreteType,
                             LifeCycle.Transient)));
             else
-            return new RegisterOptions(
-                container,
-                InternalRegister(container, resolvedType, key,
-                    new MetaObject(
-                        concreteType,
-                        LifeCycle.Transient,
-                        constructorParameters))); }
+                return new RegisterOptions(
+                    container,
+                    InternalRegister(container, resolvedType, key,
+                        new MetaObject(
+                            concreteType,
+                            LifeCycle.Transient,
+                            constructorParameters)));
+        }
 
         //todo validatee resolvedType:TConcrete
         //todo investigate possibility of ctor params
@@ -466,6 +467,35 @@ namespace SmartDi
         object IDiContainer.Resolve(Type type, string key)
             => InternalResolve(container, type, key, this);
 
+        internal Expression GetNewExpression(Type resolvedType, string key)
+        {
+            //todo need to handle Instance stuff
+            if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
+            {
+                if (metaObject.NewExpression != null)
+                    return metaObject.NewExpression;
+
+                var paramsInfo = metaObject.ConstructorCache?.GetParameters() ?? throw new Exception("ConstructorCash should not be null");
+
+                var argsExp = new Expression[paramsInfo.Length];
+
+                for (int i = 0; i < paramsInfo.Length; i++)
+                {
+                    var param = paramsInfo[i];
+                    var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
+
+                    argsExp[i] = GetNewExpression(param.ParameterType, namedAttribute?.Key);
+                }
+
+                metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
+
+                return metaObject.NewExpression;
+            }
+
+            return null;
+        }
+
+
         internal object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key, IDiContainer smartDiInstance = null)
         {
             //todo do we still need to pass smartDiInstance?
@@ -476,13 +506,12 @@ namespace SmartDi
                 if (metaObject.Instance != null) //Will only be the case if Singleton
                     return metaObject.Instance;
 
-                //object instance;
-                //if (metaObject.ActivationExpression != null)
-                   var instance = metaObject.ActivationExpression(smartDiInstance);
-                //else if (metaObject.StaticActivationExpression != null)
-                //    instance = metaObject.StaticActivationExpression();
-                //else
-                //    instance = metaObject.ObjectActivator(ResolveDependencies(container, metaObject).ToArray());
+                if (metaObject.ActivationExpression is null)
+                    GetNewExpression(resolvedType, key);
+
+                var instance = metaObject.ActivationExpression(smartDiInstance);
+
+
 
                 if (metaObject.LifeCycle == LifeCycle.Singleton)
                     metaObject.Instance = instance; //Cache if singleton
@@ -751,7 +780,7 @@ namespace SmartDi
                     ? GetSpecificConstructor(concreteType, args)
                     : GetBestConstructor(concreteType);
 
-            TestExpressionCreator(ConstructorCache);
+            //TestExpressionCreator(ConstructorCache);
             //ObjectActivator = GetActivator(ConstructorCache);
         }
 
@@ -763,6 +792,23 @@ namespace SmartDi
         #endregion
 
         #region Properties
+
+        NewExpression newExpression;
+        public NewExpression NewExpression
+        {
+            get => newExpression;
+            set
+            {
+                newExpression = value;
+
+                ActivationExpression = Expression.Lambda(
+                    value,
+                    Expression.Parameter(typeof(IDiContainer), "c")
+                    ).Compile() as Func<IDiContainer, object>;
+            }
+        }
+
+
         public Type TConcrete { get; }
 
         object instance;
@@ -807,6 +853,8 @@ namespace SmartDi
         #endregion
 
         #region Internal methods
+
+
         internal ConstructorInfo GetSpecificConstructor(Type concreteType, params Type[] args)
         {
             try
@@ -864,6 +912,7 @@ namespace SmartDi
             return constructors[0];
         }
 
+
         //todo - don't compile on register. On first resolve compile by substituting each expression.
         internal string TestExpressionCreator(ConstructorInfo ctor)
         {
@@ -886,7 +935,7 @@ namespace SmartDi
                     //todo: only need to do once
                     var get = typeof(IDiContainer).GetMethods().Where(m => m.Name == "Resolve" && m.GetParameters().Count() == 1 && m.IsGenericMethod).ToArray();
                     MethodInfo method = get[0].MakeGenericMethod(item.ParameterType);
-                    argsExp[i] = Expression.Call(p, method,Expression.Constant(namedAttribute.Key));
+                    argsExp[i] = Expression.Call(p, method, Expression.Constant(namedAttribute.Key));
                 }
                 else
                 {
@@ -901,13 +950,13 @@ namespace SmartDi
             builder.Append(")");
 
             //const string exp = @"(Person.Age > 3 AND Person.Weight > 50) OR Person.Age < 3";
-            
+
             //var e = DynamicExpression.ParseLambda(new[] { p }, null, exp);
             //DynamicExpression.
             //var lambda = DynamicExpressionParser.ParseLambda(new[] { p }, null, builder.ToString());
-            var test = Expression.Lambda(Expression.New(ctor, argsExp),p);
+            var test = Expression.Lambda(Expression.New(ctor, argsExp), p);
             //todo somehow need the parameter in here
-            ActivationExpression = test.Compile() as Func<IDiContainer,object>;
+            ActivationExpression = test.Compile() as Func<IDiContainer, object>;
 
             return builder.ToString();
         }

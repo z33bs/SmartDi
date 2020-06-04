@@ -14,7 +14,15 @@ namespace SmartDiTests
         public void Playground()
         {
             //DiContainer.RegisterType(typeof(IEnumerable<ISimpleAdapter>)).SingleInstance();
-            DiContainer.Register<ClassWith3Ctors>();
+            IDiContainer container = new DiContainer();
+            container.Register<MyService, IService>();
+            container.Register<ClassWith3Ctors>();
+            var test = (container as DiContainer).GetNewExpression(typeof(ClassWith3Ctors), null);
+
+            var test2 = (container as DiContainer).GetNewExpression(typeof(ClassWith3Ctors), null);
+
+            //var lazy = new Lazy<MyService>()
+
         }
 
         public abstract class DisposableBase : IDisposable
