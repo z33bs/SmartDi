@@ -104,7 +104,6 @@ namespace SmartDi
 
         void UnregisterAll();
 
-        T GetInstance<T>(string key);
     }
 
 
@@ -469,25 +468,7 @@ namespace SmartDi
         object IDiContainer.Resolve(Type type, string key)
             => InternalResolve(container, type, key);
 
-        //internal object GetInstance(Type resolvedType, string key)
-        //{
-        //    if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
-        //    {
-        //        return metaObject.Instance;
-        //    }
-        //    throw new Exception("Couldn't find metaObject");
-        //}
 
-            //todo GetInstance not all that relevant now that we're returning GetObject
-        T IDiContainer.GetInstance<T>(string key)
-        {
-            if (container.TryGetValue(new Tuple<Type, string>(typeof(T), key), out MetaObject metaObject))
-            {
-                //return (T)metaObject.Instance;
-                return (T)metaObject.GetObject(this);
-            }
-            throw new Exception("Couldn't find metaObject");
-        }
 
         internal Expression GetNewExpression(Type resolvedType, string key)
         {
@@ -496,28 +477,12 @@ namespace SmartDi
             {
                 if (metaObject.LifeCycle is LifeCycle.Singleton)
                 {
-                    //var test = typeof(DiContainer).GetMethods(BindingFlags.Instance|BindingFlags.NonPublic);//.Where(m => m.Name == nameof(GetInstance));
+                    var method = typeof(IDiContainer).GetMethod(nameof(IDiContainer.Resolve),new Type[]{ typeof(string) }).MakeGenericMethod(resolvedType);
 
-                    //todo make internal again
-                    var method = typeof(IDiContainer).GetMethod(nameof(IDiContainer.GetInstance)).MakeGenericMethod(resolvedType);
-                    //,null,CallingConventions.Any,new Type[] { typeof(Type),typeof(string)},null);
-                    //var method = typeof(IDiContainer).GetMethod(nameof(IDiContainer.Resolve),new Type[] { typeof(string)}).MakeGenericMethod(resolvedType);
-
-                    if (metaObject.NewExpression is null)
-                        MakeNewExpression(metaObject);
-
-                    ////todo try bring logic into MakeNewExpression, as appears its in scope then
-                    //var p = Expression.Parameter(typeof(IDiContainer), "c");
-
-                    //return Expression.Call(p, method, Expression.Constant(key, typeof(string)));
-                    //var result = Expression.Parameter(resolvedType, "result");
                     return
-                        //Expression.Block(
-                        //    new[] { p },
                             Expression.Call(
                                 MetaObject.IDiContainerParameter,
                                 method,
-                                //Expression.Constant(resolvedType, typeof(Type)),
                                 Expression.Constant(key, typeof(string)));
                 }
 
