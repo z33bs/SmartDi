@@ -558,27 +558,12 @@ namespace SmartDi
         {
             //todo do we still need to pass smartDiInstance?
 
-            //if registered
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
-                //if (metaObject.Instance != null) //Will only be the case if Singleton
-                //    return metaObject.Instance;
-
                 if (metaObject.ActivationExpression is null)
                     GetNewExpression(resolvedType, key);
 
-                //todo redundant now
-                if (metaObject.LifeCycle is LifeCycle.Singleton)
-                    return metaObject.GetObject(smartDiInstance); //metaObject.Instance;
-
-                var instance = metaObject.GetObject(smartDiInstance); //metaObject.ActivationExpression(smartDiInstance);
-
-
-
-                //if (metaObject.LifeCycle == LifeCycle.Singleton)
-                //    metaObject.Instance = instance; //Cache if singleton
-
-                return instance;
+                return metaObject.GetObject(smartDiInstance);
             }
 
             if (resolvedType.IsGenericType)
