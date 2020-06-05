@@ -27,6 +27,7 @@ namespace SmartDiTests
             RegisterOpenGeneric();
             RegisterMultiple();
             RegisterConditional();
+            DiContainer.Compile();
         }
 
         void PrepareBasic()
@@ -35,6 +36,7 @@ namespace SmartDiTests
             RegisterDummies();
             RegisterStandard();
             RegisterComplexObject();
+            DiContainer.Compile();
         }
 
 

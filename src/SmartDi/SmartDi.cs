@@ -86,6 +86,8 @@ namespace SmartDi
         void RegisterInstance<TResolved>(object instance, string key)
             where TResolved : notnull;
 
+        void Compile();
+
         // Resolve
 
         T Resolve<T>() where T : notnull;
@@ -367,7 +369,6 @@ namespace SmartDi
                             LifeCycle.Transient,
                             constructorParameters)));
         }
-
         //todo validatee resolvedType:TConcrete
         //todo investigate possibility of ctor params
 
@@ -382,6 +383,20 @@ namespace SmartDi
         }
 
         #endregion
+
+
+        public static void Compile()
+            => (Instance as IDiContainer).Compile();
+
+        void IDiContainer.Compile()
+        {
+            foreach (var keyValuePair in container)
+            {
+                if(keyValuePair.Value.ActivationExpression == null)
+                    MakeNewExpression(keyValuePair.Value);
+            }
+        }
+
 
         internal Tuple<Type, string> InternalRegister(
             ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
