@@ -520,6 +520,7 @@ namespace SmartDi
                                 //Expression.Constant(resolvedType, typeof(Type)),
                                 Expression.Constant(key, typeof(string)));
                 }
+
                 if (metaObject.NewExpression != null)
                     return metaObject.NewExpression;
 
@@ -559,7 +560,7 @@ namespace SmartDi
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
                 if (metaObject.ActivationExpression is null)
-                    GetNewExpression(resolvedType, key);
+                    MakeNewExpression(metaObject);//GetNewExpression(resolvedType, key);
 
                 return metaObject.GetObject(this);
             }
