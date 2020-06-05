@@ -17,9 +17,9 @@ namespace SmartDiTests
             IDiContainer container = new DiContainer();
             container.Register<MyService, IService>();
             container.Register<ClassWith3Ctors>();
-            var test = (container as DiContainer).GetNewExpression(typeof(ClassWith3Ctors), null);
+            var test = (container as DiContainer).GetExpression(typeof(ClassWith3Ctors), null);
 
-            var test2 = (container as DiContainer).GetNewExpression(typeof(ClassWith3Ctors), null);
+            var test2 = (container as DiContainer).GetExpression(typeof(ClassWith3Ctors), null);
 
             //var lazy = new Lazy<MyService>()
 
@@ -1002,12 +1002,13 @@ namespace SmartDiTests
 
 
 
-        [Fact]
-        public void StaticResolve_UnregisteredUnresolvable2_Throws()
-        {
-            Assert.Throws<ResolveException>(
-                () => DiContainer.Resolve<ClassThatsUnresolvable>());
-        }
+        //Silly test - just a throw in the constructor
+        //[Fact]
+        //public void StaticResolve_UnregisteredUnresolvable2_Throws()
+        //{
+        //    Assert.Throws<ResolveException>(
+        //        () => DiContainer.Resolve<ClassThatsUnresolvable>());
+        //}
 
         //Now have explicit child container
         //[Fact]

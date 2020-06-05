@@ -485,9 +485,8 @@ namespace SmartDi
 
 
 
-        internal Expression GetNewExpression(Type resolvedType, string key)
+        internal Expression GetExpression(Type resolvedType, string key)
         {
-            //todo need to handle Instance stuff
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
                 if (metaObject.LifeCycle is LifeCycle.Singleton)
@@ -509,13 +508,8 @@ namespace SmartDi
                 return metaObject.NewExpression;
             }
 
-            //todo - Would be clearer / better to have separation of concerns and have this in a separate method
-            //Doesn't exist so create
-            //todo small overlap with innerResolve - could extract
-            var newMetaObject = new MetaObject(resolvedType, LifeCycle.Transient);
-            container.TryAdd(new Tuple<Type, string>(resolvedType, key), newMetaObject);
-            MakeNewExpression(newMetaObject);
-            return newMetaObject.NewExpression;
+            //else
+            return null;
         }
 
         private void MakeNewExpression(MetaObject metaObject)
@@ -529,7 +523,8 @@ namespace SmartDi
                 var param = paramsInfo[i];
                 var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
 
-                argsExp[i] = GetNewExpression(param.ParameterType, namedAttribute?.Key);
+                argsExp[i] = GetExpression(param.ParameterType, namedAttribute?.Key)
+                    ?? TryAutoRegister(param.ParameterType)?.NewExpression;
             }
 
             metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
@@ -591,7 +586,8 @@ namespace SmartDi
                         var tryMetaObject = new MetaObject(resolvableType, genericMetaObject.LifeCycle);
                         //var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
 
-                        GetNewExpression(resolvableType, key);
+                        //todo should this be make? And what if returns null (if get)
+                        GetExpression(resolvableType, key);
                         //if success, then add
 
                         //todo watch for double-add in GetNewExpression
@@ -611,11 +607,6 @@ namespace SmartDi
             if (ParentContainer != null)
                 return InternalResolve(ParentContainer, resolvedType, key);
 
-            if (!Settings.TryResolveUnregistered)
-                throw new ResolveException(
-                    $"The type {resolvedType.Name} has not been registered. Either " +
-                    $"register the class, or configure {nameof(Settings)}.");
-
             if (resolvedType.IsInterface || resolvedType.IsAbstract)
                 throw new ResolveException(
                     $"Could not Resolve or Create {resolvedType.Name}" +
@@ -623,15 +614,25 @@ namespace SmartDi
                     $"smart resolve couldn't create an instance.");
 
             //else try resolve concreteType anyway
+            return TryAutoRegister(resolvedType)?.GetObject(this);
+        }
+
+        private MetaObject TryAutoRegister(Type resolvedType)
+        {
+            if (!Settings.TryResolveUnregistered)
+                throw new ResolveException(
+                    $"The type {resolvedType.Name} has not been registered. Either " +
+                    $"register the class, or configure {nameof(Settings)}.");
+
             try
             {
-                var tryMetaObject = new MetaObject(resolvedType, LifeCycle.Transient);
-                MakeNewExpression(tryMetaObject);
-                var instance = tryMetaObject.GetObject(this);//tryMetaObject.ActivationExpression.Invoke(smartDiInstance);
-                //var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
-                //if success then add registration
-                container.TryAdd(new Tuple<Type, string>(resolvedType, key), tryMetaObject);
-                return instance;
+                var newMetaObject = new MetaObject(resolvedType, LifeCycle.Transient);
+
+                MakeNewExpression(newMetaObject); //only add after successful make
+
+                container.TryAdd(new Tuple<Type, string>(resolvedType, null), newMetaObject);
+
+                return newMetaObject;
             }
             catch (Exception ex)
             {
