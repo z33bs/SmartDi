@@ -448,26 +448,26 @@ namespace SmartDi
             => (Instance as IDiContainer).Resolve<T>();
 
         T IDiContainer.Resolve<T>()
-            => (T)InternalResolve(container, typeof(T), null, this);
+            => (T)InternalResolve(container, typeof(T), null);
 
 
         public static T Resolve<T>(string key) where T : notnull
             => (Instance as IDiContainer).Resolve<T>(key);
 
         T IDiContainer.Resolve<T>(string key)
-            => (T)InternalResolve(container, typeof(T), key, this);
+            => (T)InternalResolve(container, typeof(T), key);
 
         public static object Resolve(Type type)
             => (Instance as IDiContainer).Resolve(type);
 
         object IDiContainer.Resolve(Type type)
-            => InternalResolve(container, type, null, this);
+            => InternalResolve(container, type, null);
 
         public static object Resolve(Type type, string key)
             => (Instance as IDiContainer).Resolve(type, key);
 
         object IDiContainer.Resolve(Type type, string key)
-            => InternalResolve(container, type, key, this);
+            => InternalResolve(container, type, key);
 
         //internal object GetInstance(Type resolvedType, string key)
         //{
@@ -554,16 +554,14 @@ namespace SmartDi
             metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
         }
 
-        internal object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key, IDiContainer smartDiInstance = null)
+        internal object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {
-            //todo do we still need to pass smartDiInstance?
-
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
                 if (metaObject.ActivationExpression is null)
                     GetNewExpression(resolvedType, key);
 
-                return metaObject.GetObject(smartDiInstance);
+                return metaObject.GetObject(this);
             }
 
             if (resolvedType.IsGenericType)
@@ -622,7 +620,7 @@ namespace SmartDi
                         if (tryMetaObject.LifeCycle is LifeCycle.Singleton)
                             return tryMetaObject.Instance;
                         else
-                            return tryMetaObject.GetObject(smartDiInstance);//tryMetaObject.ActivationExpression(smartDiInstance);
+                            return tryMetaObject.GetObject(this);//tryMetaObject.ActivationExpression(smartDiInstance);
                         //if success then add registration
                         //return instance;
                     }
@@ -648,7 +646,7 @@ namespace SmartDi
             {
                 var tryMetaObject = new MetaObject(resolvedType, LifeCycle.Transient);
                 MakeNewExpression(tryMetaObject);
-                var instance = tryMetaObject.GetObject(smartDiInstance);//tryMetaObject.ActivationExpression.Invoke(smartDiInstance);
+                var instance = tryMetaObject.GetObject(this);//tryMetaObject.ActivationExpression.Invoke(smartDiInstance);
                 //var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
                 //if success then add registration
                 container.TryAdd(new Tuple<Type, string>(resolvedType, key), tryMetaObject);
