@@ -238,15 +238,15 @@ namespace SmartDiTests
             Assert.Throws<RegisterException>(() => new MetaObject(typeof(ConcreteOnly), LifeCycle.Singleton, typeof(MyService)));
         }
 
-#if DEBUG
-        [Fact]
-        public void MetaObject_RegisteredTransient_SetInstance_Throws()
-        {
-            var metaObject = new MetaObject(typeof(ConcreteOnly), LifeCycle.Transient);
-            Assert.Throws<Exception>(() => metaObject.Instance = new ConcreteOnly());
+//#if DEBUG
+//        [Fact]
+//        public void MetaObject_RegisteredTransient_SetInstance_Throws()
+//        {
+//            var metaObject = new MetaObject(typeof(ConcreteOnly), LifeCycle.Transient);
+//            Assert.Throws<Exception>(() => metaObject.Instance = new ConcreteOnly());
 
-        }
-#endif
+//        }
+//#endif
 
         #endregion
 

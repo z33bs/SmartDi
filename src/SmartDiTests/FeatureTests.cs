@@ -54,17 +54,17 @@ namespace SmartDiTests
 
         private void RegisterStandard()
         {
-            DiContainer.Register<Singleton1, ISingleton1>();
-            DiContainer.Register<Singleton2, ISingleton2>();
-            DiContainer.Register<Singleton3, ISingleton3>();
+            DiContainer.Register<Singleton1, ISingleton1>().SingleInstance();
+            DiContainer.Register<Singleton2, ISingleton2>().SingleInstance();
+            DiContainer.Register<Singleton3, ISingleton3>().SingleInstance();
 
             DiContainer.Register<Transient1, ITransient1>();
             DiContainer.Register<Transient2, ITransient2>();
             DiContainer.Register<Transient3, ITransient3>();
 
-            DiContainer.RegisterExplicit<ICombined1>(c => new Combined1(DiContainer.Resolve<ISingleton1>(), DiContainer.Resolve<ITransient1>()));
-            DiContainer.RegisterExplicit<ICombined2>(c => new Combined2(DiContainer.Resolve<ISingleton2>(), DiContainer.Resolve<ITransient2>()));
-            DiContainer.RegisterExplicit<ICombined3>(c => new Combined3(DiContainer.Resolve<ISingleton3>(), DiContainer.Resolve<ITransient3>()));
+            DiContainer.Register<Combined1,ICombined1>();
+            DiContainer.Register<Combined2, ICombined2>();
+            DiContainer.Register<Combined3, ICombined3>();
         }
 
         private void RegisterComplexObject()
@@ -241,14 +241,71 @@ namespace SmartDiTests
             DiContainer.ResetContainer(); //was dipose
 
         }
+
+        [Fact]
+        public void Combined()
+        {
+            RegisterStandard();
+
+            for (int i = 0; i < 2; i++)
+            {
+                var combined1 = (ICombined1)DiContainer.Resolve(typeof(ICombined1));
+                var combined2 = (ICombined2)DiContainer.Resolve(typeof(ICombined2));
+                var combined3 = (ICombined3)DiContainer.Resolve(typeof(ICombined3));
+            }
+
+            Assert.Equal(1,Singleton1.Instances);
+            Assert.Equal(1, Singleton2.Instances);
+            Assert.Equal(1, Singleton3.Instances);
+
+            Assert.Equal(2, Combined1.Instances);
+            Assert.Equal(2, Combined2.Instances);
+            Assert.Equal(2, Combined3.Instances);
+
+            Assert.Equal(2, Transient1.Instances);
+            Assert.Equal(2, Transient2.Instances);
+            Assert.Equal(2, Transient3.Instances);
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void Transient()
+        {
+            ResetInstanceCounters();
+            RegisterStandard();
+
+            for (int i = 0; i < 2; i++)
+            {
+                var transient1 = (ITransient1)DiContainer.Resolve(typeof(ITransient1));
+                var transient2 = (ITransient2)DiContainer.Resolve(typeof(ITransient2));
+                var transient3 = (ITransient3)DiContainer.Resolve(typeof(ITransient3));
+            }
+
+            Assert.Equal(2, Transient1.Instances);
+            Assert.Equal(2, Transient2.Instances);
+            Assert.Equal(2, Transient3.Instances);
+
+            DiContainer.ResetContainer();
+        }
+
         [Fact]
         public void PrepareAndRegisterAndSimpleResolve()
         {
+            ResetInstanceCounters();
             PrepareBasic();
             DiContainer.Resolve(typeof(IDummyOne));
             DiContainer.Resolve(typeof(ISingleton1));
+
+            Assert.Equal(1, Singleton1.Instances);
             DiContainer.ResetContainer();
 
+        }
+
+        private void ResetInstanceCounters()
+        {
+            Transient1.Instances = Transient2.Instances = Transient3.Instances = 0;
+            Singleton1.Instances = Singleton2.Instances = Singleton3.Instances = 0;
         }
     }
 }

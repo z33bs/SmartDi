@@ -103,6 +103,8 @@ namespace SmartDi
             where T : notnull;
 
         void UnregisterAll();
+
+        T GetInstance<T>(string key);
     }
 
 
@@ -467,34 +469,90 @@ namespace SmartDi
         object IDiContainer.Resolve(Type type, string key)
             => InternalResolve(container, type, key, this);
 
+        //internal object GetInstance(Type resolvedType, string key)
+        //{
+        //    if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
+        //    {
+        //        return metaObject.Instance;
+        //    }
+        //    throw new Exception("Couldn't find metaObject");
+        //}
+
+            //todo GetInstance not all that relevant now that we're returning GetObject
+        T IDiContainer.GetInstance<T>(string key)
+        {
+            if (container.TryGetValue(new Tuple<Type, string>(typeof(T), key), out MetaObject metaObject))
+            {
+                //return (T)metaObject.Instance;
+                return (T)metaObject.GetObject(this);
+            }
+            throw new Exception("Couldn't find metaObject");
+        }
+
         internal Expression GetNewExpression(Type resolvedType, string key)
         {
             //todo need to handle Instance stuff
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
+                if (metaObject.LifeCycle is LifeCycle.Singleton)
+                {
+                    //var test = typeof(DiContainer).GetMethods(BindingFlags.Instance|BindingFlags.NonPublic);//.Where(m => m.Name == nameof(GetInstance));
+
+                    //todo make internal again
+                    var method = typeof(IDiContainer).GetMethod(nameof(IDiContainer.GetInstance)).MakeGenericMethod(resolvedType);
+                    //,null,CallingConventions.Any,new Type[] { typeof(Type),typeof(string)},null);
+                    //var method = typeof(IDiContainer).GetMethod(nameof(IDiContainer.Resolve),new Type[] { typeof(string)}).MakeGenericMethod(resolvedType);
+
+                    if (metaObject.NewExpression is null)
+                        MakeNewExpression(metaObject);
+
+                    ////todo try bring logic into MakeNewExpression, as appears its in scope then
+                    //var p = Expression.Parameter(typeof(IDiContainer), "c");
+
+                    //return Expression.Call(p, method, Expression.Constant(key, typeof(string)));
+                    //var result = Expression.Parameter(resolvedType, "result");
+                    return
+                        //Expression.Block(
+                        //    new[] { p },
+                            Expression.Call(
+                                MetaObject.IDiContainerParameter,
+                                method,
+                                //Expression.Constant(resolvedType, typeof(Type)),
+                                Expression.Constant(key, typeof(string)));
+                }
                 if (metaObject.NewExpression != null)
                     return metaObject.NewExpression;
 
-                var paramsInfo = metaObject.ConstructorCache?.GetParameters() ?? throw new Exception("ConstructorCash should not be null");
-
-                var argsExp = new Expression[paramsInfo.Length];
-
-                for (int i = 0; i < paramsInfo.Length; i++)
-                {
-                    var param = paramsInfo[i];
-                    var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
-
-                    argsExp[i] = GetNewExpression(param.ParameterType, namedAttribute?.Key);
-                }
-
-                metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
+                MakeNewExpression(metaObject);
 
                 return metaObject.NewExpression;
             }
 
-            return null;
+            //todo - Would be clearer / better to have separation of concerns and have this in a separate method
+            //Doesn't exist so create
+            //todo small overlap with innerResolve - could extract
+            var newMetaObject = new MetaObject(resolvedType, LifeCycle.Transient);
+            container.TryAdd(new Tuple<Type, string>(resolvedType, key), newMetaObject);
+            MakeNewExpression(newMetaObject);
+            return newMetaObject.NewExpression;
         }
 
+        private void MakeNewExpression(MetaObject metaObject)
+        {
+            var paramsInfo = metaObject.ConstructorCache?.GetParameters() ?? throw new Exception("ConstructorCash should not be null");
+
+            var argsExp = new Expression[paramsInfo.Length];
+
+            for (int i = 0; i < paramsInfo.Length; i++)
+            {
+                var param = paramsInfo[i];
+                var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
+
+                argsExp[i] = GetNewExpression(param.ParameterType, namedAttribute?.Key);
+            }
+
+            metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
+        }
 
         internal object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key, IDiContainer smartDiInstance = null)
         {
@@ -503,18 +561,22 @@ namespace SmartDi
             //if registered
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
-                if (metaObject.Instance != null) //Will only be the case if Singleton
-                    return metaObject.Instance;
+                //if (metaObject.Instance != null) //Will only be the case if Singleton
+                //    return metaObject.Instance;
 
                 if (metaObject.ActivationExpression is null)
                     GetNewExpression(resolvedType, key);
 
-                var instance = metaObject.ActivationExpression(smartDiInstance);
+                //todo redundant now
+                if (metaObject.LifeCycle is LifeCycle.Singleton)
+                    return metaObject.GetObject(smartDiInstance); //metaObject.Instance;
+
+                var instance = metaObject.GetObject(smartDiInstance); //metaObject.ActivationExpression(smartDiInstance);
 
 
 
-                if (metaObject.LifeCycle == LifeCycle.Singleton)
-                    metaObject.Instance = instance; //Cache if singleton
+                //if (metaObject.LifeCycle == LifeCycle.Singleton)
+                //    metaObject.Instance = instance; //Cache if singleton
 
                 return instance;
             }
@@ -564,10 +626,20 @@ namespace SmartDi
                         //todo code repetition
                         var tryMetaObject = new MetaObject(resolvableType, genericMetaObject.LifeCycle);
                         //var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
-                        var instance = tryMetaObject.ActivationExpression(smartDiInstance);
-                        //if success then add registration
+
+                        GetNewExpression(resolvableType, key);
+                        //if success, then add
+
+                        //todo watch for double-add in GetNewExpression
                         container.TryAdd(new Tuple<Type, string>(resolvedType, key), tryMetaObject);
-                        return instance;
+
+
+                        if (tryMetaObject.LifeCycle is LifeCycle.Singleton)
+                            return tryMetaObject.Instance;
+                        else
+                            return tryMetaObject.GetObject(smartDiInstance);//tryMetaObject.ActivationExpression(smartDiInstance);
+                        //if success then add registration
+                        //return instance;
                     }
                 }
             }
@@ -590,7 +662,8 @@ namespace SmartDi
             try
             {
                 var tryMetaObject = new MetaObject(resolvedType, LifeCycle.Transient);
-                var instance = tryMetaObject.ActivationExpression.Invoke(smartDiInstance);
+                MakeNewExpression(tryMetaObject);
+                var instance = tryMetaObject.GetObject(smartDiInstance);//tryMetaObject.ActivationExpression.Invoke(smartDiInstance);
                 //var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
                 //if success then add registration
                 container.TryAdd(new Tuple<Type, string>(resolvedType, key), tryMetaObject);
@@ -755,7 +828,9 @@ namespace SmartDi
         public MetaObject(object instance) : this(instance?.GetType(), LifeCycle.Singleton)
         {
             //this( ctor will throw if instance is null
+            //lazy = new Lazy<object>(() => instance);
             Instance = instance;
+            ActivationExpression = c => instance; //todo I dont think we need this
         }
 
         //public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<object> staticInstanceDelegate) : this(concreteType, lifeCycle)
@@ -771,6 +846,7 @@ namespace SmartDi
             if (instanceDelegate is null)
                 throw new ArgumentNullException(nameof(instanceDelegate));
 
+            //todo Walk the instanceDelegate tree
             ActivationExpression = instanceDelegate;
         }
 
@@ -793,6 +869,8 @@ namespace SmartDi
 
         #region Properties
 
+        public static ParameterExpression IDiContainerParameter { get; } = Expression.Parameter(typeof(IDiContainer), "c");
+
         NewExpression newExpression;
         public NewExpression NewExpression
         {
@@ -801,9 +879,12 @@ namespace SmartDi
             {
                 newExpression = value;
 
+                //lazy = new Lazy<object>(Expression.Lambda<Func<object>>(newExpression, null).Compile());
+
+
                 ActivationExpression = Expression.Lambda(
-                    value,
-                    Expression.Parameter(typeof(IDiContainer), "c")
+                    newExpression,
+                    IDiContainerParameter
                     ).Compile() as Func<IDiContainer, object>;
             }
         }
@@ -811,21 +892,23 @@ namespace SmartDi
 
         public Type TConcrete { get; }
 
-        object instance;
+        //Lazy<object> lazy;
+        //object instance;
         public object Instance
         {
-            get => instance;
-            set
-            {
-#if DEBUG
-                if (LifeCycle is LifeCycle.Singleton)
-                    instance = value;
-                else
-                    throw new Exception("Should only set Instance if LifeCycle is Singleton");
-#else
-                instance = value;
-#endif
-            }
+            get;set;
+            //get => lazy?.Value;
+//            set
+//            {
+//#if DEBUG
+//                if (LifeCycle is LifeCycle.Singleton)
+//                    instance = value;
+//                else
+//                    throw new Exception("Should only set Instance if LifeCycle is Singleton");
+//#else
+//                instance = value;
+//#endif
+//            }
         }
 
         LifeCycle lifeCycle;
@@ -834,8 +917,10 @@ namespace SmartDi
             get => lifeCycle;
             set
             {
-                if (value is LifeCycle.Transient)
-                    instance = null; //Can only have instance if Singleton
+                //todo check this logic when clean up
+
+                //if (value is LifeCycle.Transient)
+                //    instance = null; //Can only have instance if Singleton
 
                 lifeCycle = value;
             }
@@ -854,6 +939,18 @@ namespace SmartDi
 
         #region Internal methods
 
+        public object GetObject(IDiContainer container)
+        {
+            if(LifeCycle is LifeCycle.Singleton)
+            {
+                if (Instance is null)
+                    Instance = ActivationExpression(container);
+
+                return Instance;
+            }
+
+            return ActivationExpression(container);
+        }
 
         internal ConstructorInfo GetSpecificConstructor(Type concreteType, params Type[] args)
         {
@@ -924,7 +1021,7 @@ namespace SmartDi
 
 
 
-            var p = Expression.Parameter(typeof(IDiContainer), "c");
+            //var p = Expression.Parameter(typeof(IDiContainer), "c");
 
             int i = 0;
             foreach (var item in paramsInfo)
@@ -935,13 +1032,13 @@ namespace SmartDi
                     //todo: only need to do once
                     var get = typeof(IDiContainer).GetMethods().Where(m => m.Name == "Resolve" && m.GetParameters().Count() == 1 && m.IsGenericMethod).ToArray();
                     MethodInfo method = get[0].MakeGenericMethod(item.ParameterType);
-                    argsExp[i] = Expression.Call(p, method, Expression.Constant(namedAttribute.Key));
+                    argsExp[i] = Expression.Call(IDiContainerParameter, method, Expression.Constant(namedAttribute.Key));
                 }
                 else
                 {
                     var get = typeof(IDiContainer).GetMethods().Where(m => m.Name == "Resolve" && m.GetParameters().Count() == 0 && m.IsGenericMethod).ToArray();
                     MethodInfo method = get[0].MakeGenericMethod(item.ParameterType);
-                    argsExp[i] = Expression.Call(p, method);
+                    argsExp[i] = Expression.Call(IDiContainerParameter, method);
                 }
                 builder.Append($"c.Resolve<{item.ParameterType.Name}>(),");
                 i++;
@@ -954,7 +1051,7 @@ namespace SmartDi
             //var e = DynamicExpression.ParseLambda(new[] { p }, null, exp);
             //DynamicExpression.
             //var lambda = DynamicExpressionParser.ParseLambda(new[] { p }, null, builder.ToString());
-            var test = Expression.Lambda(Expression.New(ctor, argsExp), p);
+            var test = Expression.Lambda(Expression.New(ctor, argsExp), IDiContainerParameter);
             //todo somehow need the parameter in here
             ActivationExpression = test.Compile() as Func<IDiContainer, object>;
 
