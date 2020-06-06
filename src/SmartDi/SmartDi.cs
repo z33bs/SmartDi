@@ -123,14 +123,14 @@ namespace SmartDi
 
         public DiContainer()
         {
-            container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            container = new ConcurrentDictionary<Tuple<string, string>, MetaObject>();
             openGenericContainer = new ConcurrentDictionary<Tuple<string, string>, GenericMetaObject>();
             enumerableLookup = new ConcurrentDictionary<Type, EnumerableBinding>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public DiContainer(
-            ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
+            ConcurrentDictionary<Tuple<string, string>, MetaObject> container,
             ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> openGenericContainer = null,
             ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup = null)
         {
@@ -140,7 +140,7 @@ namespace SmartDi
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void SetContainer(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
+        public static void SetContainer(ConcurrentDictionary<Tuple<string, string>, MetaObject> container)
             => Instance.container = container;
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -151,10 +151,10 @@ namespace SmartDi
 
         internal static DiContainer Instance { get; private set; } = new DiContainer();
 
-        public ConcurrentDictionary<Tuple<Type, string>, MetaObject> ParentContainer { get; set; }
+        public ConcurrentDictionary<Tuple<string, string>, MetaObject> ParentContainer { get; set; }
 
         //todo if key is string, string - don't need separate generic container
-        internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
+        internal ConcurrentDictionary<Tuple<string, string>, MetaObject> container;
         internal readonly ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> openGenericContainer;
         internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
 
@@ -398,20 +398,20 @@ namespace SmartDi
         }
 
 
-        internal Tuple<Type, string> InternalRegister(
-            ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
+        internal Tuple<string, string> InternalRegister(
+            ConcurrentDictionary<Tuple<string, string>, MetaObject> container,
             Type resolvedType,
             string key,
             MetaObject metaObject
             )
         {
-            var containerKey = new Tuple<Type, string>(
-                resolvedType ?? metaObject.TConcrete, key);
+            var containerKey = new Tuple<string, string>(
+                resolvedType?.AssemblyQualifiedName ?? metaObject.TConcrete.AssemblyQualifiedName, key);
 
             if (!container.TryAdd(containerKey, metaObject))
             {
                 var builder = new StringBuilder();
-                builder.Append($"{containerKey.Item1.Name} is already registered");
+                builder.Append($"{containerKey.Item1} is already registered");
                 if (containerKey.Item2 != null)
                     builder.Append($" with key '{nameof(containerKey.Item2)}'");
                 builder.Append(".");
@@ -487,7 +487,7 @@ namespace SmartDi
 
         internal Expression GetExpression(Type resolvedType, string key)
         {
-            if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
+            if (container.TryGetValue(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, key), out MetaObject metaObject))
             {
                 if (metaObject.LifeCycle is LifeCycle.Singleton)
                     return Expression.Call(
@@ -529,9 +529,9 @@ namespace SmartDi
             metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
         }
 
-        internal object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
+        internal object InternalResolve(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
         {
-            if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
+            if (container.TryGetValue(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, key), out MetaObject metaObject))
             {
                 if (metaObject.ActivationExpression is null)
                     MakeNewExpression(metaObject);//GetNewExpression(resolvedType, key);
@@ -557,7 +557,7 @@ namespace SmartDi
                         }
 
                         //todo if success, add to container (with activationExpression)
-                        if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<Type, string>(resolvedType, null), new MetaObject(instance)))
+                        if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, null), new MetaObject(instance)))
                         {
 #if DEBUG
                             throw new ResolveException("Debugging exception: Unextpected behaviour. Should have found listing");
@@ -590,7 +590,7 @@ namespace SmartDi
                         //if success, then add
 
                         //todo watch for double-add in GetNewExpression
-                        container.TryAdd(new Tuple<Type, string>(resolvedType, key), tryMetaObject);
+                        container.TryAdd(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, key), tryMetaObject);
 
 
                         if (tryMetaObject.LifeCycle is LifeCycle.Singleton)
@@ -629,7 +629,7 @@ namespace SmartDi
 
                 MakeNewExpression(newMetaObject); //only add after successful make
 
-                container.TryAdd(new Tuple<Type, string>(resolvedType, null), newMetaObject);
+                container.TryAdd(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, null), newMetaObject);
 
                 return newMetaObject;
             }
@@ -645,7 +645,7 @@ namespace SmartDi
             }
         }
 
-        private IEnumerable<object> EnumerateFromRegistrations(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, List<string> implementations)
+        private IEnumerable<object> EnumerateFromRegistrations(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, List<string> implementations)
         {
             foreach (var implementation in implementations)
             {
@@ -653,7 +653,7 @@ namespace SmartDi
             }
         }
 
-        internal IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
+        internal IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, MetaObject metaObject)
         {
             if (metaObject.ConstructorCache != null) //null if instanceDelegate was passed
             {
@@ -686,9 +686,9 @@ namespace SmartDi
             => InternalUnregister(container, typeof(T), key);
 
 
-        static void InternalUnregister(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
+        static void InternalUnregister(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
         {
-            if (container.TryRemove(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
+            if (container.TryRemove(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, key), out MetaObject metaObject))
                 TryDispose(metaObject);
             else
             {
@@ -708,7 +708,7 @@ namespace SmartDi
             => InternalUnregisterAll(container);
 
 
-        static void InternalUnregisterAll(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
+        static void InternalUnregisterAll(ConcurrentDictionary<Tuple<string, string>, MetaObject> container)
         {
             foreach (var registration in container)
             {
@@ -751,10 +751,10 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class RegisterOptions : IRegisterOptions
     {
-        readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
-        readonly Tuple<Type, string> key;
+        readonly ConcurrentDictionary<Tuple<string, string>, MetaObject> container;
+        readonly Tuple<string, string> key;
 
-        public RegisterOptions(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Tuple<Type, string> key)
+        public RegisterOptions(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Tuple<string, string> key)
         {
             this.container = container;
             this.key = key;
