@@ -264,7 +264,7 @@ namespace SmartDi
         RegisterOptions IDiContainer.RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate).Compile())));
+                InternalRegister(container, null, null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TConcrete), null))));
 
 
 
@@ -275,7 +275,7 @@ namespace SmartDi
         RegisterOptions IDiContainer.RegisterExplicit<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(TResolved), null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate).Compile())));
+                InternalRegister(container, typeof(TResolved), null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TResolved), null))));
 
 
 
@@ -287,7 +287,7 @@ namespace SmartDi
         RegisterOptions IDiContainer.RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, null, key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate).Compile())));
+                InternalRegister(container, null, key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TConcrete), key))));
 
         public static RegisterOptions RegisterExplicit<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>>
  instanceDelegate, string key)
@@ -297,7 +297,7 @@ namespace SmartDi
         RegisterOptions IDiContainer.RegisterExplicit<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(TResolved), key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate).Compile())));
+                InternalRegister(container, typeof(TResolved), key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TResolved),key))));
 
         #endregion
 
@@ -490,16 +490,15 @@ namespace SmartDi
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
             {
                 if (metaObject.LifeCycle is LifeCycle.Singleton)
-                {
-                    var method = typeof(IDiContainer).GetMethod(nameof(IDiContainer.Resolve),new Type[]{ typeof(string) }).MakeGenericMethod(resolvedType);
-
-                    return
-                            Expression.Call(
-                                MetaObject.IDiContainerParameter,
-                                method,
-                                Expression.Constant(key, typeof(string)));
-                }
-
+                    return Expression.Call(
+                        MetaObject.IDiContainerParameter,
+                        typeof(IDiContainer)
+                            .GetMethod(
+                                nameof(IDiContainer.Resolve),
+                                new Type[] { typeof(string) })
+                            .MakeGenericMethod(resolvedType),
+                        Expression.Constant(key, typeof(string)));
+                
                 if (metaObject.NewExpression != null)
                     return metaObject.NewExpression;
 
@@ -740,7 +739,6 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public interface IRegisterOptions : ILifeCycleOptions
     {
-        void SingleInstance();
     }
 
 
@@ -806,13 +804,22 @@ namespace SmartDi
         //    StaticActivationExpression = staticInstanceDelegate;
         //}
 
-        public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<IDiContainer, object> instanceDelegate) : this(concreteType, lifeCycle)
+        ///<param name="key">Need to know its full dictionary key to make its uncompiled expression</param>
+        public MetaObject(Type concreteType, LifeCycle lifeCycle, Expression<Func<IDiContainer, object>> instanceDelegate, Tuple<Type,string> key) : this(concreteType, lifeCycle)
         {
             if (instanceDelegate is null)
                 throw new ArgumentNullException(nameof(instanceDelegate));
 
-            //todo Walk the instanceDelegate tree
-            ActivationExpression = instanceDelegate;
+            var resolveMethod = typeof(IDiContainer).GetMethod(nameof(IDiContainer.Resolve), new Type[] { typeof(string) }).MakeGenericMethod(key.Item1);
+
+            //Cant set to instanceDelegate.Body because the parameter c is out of scope
+            //...figure this out and you'll have a more elegant solution
+            NewExpression = Expression.Call(
+                IDiContainerParameter,
+                resolveMethod,
+                Expression.Constant(key.Item2, typeof(string)));
+
+            ActivationExpression = instanceDelegate.Compile();
         }
 
         public MetaObject(Type concreteType, LifeCycle lifeCycle, params Type[] args) : this(concreteType, lifeCycle)
@@ -834,10 +841,11 @@ namespace SmartDi
 
         #region Properties
 
+        //todo test whether static causes problem for child containers. Me thinks shouldn't
         public static ParameterExpression IDiContainerParameter { get; } = Expression.Parameter(typeof(IDiContainer), "c");
 
-        NewExpression newExpression;
-        public NewExpression NewExpression
+        Expression newExpression;
+        public Expression NewExpression
         {
             get => newExpression;
             set

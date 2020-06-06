@@ -223,7 +223,7 @@ namespace SmartDiTests
         [Fact]
         public void MetaObjectCtor_InstanceDelegateNull_Throws()
         {
-            Assert.Throws<ArgumentNullException>(() => new MetaObject(typeof(ConcreteOnly), LifeCycle.Transient, instanceDelegate: null));
+            Assert.Throws<ArgumentNullException>(() => new MetaObject(typeof(ConcreteOnly), LifeCycle.Transient, instanceDelegate: null,null));
         }
 
         [Fact]

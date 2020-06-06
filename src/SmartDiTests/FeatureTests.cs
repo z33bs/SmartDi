@@ -256,7 +256,7 @@ namespace SmartDiTests
                 var combined3 = (ICombined3)DiContainer.Resolve(typeof(ICombined3));
             }
 
-            Assert.Equal(1,Singleton1.Instances);
+            Assert.Equal(1, Singleton1.Instances);
             Assert.Equal(1, Singleton2.Instances);
             Assert.Equal(1, Singleton3.Instances);
 
