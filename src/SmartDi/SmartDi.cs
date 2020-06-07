@@ -504,19 +504,29 @@ namespace SmartDi
 
         private void MakeNewExpression(MetaObject metaObject)
         {
-            var paramsInfo = metaObject.ConstructorCache?.GetParameters() ?? throw new Exception("ConstructorCash should not be null");
+            var paramsInfo = metaObject.ConstructorCache?.GetParameters();
 
-            var argsExp = new Expression[paramsInfo.Length];
-
-            for (int i = 0; i < paramsInfo.Length; i++)
+            if (paramsInfo != null)
             {
-                var param = paramsInfo[i];
-                var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
 
-                argsExp[i] = GetExpression(param.ParameterType, namedAttribute?.Key);
+                var argsExp = new Expression[paramsInfo.Length];
+
+                for (int i = 0; i < paramsInfo.Length; i++)
+                {
+                    var param = paramsInfo[i];
+                    var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
+
+                    argsExp[i] = GetExpression(param.ParameterType, namedAttribute?.Key);
+                }
+
+                metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
             }
 
-            metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
+            else if (metaObject.TConcrete.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                metaObject.NewExpression = GetEnumerableExpression(metaObject.TConcrete);
+
+            else
+                throw new Exception($"{nameof(metaObject.ConstructorCache)} should not be null");
         }
 
         ///<param name="container">Needed so we can call with ParentContainer</param>
@@ -548,26 +558,7 @@ namespace SmartDi
                 //todo move to register with ActivationExpression
                 if (resolvedType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                 {
-                    //                    var resolvableType = resolvedType.GetGenericArguments()[0];
 
-                    //                    if (enumerableLookup.TryGetValue(resolvableType, out EnumerableBinding enumerableBinding))
-                    //                    {
-                    //                        var metainstance = EnumerateFromRegistrations(container, resolvableType, enumerableBinding.Implementations);
-
-                    //                        var instance = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(resolvableType));
-                    //                        foreach (var item in metainstance)
-                    //                        {
-                    //                            instance.Add(item);
-                    //                        }
-
-                    //                        //todo if success, add to container (with activationExpression)
-                    //                        if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<string, string>(resolvedType.FullName, null), new MetaObject(instance)))
-                    //                        {
-                    //#if DEBUG
-                    //                            throw new ResolveException("Debugging exception: Unextpected behaviour. Should have found listing");
-                    //#endif
-                    //                        }
-                    //                        return instance;
                     return null; //todo handle enumerable
                 }
 
@@ -609,12 +600,40 @@ namespace SmartDi
             return metaObject.GetObject(this);
         }
 
-
-        private IEnumerable<object> EnumerateFromRegistrations(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, List<string> implementations)
+        internal Expression GetEnumerableExpression(Type resolvedType)
         {
+            var resolvableType = resolvedType.GetGenericArguments()[0];
+
+            if (enumerableLookup.TryGetValue(resolvableType, out EnumerableBinding enumerableBinding))
+            {
+                IEnumerable<ElementInit> listElements = GetListElementExpressionsForEnumerable(resolvableType, enumerableBinding.Implementations);
+
+                // Create a NewExpression that represents constructing
+                // a new instance of Dictionary<int, string>.
+                NewExpression newDictionaryExpression =
+                    Expression.New(typeof(List<>).MakeGenericType(resolvableType));
+
+                // Create a ListInitExpression that represents initializing
+                // a new Dictionary<> instance with two key-value pairs.
+                ListInitExpression listInitExpression =
+                    Expression.ListInit(
+                        newDictionaryExpression,
+                        listElements);
+
+                return listInitExpression;
+            }
+
+            throw new ResolveException($"Could not resolve {resolvedType.Name}");
+        }
+
+        private IEnumerable<ElementInit> GetListElementExpressionsForEnumerable(Type resolvedType, List<string> implementations)
+        {
+            var addMethod = typeof(List<>).MakeGenericType(resolvedType).GetMethod("Add");
             foreach (var implementation in implementations)
             {
-                yield return InternalResolve(container, resolvedType, implementation);
+                var expression = GetExpression(resolvedType, implementation);
+                var elementInit = Expression.ElementInit(addMethod, expression);
+                yield return elementInit; //InternalResolve(container, resolvedType, implementation);
             }
         }
 
@@ -775,9 +794,6 @@ namespace SmartDi
             ConstructorCache = args != Type.EmptyTypes
                     ? GetSpecificConstructor(concreteType, args)
                     : GetBestConstructor(concreteType);
-
-            //TestExpressionCreator(ConstructorCache);
-            //ObjectActivator = GetActivator(ConstructorCache);
         }
 
         private MetaObject(Type concreteType, LifeCycle lifeCycle)
@@ -902,9 +918,12 @@ namespace SmartDi
                     GetConstructors(BindingFlags.Instance | BindingFlags.Public)
                     .ToList();
 
-            //todo can trigger IEnumerable logic here
             if (constructors.Count == 0)
-                throw new RegisterException($"{concreteType.Name} won't be resolved as it has no constructors.");
+                if (concreteType.IsGenericType
+                    && concreteType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                        return null; //ok because we won't need the constructor
+                else
+                    throw new RegisterException($"{concreteType.Name} won't be resolved as it has no constructors.");
 
             if (constructors.Count > 1)
             {

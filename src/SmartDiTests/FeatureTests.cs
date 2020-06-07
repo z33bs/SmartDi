@@ -182,7 +182,7 @@ namespace SmartDiTests
             DiContainer.Register<SimpleAdapterThree, ISimpleAdapter>("3");
             DiContainer.Register<SimpleAdapterFour, ISimpleAdapter>("4");
             DiContainer.Register<SimpleAdapterFive, ISimpleAdapter>("5");
-            //DiContainer.Register<IEnumerable<ISimpleAdapter>>();
+            DiContainer.Register<IEnumerable<ISimpleAdapter>>();
 
             DiContainer.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
             DiContainer.RegisterExplicit<ImportMultiple2>(c => new ImportMultiple2(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
@@ -206,7 +206,7 @@ namespace SmartDiTests
             container.Register<SimpleAdapterThree, ISimpleAdapter>("3");
             container.Register<SimpleAdapterFour, ISimpleAdapter>("4");
             container.Register<SimpleAdapterFive, ISimpleAdapter>("5");
-            //DiContainer.Register<IEnumerable<ISimpleAdapter>>();
+            container.Register<IEnumerable<ISimpleAdapter>>();
 
             container.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(c.Resolve<IEnumerable<ISimpleAdapter>>()));
             container.RegisterExplicit<ImportMultiple2>(c => new ImportMultiple2(c.Resolve<IEnumerable<ISimpleAdapter>>()));
