@@ -406,7 +406,7 @@ namespace SmartDi
             )
         {
             var containerKey = new Tuple<string, string>(
-                resolvedType?.AssemblyQualifiedName ?? metaObject.TConcrete.AssemblyQualifiedName, key);
+                resolvedType?.FullName ?? metaObject.TConcrete.FullName, key);
 
             if (!container.TryAdd(containerKey, metaObject))
             {
@@ -487,7 +487,7 @@ namespace SmartDi
 
         internal Expression GetExpression(Type resolvedType, string key)
         {
-            if (container.TryGetValue(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, key), out MetaObject metaObject))
+            if (container.TryGetValue(new Tuple<string, string>(resolvedType.FullName, key), out MetaObject metaObject))
             {
                 if (metaObject.LifeCycle is LifeCycle.Singleton)
                     return Expression.Call(
@@ -531,7 +531,7 @@ namespace SmartDi
 
         internal object InternalResolve(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
         {
-            if (container.TryGetValue(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, key), out MetaObject metaObject))
+            if (container.TryGetValue(new Tuple<string, string>(resolvedType.FullName, key), out MetaObject metaObject))
             {
                 if (metaObject.ActivationExpression is null)
                     MakeNewExpression(metaObject);//GetNewExpression(resolvedType, key);
@@ -557,7 +557,7 @@ namespace SmartDi
                         }
 
                         //todo if success, add to container (with activationExpression)
-                        if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, null), new MetaObject(instance)))
+                        if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<string, string>(resolvedType.FullName, null), new MetaObject(instance)))
                         {
 #if DEBUG
                             throw new ResolveException("Debugging exception: Unextpected behaviour. Should have found listing");
@@ -590,7 +590,7 @@ namespace SmartDi
                         //if success, then add
 
                         //todo watch for double-add in GetNewExpression
-                        container.TryAdd(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, key), tryMetaObject);
+                        container.TryAdd(new Tuple<string, string>(resolvedType.FullName, key), tryMetaObject);
 
 
                         if (tryMetaObject.LifeCycle is LifeCycle.Singleton)
@@ -629,7 +629,7 @@ namespace SmartDi
 
                 MakeNewExpression(newMetaObject); //only add after successful make
 
-                container.TryAdd(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, null), newMetaObject);
+                container.TryAdd(new Tuple<string, string>(resolvedType.FullName, null), newMetaObject);
 
                 return newMetaObject;
             }
@@ -688,7 +688,7 @@ namespace SmartDi
 
         static void InternalUnregister(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
         {
-            if (container.TryRemove(new Tuple<string, string>(resolvedType.AssemblyQualifiedName, key), out MetaObject metaObject))
+            if (container.TryRemove(new Tuple<string, string>(resolvedType.FullName, key), out MetaObject metaObject))
                 TryDispose(metaObject);
             else
             {

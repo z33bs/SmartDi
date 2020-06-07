@@ -276,7 +276,7 @@ namespace SmartDiTests
 
             DiContainer.Register<MyService>();
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -289,7 +289,7 @@ namespace SmartDiTests
 
             container.Register<MyService>();
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, null)));
         }
 
         [Fact]
@@ -300,7 +300,7 @@ namespace SmartDiTests
 
             DiContainer.Register<MyService>();
 
-            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)].LifeCycle);
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(MyService).FullName, null)].LifeCycle);
 
             DiContainer.ResetContainer();
         }
@@ -313,7 +313,7 @@ namespace SmartDiTests
 
             container.Register<MyService>();
 
-            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)].LifeCycle);
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(MyService).FullName, null)].LifeCycle);
         }
 
         #endregion
@@ -326,7 +326,7 @@ namespace SmartDiTests
 
             DiContainer.Register<MyService, IService>();
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -339,7 +339,7 @@ namespace SmartDiTests
 
             container.Register<MyService, IService>();
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, null)));
         }
 
         [Fact]
@@ -350,7 +350,7 @@ namespace SmartDiTests
 
             DiContainer.Register<MyService, IService>();
 
-            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)].LifeCycle);
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(IService).FullName, null)].LifeCycle);
 
             DiContainer.ResetContainer();
         }
@@ -363,7 +363,7 @@ namespace SmartDiTests
 
             container.Register<MyService, IService>();
 
-            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)].LifeCycle);
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(IService).FullName, null)].LifeCycle);
         }
 
         #endregion
@@ -376,7 +376,7 @@ namespace SmartDiTests
 
             DiContainer.Register<MyService>("test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, "test")));
 
             DiContainer.ResetContainer();
         }
@@ -389,7 +389,7 @@ namespace SmartDiTests
 
             container.Register<MyService>("test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, "test")));
         }
 
         #endregion
@@ -402,7 +402,7 @@ namespace SmartDiTests
 
             DiContainer.Register<MyService, IService>("test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, "test")));
 
             DiContainer.ResetContainer();
         }
@@ -415,7 +415,7 @@ namespace SmartDiTests
 
             container.Register<MyService, IService>("test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, "test")));
         }
 
         #endregion
@@ -429,7 +429,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterInstance(new MyService());
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -442,7 +442,7 @@ namespace SmartDiTests
 
             container.RegisterInstance(new MyService());
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, null)));
         }
 
         [Fact]
@@ -453,7 +453,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterInstance<IService>(new MyService());
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -466,7 +466,7 @@ namespace SmartDiTests
 
             container.RegisterInstance<IService>(new MyService());
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, null)));
         }
 
         [Fact]
@@ -477,7 +477,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterInstance(new MyService(), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, "test")));
 
             DiContainer.ResetContainer();
         }
@@ -490,7 +490,7 @@ namespace SmartDiTests
 
             container.RegisterInstance(new MyService(), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, "test")));
         }
 
         [Fact]
@@ -501,7 +501,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterInstance<IService>(new MyService(), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, "test")));
 
             DiContainer.ResetContainer();
         }
@@ -514,7 +514,7 @@ namespace SmartDiTests
 
             container.RegisterInstance<IService>(new MyService(), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, "test")));
         }
 
 
@@ -530,7 +530,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterExplicit<MyService>(c => new MyService());
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -543,7 +543,7 @@ namespace SmartDiTests
 
             container.RegisterExplicit<MyService>(c => new MyService());
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, null)));
         }
 
         [Fact]
@@ -554,7 +554,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterExplicit<IService>(c => new MyService());
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -567,7 +567,7 @@ namespace SmartDiTests
 
             container.RegisterExplicit<IService>(c => new MyService());
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, null)));
         }
 
         [Fact]
@@ -578,7 +578,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterExplicit<MyService>(c => new MyService(), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, "test")));
 
             DiContainer.ResetContainer();
         }
@@ -591,7 +591,7 @@ namespace SmartDiTests
 
             container.RegisterExplicit<MyService>(c => new MyService(), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, "test")));
         }
 
         [Fact]
@@ -602,7 +602,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterExplicit<IService>(c => new MyService(), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, "test")));
 
             DiContainer.ResetContainer();
         }
@@ -615,7 +615,7 @@ namespace SmartDiTests
 
             container.RegisterExplicit<IService>(c => new MyService(), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, "test")));
         }
 
         #endregion
@@ -629,7 +629,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterType(typeof(MyService));
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -642,7 +642,7 @@ namespace SmartDiTests
 
             container.RegisterType(typeof(MyService));
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(MyService).FullName, null)));
         }
 
         [Fact]
@@ -653,7 +653,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterType(typeof(MyService), typeof(IService));
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -666,7 +666,7 @@ namespace SmartDiTests
 
             container.RegisterType(typeof(MyService), typeof(IService));
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, null)));
         }
 
         [Fact]
@@ -677,7 +677,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterType(typeof(MyService), typeof(IService), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, "test")));
 
             DiContainer.ResetContainer();
         }
@@ -690,7 +690,7 @@ namespace SmartDiTests
 
             container.RegisterType(typeof(MyService), typeof(IService), "test");
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, "test")));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(IService).FullName, "test")));
         }
 
         [Fact]
@@ -701,7 +701,7 @@ namespace SmartDiTests
 
             DiContainer.RegisterType(typeof(ClassWith3Ctors), null, null, typeof(IService), typeof(ConcreteOnly));
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(ClassWith3Ctors).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(ClassWith3Ctors).FullName, null)));
 
             DiContainer.ResetContainer();
         }
@@ -714,7 +714,7 @@ namespace SmartDiTests
 
             container.RegisterType(typeof(ClassWith3Ctors), null, null, typeof(IService), typeof(ConcreteOnly));
 
-            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(ClassWith3Ctors).AssemblyQualifiedName, null)));
+            Assert.True(mock.ContainsKey(new Tuple<string, string>(typeof(ClassWith3Ctors).FullName, null)));
         }
         #endregion
 
@@ -729,7 +729,7 @@ namespace SmartDiTests
                 .Register<MyService>()
                 .SingleInstance();
 
-            Assert.Equal(LifeCycle.Singleton, mock[new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)].LifeCycle);
+            Assert.Equal(LifeCycle.Singleton, mock[new Tuple<string, string>(typeof(MyService).FullName, null)].LifeCycle);
 
             DiContainer.ResetContainer();
         }
@@ -744,7 +744,7 @@ namespace SmartDiTests
                 .Register<MyService>()
                 .SingleInstance();
 
-            Assert.Equal(LifeCycle.Singleton, mock[new Tuple<string, string>(typeof(MyService).AssemblyQualifiedName, null)].LifeCycle);
+            Assert.Equal(LifeCycle.Singleton, mock[new Tuple<string, string>(typeof(MyService).FullName, null)].LifeCycle);
         }
 
         [Fact]
@@ -756,7 +756,7 @@ namespace SmartDiTests
             DiContainer
                 .Register<MyService, IService>();
 
-            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)].LifeCycle);
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(IService).FullName, null)].LifeCycle);
 
             DiContainer.ResetContainer();
         }
@@ -770,7 +770,7 @@ namespace SmartDiTests
             container
                 .Register<MyService, IService>();
 
-            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)].LifeCycle);
+            Assert.Equal(LifeCycle.Transient, mock[new Tuple<string, string>(typeof(IService).FullName, null)].LifeCycle);
         }
 
         [Fact]
@@ -1062,12 +1062,12 @@ namespace SmartDiTests
 
             DiContainer.Register<MyService, IService>().SingleInstance();
 
-            Assert.Null(mock[new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)].Instance);
+            Assert.Null(mock[new Tuple<string, string>(typeof(IService).FullName, null)].Instance);
 
             //first resolve
             var first = DiContainer.Resolve<IService>();
 
-            Assert.NotNull(mock[new Tuple<string, string>(typeof(IService).AssemblyQualifiedName, null)].Instance);
+            Assert.NotNull(mock[new Tuple<string, string>(typeof(IService).FullName, null)].Instance);
 
             //second resolve
             var second = DiContainer.Resolve<IService>();
