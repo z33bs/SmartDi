@@ -124,18 +124,15 @@ namespace SmartDi
         public DiContainer()
         {
             container = new ConcurrentDictionary<Tuple<string, string>, MetaObject>();
-            openGenericContainer = new ConcurrentDictionary<Tuple<string, string>, GenericMetaObject>();
             enumerableLookup = new ConcurrentDictionary<Type, EnumerableBinding>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public DiContainer(
             ConcurrentDictionary<Tuple<string, string>, MetaObject> container,
-            ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> openGenericContainer = null,
             ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup = null)
         {
             this.container = container;
-            this.openGenericContainer = openGenericContainer ?? new ConcurrentDictionary<Tuple<string, string>, GenericMetaObject>();
             this.enumerableLookup = enumerableLookup ?? new ConcurrentDictionary<Type, EnumerableBinding>();
         }
 
@@ -155,7 +152,6 @@ namespace SmartDi
 
         //todo if key is string, string - don't need separate generic container
         internal ConcurrentDictionary<Tuple<string, string>, MetaObject> container;
-        internal readonly ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> openGenericContainer;
         internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
 
         public IDiContainer NewChildContainer()
@@ -297,7 +293,7 @@ namespace SmartDi
         RegisterOptions IDiContainer.RegisterExplicit<TConcrete, TResolved>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
             => new RegisterOptions(
                 container,
-                InternalRegister(container, typeof(TResolved), key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TResolved),key))));
+                InternalRegister(container, typeof(TResolved), key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TResolved), key))));
 
         #endregion
 
@@ -353,21 +349,21 @@ namespace SmartDi
 
         IRegisterOptions IDiContainer.RegisterType(Type concreteType, Type resolvedType, string key, params Type[] constructorParameters)
         {
-            if (concreteType.IsGenericTypeDefinition)
-                return new GenericRegisterOptions(
-                    openGenericContainer,
-                    InternalRegisterOpenGeneric(openGenericContainer, resolvedType, key,
-                        new GenericMetaObject(
-                            concreteType,
-                            LifeCycle.Transient)));
-            else
-                return new RegisterOptions(
-                    container,
-                    InternalRegister(container, resolvedType, key,
-                        new MetaObject(
-                            concreteType,
-                            LifeCycle.Transient,
-                            constructorParameters)));
+            //if (concreteType.IsGenericTypeDefinition)
+            //    return new GenericRegisterOptions(
+            //        openGenericContainer,
+            //        InternalRegisterOpenGeneric(openGenericContainer, resolvedType, key,
+            //            new GenericMetaObject(
+            //                concreteType,
+            //                LifeCycle.Transient)));
+            //else
+            return new RegisterOptions(
+                container,
+                InternalRegister(container, resolvedType, key,
+                    new MetaObject(
+                        concreteType,
+                        LifeCycle.Transient,
+                        constructorParameters)));
         }
         //todo validatee resolvedType:TConcrete
         //todo investigate possibility of ctor params
@@ -392,7 +388,7 @@ namespace SmartDi
         {
             foreach (var keyValuePair in container)
             {
-                if(keyValuePair.Value.ActivationExpression == null)
+                if (keyValuePair.Value.ActivationExpression == null)
                     MakeNewExpression(keyValuePair.Value);
             }
         }
@@ -429,29 +425,28 @@ namespace SmartDi
             return containerKey;
         }
 
-        //todo only diff is the Tuple - any such thing as a generic Tuple?
-        internal Tuple<string, string> InternalRegisterOpenGeneric(
-            ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container,
-            Type resolvedType,
-            string key,
-            GenericMetaObject metaObject
-            )
-        {
-            var containerKey = new Tuple<string, string>(
-                resolvedType?.Name ?? metaObject.TConcrete.Name, key);
+        //internal Tuple<string, string> InternalRegisterOpenGeneric(
+        //    ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container,
+        //    Type resolvedType,
+        //    string key,
+        //    GenericMetaObject metaObject
+        //    )
+        //{
+        //    var containerKey = new Tuple<string, string>(
+        //        resolvedType?.Name ?? metaObject.TConcrete.Name, key);
 
-            if (!container.TryAdd(containerKey, metaObject))
-            {
-                var builder = new StringBuilder();
-                builder.Append($"{nameof(containerKey.Item1)} is already registered");
-                if (containerKey.Item2 != null)
-                    builder.Append($" with key '{nameof(containerKey.Item2)}'");
-                builder.Append(".");
-                throw new RegisterException(builder.ToString());
-            }
+        //    if (!container.TryAdd(containerKey, metaObject))
+        //    {
+        //        var builder = new StringBuilder();
+        //        builder.Append($"{nameof(containerKey.Item1)} is already registered");
+        //        if (containerKey.Item2 != null)
+        //            builder.Append($" with key '{nameof(containerKey.Item2)}'");
+        //        builder.Append(".");
+        //        throw new RegisterException(builder.ToString());
+        //    }
 
-            return containerKey;
-        }
+        //    return containerKey;
+        //}
 
 
         #endregion
@@ -487,28 +482,24 @@ namespace SmartDi
 
         internal Expression GetExpression(Type resolvedType, string key)
         {
-            if (container.TryGetValue(new Tuple<string, string>(resolvedType.FullName, key), out MetaObject metaObject))
-            {
-                if (metaObject.LifeCycle is LifeCycle.Singleton)
-                    return Expression.Call(
-                        MetaObject.IDiContainerParameter,
-                        typeof(IDiContainer)
-                            .GetMethod(
-                                nameof(IDiContainer.Resolve),
-                                new Type[] { typeof(string) })
-                            .MakeGenericMethod(resolvedType),
-                        Expression.Constant(key, typeof(string)));
-                
-                if (metaObject.NewExpression != null)
-                    return metaObject.NewExpression;
+            var metaObject = GetMetaObject(container, resolvedType, key);
 
-                MakeNewExpression(metaObject);
+            if (metaObject.LifeCycle is LifeCycle.Singleton)
+                return Expression.Call(
+                    MetaObject.IDiContainerParameter,
+                    typeof(IDiContainer)
+                        .GetMethod(
+                            nameof(IDiContainer.Resolve),
+                            new Type[] { typeof(string) })
+                        .MakeGenericMethod(resolvedType),
+                    Expression.Constant(key, typeof(string)));
 
+            if (metaObject.NewExpression != null)
                 return metaObject.NewExpression;
-            }
 
-            //else
-            return null;
+            MakeNewExpression(metaObject);
+
+            return metaObject.NewExpression;
         }
 
         private void MakeNewExpression(MetaObject metaObject)
@@ -522,89 +513,72 @@ namespace SmartDi
                 var param = paramsInfo[i];
                 var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
 
-                argsExp[i] = GetExpression(param.ParameterType, namedAttribute?.Key)
-                    ?? TryAutoRegister(param.ParameterType)?.NewExpression;
+                argsExp[i] = GetExpression(param.ParameterType, namedAttribute?.Key);
             }
 
             metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
         }
 
-        internal object InternalResolve(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
+        ///<param name="container">Needed so we can call with ParentContainer</param>
+        internal MetaObject GetMetaObject(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
         {
             if (container.TryGetValue(new Tuple<string, string>(resolvedType.FullName, key), out MetaObject metaObject))
-            {
-                if (metaObject.ActivationExpression is null)
-                    MakeNewExpression(metaObject);//GetNewExpression(resolvedType, key);
-
-                return metaObject.GetObject(this);
-            }
+                return metaObject;
 
             if (resolvedType.IsGenericType)
             {
+                if (resolvedType.IsConstructedGenericType) //if Generic
+                {
+                    var genericTypeDefinition = resolvedType.GetGenericTypeDefinition();
+
+                    if (container.TryGetValue(new Tuple<string, string>(genericTypeDefinition.FullName, key), out MetaObject genericMetaObject))
+                    {
+                        Type[] closedTypeArgs = resolvedType.GetGenericArguments();
+                        Type resolvableType = genericTypeDefinition.MakeGenericType(closedTypeArgs);
+                        Type makeableType = genericMetaObject.TConcrete.MakeGenericType(closedTypeArgs);
+
+                        //todo - investigate if specify constructor with generic type and pass params here or constructorcache
+                        var specificMetaObject = new MetaObject(makeableType, genericMetaObject.LifeCycle);
+                        InternalRegister(container, resolvableType, key, specificMetaObject);
+
+                        return specificMetaObject;
+                    }
+                }
+
                 //todo move to register with ActivationExpression
                 if (resolvedType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                 {
-                    var resolvableType = resolvedType.GetGenericArguments()[0];
+                    //                    var resolvableType = resolvedType.GetGenericArguments()[0];
 
-                    if (enumerableLookup.TryGetValue(resolvableType, out EnumerableBinding enumerableBinding))
-                    {
-                        var metainstance = EnumerateFromRegistrations(container, resolvableType, enumerableBinding.Implementations);
+                    //                    if (enumerableLookup.TryGetValue(resolvableType, out EnumerableBinding enumerableBinding))
+                    //                    {
+                    //                        var metainstance = EnumerateFromRegistrations(container, resolvableType, enumerableBinding.Implementations);
 
-                        var instance = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(resolvableType));
-                        foreach (var item in metainstance)
-                        {
-                            instance.Add(item);
-                        }
+                    //                        var instance = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(resolvableType));
+                    //                        foreach (var item in metainstance)
+                    //                        {
+                    //                            instance.Add(item);
+                    //                        }
 
-                        //todo if success, add to container (with activationExpression)
-                        if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<string, string>(resolvedType.FullName, null), new MetaObject(instance)))
-                        {
-#if DEBUG
-                            throw new ResolveException("Debugging exception: Unextpected behaviour. Should have found listing");
-#endif
-                        }
-                        return instance;
-                    }
-
-                    throw new ResolveException(
-                        $"Could not Resolve or Create {resolvedType.Name}" +
-                        $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
-                        $"smart resolve couldn't create an instance.");
-
-
+                    //                        //todo if success, add to container (with activationExpression)
+                    //                        if (enumerableBinding.LifeCycle == LifeCycle.Singleton && !container.TryAdd(new Tuple<string, string>(resolvedType.FullName, null), new MetaObject(instance)))
+                    //                        {
+                    //#if DEBUG
+                    //                            throw new ResolveException("Debugging exception: Unextpected behaviour. Should have found listing");
+                    //#endif
+                    //                        }
+                    //                        return instance;
+                    return null; //todo handle enumerable
                 }
-                if (resolvedType.IsConstructedGenericType)
-                {
-                    //todo need to replicate for instance
-                    if (openGenericContainer.TryGetValue(new Tuple<string, string>(resolvedType.Name, key), out GenericMetaObject genericMetaObject))
-                    {
-                        Type[] closedTypeArgs = resolvedType.GetGenericArguments();
-                        Type resolvableType = genericMetaObject.TConcrete.MakeGenericType(closedTypeArgs);
 
-                        //todo code repetition
-                        var tryMetaObject = new MetaObject(resolvableType, genericMetaObject.LifeCycle);
-                        //var instance = tryMetaObject.ObjectActivator(ResolveDependencies(container, tryMetaObject).ToArray());
-
-                        //todo should this be make? And what if returns null (if get)
-                        GetExpression(resolvableType, key);
-                        //if success, then add
-
-                        //todo watch for double-add in GetNewExpression
-                        container.TryAdd(new Tuple<string, string>(resolvedType.FullName, key), tryMetaObject);
-
-
-                        if (tryMetaObject.LifeCycle is LifeCycle.Singleton)
-                            return tryMetaObject.Instance;
-                        else
-                            return tryMetaObject.GetObject(this);//tryMetaObject.ActivationExpression(smartDiInstance);
-                        //if success then add registration
-                        //return instance;
-                    }
-                }
+                throw new ResolveException(
+                    $"Could not Resolve or Create {resolvedType.Name}" +
+                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
+                    $"smart resolve couldn't create an instance.");
             }
 
             if (ParentContainer != null)
-                return InternalResolve(ParentContainer, resolvedType, key);
+                return GetMetaObject(ParentContainer, resolvedType, key);
 
             if (resolvedType.IsInterface || resolvedType.IsAbstract)
                 throw new ResolveException(
@@ -612,38 +586,29 @@ namespace SmartDi
                     $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
                     $"smart resolve couldn't create an instance.");
 
-            //else try resolve concreteType anyway
-            return TryAutoRegister(resolvedType)?.GetObject(this);
-        }
-
-        private MetaObject TryAutoRegister(Type resolvedType)
-        {
             if (!Settings.TryResolveUnregistered)
                 throw new ResolveException(
                     $"The type {resolvedType.Name} has not been registered. Either " +
                     $"register the class, or configure {nameof(Settings)}.");
 
-            try
-            {
-                var newMetaObject = new MetaObject(resolvedType, LifeCycle.Transient);
+            metaObject = new MetaObject(resolvedType, LifeCycle.Transient);
+            if (container.TryAdd(new Tuple<string, string>(resolvedType.FullName, null), metaObject))
+                return metaObject;
 
-                MakeNewExpression(newMetaObject); //only add after successful make
-
-                container.TryAdd(new Tuple<string, string>(resolvedType.FullName, null), newMetaObject);
-
-                return newMetaObject;
-            }
-            catch (Exception ex)
-            {
-                if (ex is ResolveException)
-                    throw ex;
-
-                throw new ResolveException(
-                    $"Could not Resolve or Create {resolvedType.Name}" +
-                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
-                    $"smart resolve couldn't create an instance.", ex);
-            }
+            throw new ResolveException(
+                $"The type {resolvedType.Name} has not been registered and SmartResolve didn't work.");
         }
+
+        internal object InternalResolve(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
+        {
+            var metaObject = GetMetaObject(container, resolvedType, key);
+
+            if (metaObject.ActivationExpression is null)
+                MakeNewExpression(metaObject);
+
+            return metaObject.GetObject(this);
+        }
+
 
         private IEnumerable<object> EnumerateFromRegistrations(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, List<string> implementations)
         {
@@ -766,23 +731,6 @@ namespace SmartDi
         }
     }
 
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public class GenericRegisterOptions : IRegisterOptions
-    {
-        readonly ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container;
-        readonly Tuple<string, string> key;
-
-        public GenericRegisterOptions(ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container, Tuple<string, string> key)
-        {
-            this.container = container;
-            this.key = key;
-        }
-
-        public void SingleInstance()
-        {
-            container[key].LifeCycle = LifeCycle.Singleton;
-        }
-    }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class MetaObject : IDisposable
@@ -805,7 +753,7 @@ namespace SmartDi
         //}
 
         ///<param name="key">Need to know its full dictionary key to make its uncompiled expression</param>
-        public MetaObject(Type concreteType, LifeCycle lifeCycle, Expression<Func<IDiContainer, object>> instanceDelegate, Tuple<Type,string> key) : this(concreteType, lifeCycle)
+        public MetaObject(Type concreteType, LifeCycle lifeCycle, Expression<Func<IDiContainer, object>> instanceDelegate, Tuple<Type, string> key) : this(concreteType, lifeCycle)
         {
             if (instanceDelegate is null)
                 throw new ArgumentNullException(nameof(instanceDelegate));
@@ -869,19 +817,19 @@ namespace SmartDi
         //object instance;
         public object Instance
         {
-            get;set;
+            get; set;
             //get => lazy?.Value;
-//            set
-//            {
-//#if DEBUG
-//                if (LifeCycle is LifeCycle.Singleton)
-//                    instance = value;
-//                else
-//                    throw new Exception("Should only set Instance if LifeCycle is Singleton");
-//#else
-//                instance = value;
-//#endif
-//            }
+            //            set
+            //            {
+            //#if DEBUG
+            //                if (LifeCycle is LifeCycle.Singleton)
+            //                    instance = value;
+            //                else
+            //                    throw new Exception("Should only set Instance if LifeCycle is Singleton");
+            //#else
+            //                instance = value;
+            //#endif
+            //            }
         }
 
         LifeCycle lifeCycle;
@@ -914,7 +862,7 @@ namespace SmartDi
 
         public object GetObject(IDiContainer container)
         {
-            if(LifeCycle is LifeCycle.Singleton)
+            if (LifeCycle is LifeCycle.Singleton)
             {
                 if (Instance is null)
                     Instance = ActivationExpression(container);
@@ -1085,29 +1033,6 @@ namespace SmartDi
         }
     }
 
-    //todo can derive from a common abstractType
-    public class GenericMetaObject
-    {
-        public GenericMetaObject(Type concreteType, LifeCycle lifeCycle)
-        {
-            if (!concreteType.IsGenericTypeDefinition)
-            {
-                var builder = new StringBuilder();
-                builder.Append($"{concreteType.Name} is not an open (unbound) generic type.");
-                if (concreteType.IsConstructedGenericType)
-                    builder.Append("Register using standard Register options.");
-
-                throw new RegisterException(builder.ToString());
-            }
-
-            this.TConcrete = concreteType;
-            this.LifeCycle = lifeCycle;
-        }
-
-        public LifeCycle LifeCycle { get; set; }
-        public Type TConcrete { get; }
-
-    }
     /// <summary>
     /// Lifecycle of the registered object
     /// </summary>
