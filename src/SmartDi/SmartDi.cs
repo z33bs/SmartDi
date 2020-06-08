@@ -555,13 +555,6 @@ namespace SmartDi
                     }
                 }
 
-                //todo move to register with ActivationExpression
-                if (resolvedType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                {
-
-                    return null; //todo handle enumerable
-                }
-
                 throw new ResolveException(
                     $"Could not Resolve or Create {resolvedType.Name}" +
                     $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
