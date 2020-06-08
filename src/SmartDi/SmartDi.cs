@@ -123,13 +123,13 @@ namespace SmartDi
 
         public DiContainer()
         {
-            container = new ConcurrentDictionary<Tuple<string, string>, MetaObject>();
+            container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             enumerableLookup = new ConcurrentDictionary<Type, EnumerableBinding>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public DiContainer(
-            ConcurrentDictionary<Tuple<string, string>, MetaObject> container,
+            ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
             ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup = null)
         {
             this.container = container;
@@ -137,7 +137,7 @@ namespace SmartDi
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void SetContainer(ConcurrentDictionary<Tuple<string, string>, MetaObject> container)
+        public static void SetContainer(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
             => Instance.container = container;
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -148,10 +148,10 @@ namespace SmartDi
 
         internal static DiContainer Instance { get; private set; } = new DiContainer();
 
-        public ConcurrentDictionary<Tuple<string, string>, MetaObject> ParentContainer { get; set; }
+        public ConcurrentDictionary<Tuple<Type, string>, MetaObject> ParentContainer { get; set; }
 
         //todo if key is string, string - don't need separate generic container
-        internal ConcurrentDictionary<Tuple<string, string>, MetaObject> container;
+        internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
 
         public IDiContainer NewChildContainer()
@@ -394,15 +394,15 @@ namespace SmartDi
         }
 
 
-        internal Tuple<string, string> InternalRegister(
-            ConcurrentDictionary<Tuple<string, string>, MetaObject> container,
+        internal Tuple<Type, string> InternalRegister(
+            ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
             Type resolvedType,
             string key,
             MetaObject metaObject
             )
         {
-            var containerKey = new Tuple<string, string>(
-                resolvedType?.FullName ?? metaObject.TConcrete.FullName, key);
+            var containerKey = new Tuple<Type, string>(
+                resolvedType ?? metaObject.TConcrete, key);
 
             if (!container.TryAdd(containerKey, metaObject))
             {
@@ -425,14 +425,14 @@ namespace SmartDi
             return containerKey;
         }
 
-        //internal Tuple<string, string> InternalRegisterOpenGeneric(
-        //    ConcurrentDictionary<Tuple<string, string>, GenericMetaObject> container,
+        //internal Tuple<Type, string> InternalRegisterOpenGeneric(
+        //    ConcurrentDictionary<Tuple<Type, string>, GenericMetaObject> container,
         //    Type resolvedType,
         //    string key,
         //    GenericMetaObject metaObject
         //    )
         //{
-        //    var containerKey = new Tuple<string, string>(
+        //    var containerKey = new Tuple<Type, string>(
         //        resolvedType?.Name ?? metaObject.TConcrete.Name, key);
 
         //    if (!container.TryAdd(containerKey, metaObject))
@@ -530,9 +530,9 @@ namespace SmartDi
         }
 
         ///<param name="container">Needed so we can call with ParentContainer</param>
-        internal MetaObject GetMetaObject(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
+        internal MetaObject GetMetaObject(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {
-            if (container.TryGetValue(new Tuple<string, string>(resolvedType.FullName, key), out MetaObject metaObject))
+            if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
                 return metaObject;
 
             if (resolvedType.IsGenericType)
@@ -541,7 +541,7 @@ namespace SmartDi
                 {
                     var genericTypeDefinition = resolvedType.GetGenericTypeDefinition();
 
-                    if (container.TryGetValue(new Tuple<string, string>(genericTypeDefinition.FullName, key), out MetaObject genericMetaObject))
+                    if (container.TryGetValue(new Tuple<Type, string>(genericTypeDefinition, key), out MetaObject genericMetaObject))
                     {
                         Type[] closedTypeArgs = resolvedType.GetGenericArguments();
                         Type resolvableType = genericTypeDefinition.MakeGenericType(closedTypeArgs);
@@ -583,14 +583,14 @@ namespace SmartDi
                     $"register the class, or configure {nameof(Settings)}.");
 
             metaObject = new MetaObject(resolvedType, LifeCycle.Transient);
-            if (container.TryAdd(new Tuple<string, string>(resolvedType.FullName, null), metaObject))
+            if (container.TryAdd(new Tuple<Type, string>(resolvedType, null), metaObject))
                 return metaObject;
 
             throw new ResolveException(
                 $"The type {resolvedType.Name} has not been registered and SmartResolve didn't work.");
         }
 
-        internal object InternalResolve(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
+        internal object InternalResolve(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {
             var metaObject = GetMetaObject(container, resolvedType, key);
 
@@ -637,7 +637,7 @@ namespace SmartDi
             }
         }
 
-        internal IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, MetaObject metaObject)
+        internal IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
             if (metaObject.ConstructorCache != null) //null if instanceDelegate was passed
             {
@@ -670,9 +670,9 @@ namespace SmartDi
             => InternalUnregister(container, typeof(T), key);
 
 
-        static void InternalUnregister(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Type resolvedType, string key)
+        static void InternalUnregister(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {
-            if (container.TryRemove(new Tuple<string, string>(resolvedType.FullName, key), out MetaObject metaObject))
+            if (container.TryRemove(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
                 TryDispose(metaObject);
             else
             {
@@ -692,7 +692,7 @@ namespace SmartDi
             => InternalUnregisterAll(container);
 
 
-        static void InternalUnregisterAll(ConcurrentDictionary<Tuple<string, string>, MetaObject> container)
+        static void InternalUnregisterAll(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
         {
             foreach (var registration in container)
             {
@@ -735,10 +735,10 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class RegisterOptions : IRegisterOptions
     {
-        readonly ConcurrentDictionary<Tuple<string, string>, MetaObject> container;
-        readonly Tuple<string, string> key;
+        readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
+        readonly Tuple<Type, string> key;
 
-        public RegisterOptions(ConcurrentDictionary<Tuple<string, string>, MetaObject> container, Tuple<string, string> key)
+        public RegisterOptions(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Tuple<Type, string> key)
         {
             this.container = container;
             this.key = key;
