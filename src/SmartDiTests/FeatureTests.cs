@@ -42,38 +42,38 @@ namespace SmartDiTests
 
         private void RegisterDummies()
         {
-            DiContainer.Register<DummyOne, IDummyOne>();
-            DiContainer.Register<DummyTwo, IDummyTwo>();
-            DiContainer.Register<DummyThree, IDummyThree>();
-            DiContainer.Register<DummyFour, IDummyFour>();
-            DiContainer.Register<DummyFive, IDummyFive>();
-            DiContainer.Register<DummySix, IDummySix>();
-            DiContainer.Register<DummySeven, IDummySeven>();
-            DiContainer.Register<DummyEight, IDummyEight>();
-            DiContainer.Register<DummyNine, IDummyNine>();
-            DiContainer.Register<DummyTen, IDummyTen>();
+            DiContainer.Register<IDummyOne, DummyOne>();
+            DiContainer.Register<IDummyTwo, DummyTwo>();
+            DiContainer.Register<IDummyThree, DummyThree>();
+            DiContainer.Register<IDummyFour, DummyFour>();
+            DiContainer.Register<IDummyFive, DummyFive>();
+            DiContainer.Register<IDummySix, DummySix>();
+            DiContainer.Register<IDummySeven, DummySeven>();
+            DiContainer.Register<IDummyEight, DummyEight>();
+            DiContainer.Register<IDummyNine, DummyNine>();
+            DiContainer.Register<IDummyTen, DummyTen>();
         }
 
         private void RegisterStandard()
         {
-            DiContainer.Register<Singleton1, ISingleton1>().SingleInstance();
-            DiContainer.Register<Singleton2, ISingleton2>().SingleInstance();
-            DiContainer.Register<Singleton3, ISingleton3>().SingleInstance();
+            DiContainer.Register<ISingleton1, Singleton1>().SingleInstance();
+            DiContainer.Register<ISingleton2, Singleton2>().SingleInstance();
+            DiContainer.Register<ISingleton3, Singleton3>().SingleInstance();
 
-            DiContainer.Register<Transient1, ITransient1>();
-            DiContainer.Register<Transient2, ITransient2>();
-            DiContainer.Register<Transient3, ITransient3>();
+            DiContainer.Register<ITransient1, Transient1>();
+            DiContainer.Register<ITransient2, Transient2>();
+            DiContainer.Register<ITransient3, Transient3>();
 
-            DiContainer.Register<Combined1,ICombined1>();
-            DiContainer.Register<Combined2, ICombined2>();
-            DiContainer.Register<Combined3, ICombined3>();
+            DiContainer.Register<ICombined1, Combined1>();
+            DiContainer.Register<ICombined2, Combined2>();
+            DiContainer.Register<ICombined3, Combined3>();
         }
 
         private void RegisterComplexObject()
         {
-            DiContainer.Register<FirstService, IFirstService>();
-            DiContainer.Register<SecondService, ISecondService>();
-            DiContainer.Register<ThirdService, IThirdService>();
+            DiContainer.Register<IFirstService, FirstService>();
+            DiContainer.Register<ISecondService, SecondService>();
+            DiContainer.Register<IThirdService, ThirdService>();
 
             DiContainer.RegisterExplicit<ISubObjectOne>(c => new SubObjectOne(DiContainer.Resolve<IFirstService>()));
             DiContainer.RegisterExplicit<ISubObjectTwo>(c => new SubObjectTwo(DiContainer.Resolve<ISecondService>()));
@@ -134,11 +134,11 @@ namespace SmartDiTests
 
         private void RegisterMultiple()
         {
-            DiContainer.Register<SimpleAdapterOne, ISimpleAdapter>();
-            DiContainer.Register<SimpleAdapterTwo, ISimpleAdapter>("2");
-            DiContainer.Register<SimpleAdapterThree, ISimpleAdapter>("3");
-            DiContainer.Register<SimpleAdapterFour, ISimpleAdapter>("4");
-            DiContainer.Register<SimpleAdapterFive, ISimpleAdapter>("5");
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterOne>();
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterTwo>("2");
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterThree>("3");
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterFour>("4");
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterFive>("5");
 
             //todo make alternative
             //DiContainer.EnumerableBindingLifeCycle<ISimpleAdapter>(LifeCycle.Singleton);
@@ -150,9 +150,9 @@ namespace SmartDiTests
 
         private void RegisterConditional()
         {
-            DiContainer.Register<ExportConditionalObject1, IExportConditionInterface>("ExportConditionalObject1");
-            DiContainer.Register<ExportConditionalObject2, IExportConditionInterface>("ExportConditionalObject2");
-            DiContainer.Register<ExportConditionalObject3, IExportConditionInterface>("ExportConditionalObject3");
+            DiContainer.Register<IExportConditionInterface, ExportConditionalObject1>("ExportConditionalObject1");
+            DiContainer.Register<IExportConditionInterface, ExportConditionalObject2>("ExportConditionalObject2");
+            DiContainer.Register<IExportConditionInterface, ExportConditionalObject3>("ExportConditionalObject3");
 
             DiContainer.RegisterExplicit<ImportConditionObject1>(c => new ImportConditionObject1(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject1")));
             DiContainer.RegisterExplicit<ImportConditionObject2>(c => new ImportConditionObject2(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject2")));
@@ -177,11 +177,11 @@ namespace SmartDiTests
             //todo test for abstract too
             DiContainer.ResetContainer();
 
-            DiContainer.Register<SimpleAdapterOne, ISimpleAdapter>();
-            DiContainer.Register<SimpleAdapterTwo, ISimpleAdapter>("2");
-            DiContainer.Register<SimpleAdapterThree, ISimpleAdapter>("3");
-            DiContainer.Register<SimpleAdapterFour, ISimpleAdapter>("4");
-            DiContainer.Register<SimpleAdapterFive, ISimpleAdapter>("5");
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterOne>();
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterTwo>("2");
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterThree>("3");
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterFour>("4");
+            DiContainer.Register<ISimpleAdapter, SimpleAdapterFive>("5");
             DiContainer.Register<IEnumerable<ISimpleAdapter>>();
 
             DiContainer.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
@@ -201,11 +201,11 @@ namespace SmartDiTests
         {
             //todo test for abstract too
             IDiContainer container = new DiContainer();
-            container.Register<SimpleAdapterOne, ISimpleAdapter>();
-            container.Register<SimpleAdapterTwo, ISimpleAdapter>("2");
-            container.Register<SimpleAdapterThree, ISimpleAdapter>("3");
-            container.Register<SimpleAdapterFour, ISimpleAdapter>("4");
-            container.Register<SimpleAdapterFive, ISimpleAdapter>("5");
+            container.Register<ISimpleAdapter, SimpleAdapterOne>();
+            container.Register<ISimpleAdapter, SimpleAdapterTwo>("2");
+            container.Register<ISimpleAdapter, SimpleAdapterThree>("3");
+            container.Register<ISimpleAdapter, SimpleAdapterFour>("4");
+            container.Register<ISimpleAdapter, SimpleAdapterFive>("5");
             container.Register<IEnumerable<ISimpleAdapter>>();
 
             container.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(c.Resolve<IEnumerable<ISimpleAdapter>>()));
@@ -237,7 +237,8 @@ namespace SmartDiTests
             DiContainer.ResetContainer();
         }
 
-        [Fact] public void PrepareAndRegister()
+        [Fact]
+        public void PrepareAndRegister()
         {
             PrepareBasic();
             DiContainer.ResetContainer(); //was dipose
