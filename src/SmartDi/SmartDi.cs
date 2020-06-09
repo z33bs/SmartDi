@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,6 +9,8 @@ using System.Reflection;
 using System.Text;
 using System.Linq.Dynamic.Core;
 
+//todo IEnumerable can simply scan Key's?
+//todo Swap TResolve around
 namespace SmartDi
 {
     /// <summary>
@@ -687,7 +688,7 @@ namespace SmartDi
 
         static void InternalUnregisterAll(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
         {
-            foreach (var registration in container)
+            foreach (var registration in container.ToArray())
             {
                 TryDispose(registration.Value);
                 container.TryRemove(registration.Key, out _);
