@@ -9,8 +9,8 @@ using System.Reflection;
 using System.Text;
 using System.Linq.Dynamic.Core;
 
-//todo IEnumerable can simply scan Key's?
 //todo Swap TResolve around
+//todo pass container around - might help child
 namespace SmartDi
 {
     /// <summary>
@@ -125,7 +125,7 @@ namespace SmartDi
         public DiContainer()
         {
             container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
-            enumerableLookup = new ConcurrentDictionary<Type, EnumerableBinding>();
+            //enumerableLookup = new ConcurrentDictionary<Type, EnumerableBinding>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -134,7 +134,7 @@ namespace SmartDi
             ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup = null)
         {
             this.container = container;
-            this.enumerableLookup = enumerableLookup ?? new ConcurrentDictionary<Type, EnumerableBinding>();
+            //this.enumerableLookup = enumerableLookup ?? new ConcurrentDictionary<Type, EnumerableBinding>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -153,7 +153,7 @@ namespace SmartDi
 
         //todo if key is string, string - don't need separate generic container
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
-        internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
+        //internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
 
         public IDiContainer NewChildContainer()
         {
@@ -369,15 +369,14 @@ namespace SmartDi
         //todo validatee resolvedType:TConcrete
         //todo investigate possibility of ctor params
 
-        //todo Rather rely on explicit registration which will set lifecycle ?should be nonstatic now?
-        public void EnumerableBindingLifeCycle<T>(LifeCycle lifeCycle) where T : notnull
-        {
-            if (enumerableLookup.TryGetValue(typeof(T), out EnumerableBinding binding))
-                binding.LifeCycle = lifeCycle;
-            else
-                enumerableLookup.TryAdd(typeof(T), new EnumerableBinding());
-            //staticEnumerableLookup[typeof(T)].Item2 = lifeCycle;
-        }
+        //public void EnumerableBindingLifeCycle<T>(LifeCycle lifeCycle) where T : notnull
+        //{
+        //    if (enumerableLookup.TryGetValue(typeof(T), out EnumerableBinding binding))
+        //        binding.LifeCycle = lifeCycle;
+        //    else
+        //        enumerableLookup.TryAdd(typeof(T), new EnumerableBinding());
+        //    //staticEnumerableLookup[typeof(T)].Item2 = lifeCycle;
+        //}
 
         #endregion
 
@@ -415,13 +414,13 @@ namespace SmartDi
                 throw new RegisterException(builder.ToString());
             }
 
-            //the way its setup resolved type should only be interface / abstract
-            if (resolvedType != null && (resolvedType.IsInterface || resolvedType.IsAbstract))
-            {
-                //staticEnumerableLookup.AddOrUpdate(resolvedType, new List<string>() { key }, (k, oldvalue) => { oldvalue.Add(key); return oldvalue; });
-                enumerableLookup.TryAdd(resolvedType, new EnumerableBinding());
-                enumerableLookup[resolvedType].Implementations.Add(key);
-            }
+            ////the way its setup resolved type should only be interface / abstract
+            //if (resolvedType != null && (resolvedType.IsInterface || resolvedType.IsAbstract))
+            //{
+            //    //staticEnumerableLookup.AddOrUpdate(resolvedType, new List<string>() { key }, (k, oldvalue) => { oldvalue.Add(key); return oldvalue; });
+            //    enumerableLookup.TryAdd(resolvedType, new EnumerableBinding());
+            //    enumerableLookup[resolvedType].Implementations.Add(key);
+            //}
 
             return containerKey;
         }
@@ -597,39 +596,44 @@ namespace SmartDi
         internal Expression GetEnumerableExpression(Type resolvedType)
         {
             var resolvableType = resolvedType.GetGenericArguments()[0];
+            var addMethod = typeof(List<>).MakeGenericType(resolvableType).GetMethod("Add");
 
-            if (enumerableLookup.TryGetValue(resolvableType, out EnumerableBinding enumerableBinding))
+            List<ElementInit> listElements = new List<ElementInit>();
+            foreach (var key in container.Keys)
             {
-                IEnumerable<ElementInit> listElements = GetListElementExpressionsForEnumerable(resolvableType, enumerableBinding.Implementations);
-
-                // Create a NewExpression that represents constructing
-                // a new instance of Dictionary<int, string>.
-                NewExpression newDictionaryExpression =
-                    Expression.New(typeof(List<>).MakeGenericType(resolvableType));
-
-                // Create a ListInitExpression that represents initializing
-                // a new Dictionary<> instance with two key-value pairs.
-                ListInitExpression listInitExpression =
-                    Expression.ListInit(
-                        newDictionaryExpression,
-                        listElements);
-
-                return listInitExpression;
+                if (key.Item1 == resolvableType)
+                {
+                    var expression = GetExpression(resolvableType, key.Item2);
+                    listElements.Add(Expression.ElementInit(addMethod, expression));
+                }
             }
+
+            // Create a NewExpression that represents constructing
+            // a new instance of Dictionary<int, string>.
+            NewExpression newDictionaryExpression =
+                Expression.New(typeof(List<>).MakeGenericType(resolvableType));
+
+            // Create a ListInitExpression that represents initializing
+            // a new Dictionary<> instance with two key-value pairs.
+            if(listElements.Any())
+            return
+                Expression.ListInit(
+                    newDictionaryExpression,
+                    listElements);
 
             throw new ResolveException($"Could not resolve {resolvedType.Name}");
         }
 
-        private IEnumerable<ElementInit> GetListElementExpressionsForEnumerable(Type resolvedType, List<string> implementations)
-        {
-            var addMethod = typeof(List<>).MakeGenericType(resolvedType).GetMethod("Add");
-            foreach (var implementation in implementations)
-            {
-                var expression = GetExpression(resolvedType, implementation);
-                var elementInit = Expression.ElementInit(addMethod, expression);
-                yield return elementInit; //InternalResolve(container, resolvedType, implementation);
-            }
-        }
+        //private IEnumerable<ElementInit> GetListElementExpressionsForEnumerable(Type resolvedType, List<string> implementations)
+        //{
+        //    var addMethod = typeof(List<>).MakeGenericType(resolvedType).GetMethod("Add");
+        //    foreach (var implementation in implementations)
+        //    {
+        //        var expression = GetExpression(resolvedType, implementation);
+        //        var elementInit = Expression.ElementInit(addMethod, expression);
+        //        yield return elementInit; //InternalResolve(container, resolvedType, implementation);
+        //    }
+        //}
 
         internal IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
@@ -915,7 +919,7 @@ namespace SmartDi
             if (constructors.Count == 0)
                 if (concreteType.IsGenericType
                     && concreteType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                        return null; //ok because we won't need the constructor
+                    return null; //ok because we won't need the constructor
                 else
                     throw new RegisterException($"{concreteType.Name} won't be resolved as it has no constructors.");
 
