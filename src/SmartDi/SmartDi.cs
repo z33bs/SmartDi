@@ -389,7 +389,7 @@ namespace SmartDi
             foreach (var keyValuePair in container)
             {
                 if (keyValuePair.Value.ActivationExpression == null)
-                    MakeNewExpression(keyValuePair.Value);
+                    MakeNewExpression(container, keyValuePair.Value);
             }
         }
 
@@ -480,7 +480,7 @@ namespace SmartDi
 
 
 
-        internal Expression GetExpression(Type resolvedType, string key)
+        internal Expression GetExpression(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {
             var metaObject = GetMetaObject(container, resolvedType, key);
 
@@ -497,12 +497,12 @@ namespace SmartDi
             if (metaObject.NewExpression != null)
                 return metaObject.NewExpression;
 
-            MakeNewExpression(metaObject);
+            MakeNewExpression(container, metaObject);
 
             return metaObject.NewExpression;
         }
 
-        private void MakeNewExpression(MetaObject metaObject)
+        private void MakeNewExpression(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
             var paramsInfo = metaObject.ConstructorCache?.GetParameters();
 
@@ -516,14 +516,14 @@ namespace SmartDi
                     var param = paramsInfo[i];
                     var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
 
-                    argsExp[i] = GetExpression(param.ParameterType, namedAttribute?.Key);
+                    argsExp[i] = GetExpression(container, param.ParameterType, namedAttribute?.Key);
                 }
 
                 metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
             }
 
             else if (metaObject.TConcrete.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                metaObject.NewExpression = GetEnumerableExpression(metaObject.TConcrete);
+                metaObject.NewExpression = GetEnumerableExpression(container, metaObject.TConcrete);
 
             else
                 throw new Exception($"{nameof(metaObject.ConstructorCache)} should not be null");
@@ -588,12 +588,12 @@ namespace SmartDi
             var metaObject = GetMetaObject(container, resolvedType, key);
 
             if (metaObject.ActivationExpression is null)
-                MakeNewExpression(metaObject);
+                MakeNewExpression(container, metaObject);
 
             return metaObject.GetObject(this);
         }
 
-        internal Expression GetEnumerableExpression(Type resolvedType)
+        internal Expression GetEnumerableExpression(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType)
         {
             var resolvableType = resolvedType.GetGenericArguments()[0];
             var addMethod = typeof(List<>).MakeGenericType(resolvableType).GetMethod("Add");
@@ -603,7 +603,7 @@ namespace SmartDi
             {
                 if (key.Item1 == resolvableType)
                 {
-                    var expression = GetExpression(resolvableType, key.Item2);
+                    var expression = GetExpression(container,resolvableType, key.Item2);
                     listElements.Add(Expression.ElementInit(addMethod, expression));
                 }
             }
