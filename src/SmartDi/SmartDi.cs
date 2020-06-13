@@ -34,6 +34,8 @@ namespace SmartDi
     //todo autoregister (with flags like bindingflags) and exclusion like Tiny
     public interface IDiContainer : IDisposable
     {
+        IDiContainer Parent { get; set; }
+
         //RegisterType
         IRegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
 
@@ -149,15 +151,16 @@ namespace SmartDi
 
         internal static DiContainer Instance { get; private set; } = new DiContainer();
 
-        public ConcurrentDictionary<Tuple<Type, string>, MetaObject> ParentContainer { get; set; }
+        public IDiContainer Parent { get; set; }
 
         //todo if key is string, string - don't need separate generic container
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
+        internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> parentContainer;
         //internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
 
         public IDiContainer NewChildContainer()
         {
-            return new DiContainer() { ParentContainer = this.container };
+            return new DiContainer() { Parent = this, parentContainer = this.container };
         }
 
         #region Registration
@@ -561,8 +564,8 @@ namespace SmartDi
                     $"smart resolve couldn't create an instance.");
             }
 
-            if (ParentContainer != null)
-                return GetMetaObject(ParentContainer, resolvedType, key);
+            if (Parent != null)
+                return GetMetaObject(parentContainer, resolvedType, key);
 
             if (resolvedType.IsInterface || resolvedType.IsAbstract)
                 throw new ResolveException(
