@@ -36,6 +36,8 @@ namespace SmartDi
     {
         IDiContainer Parent { get; set; }
 
+        IDiContainer NewChildContainer();
+
         //RegisterType
         IRegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
 
