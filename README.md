@@ -1,7 +1,418 @@
 # SmartDi
-Fast Friendly Dependency Injection
+### **Fast Friendly Dependency Injection** [![NuGet](https://buildstats.info/nuget/SmartDi?includePreReleases=true)](https://www.nuget.org/packages/SmartDi/)
 
-[![NuGet](https://buildstats.info/nuget/SmartDi?includePreReleases=true)](https://www.nuget.org/packages/SmartDi/)
+Why use SmartDi?
 
- 
+* **Fast**. SmartDi was designed to be used in mobile apps. As such, quick resolving of dependencies is important.
+* **Feature-Rich**. SmartDi offers advanced features, without compromising on performance. SmartDi supports:
+  * Constructor selection: If multiple constructors, can control which one is used to build the object.
+  * Property Injection: Objects which require property injection are resolved
+  * Generics: Objects with a generic dependency are resolved
+  * IEnumerable: Several objects that implement the same interface are resolved into an Enumerable of that interface
+  * Conditional / Named dependencies: Objects with a conditional dependency are resolved
+  * Child Container: Objects can be scoped to a child container. Nesting of child containers is supported
+* **Friendly**. SmartDi offers a simple API and convenience:
+  * Smart-Resolve will attempt to resolve an unregistered dependency
+  * Singleton container option for simple applications
+  * Attribute decorators which simplify constructor selection and conditional resolution
+
+## QuickStart
+
+The easiest way to get started is to use SmartDi's singleton implementation. This will give access to the container throughout your app by calling `SmartDi.`. The following example instantiates two coffee-making robots. Both CoffeeRobots share the same `FilteredWater` (registered as a singleton), and use their own`IBrewEquipment` to make coffee. In this implementation, we give the robots a `FrenchPress` which implements `IBrewEquipment`. Executable code below:
+
+```c#
+using System;
+using SmartDi;
+
+public class CoffeeRobot
+{
+    public CoffeeRobot(IBrewEquipment equipment, FilteredWater water)
+    {
+        Console.WriteLine("Ready to brew using "
+            + equipment + equipment.Instances
+            +" and "
+            + water + water.Instances);
+    }
+}
+
+public interface IBrewEquipment { int Instances { get; } }
+public class FrenchPress : IBrewEquipment
+{
+    static int instances;
+    public int Instances => instances;
+    public FrenchPress() { instances++; }
+}
+
+public class FilteredWater
+{
+    static int instances;
+    public int Instances => instances;
+    public FilteredWater() { instances++; }
+}
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        DiContainer.Register<FilteredWater>().SingleInstance(); //Singleton
+        DiContainer.Register<IBrewEquipment,FrenchPress>();
+        DiContainer.Register<CoffeeRobot>();
+
+        var robot1 = DiContainer.Resolve<CoffeeRobot>();
+        var robot2 = DiContainer.Resolve<CoffeeRobot>();
+        var robot3 = DiContainer.Resolve<CoffeeRobot>();
+        var robot4 = DiContainer.Resolve<CoffeeRobot>();
+        var robot5 = DiContainer.Resolve<CoffeeRobot>();
+    }
+}
+
+//Output:
+//Ready to brew using FrenchPress1 and FilteredWater1
+//Ready to brew using FrenchPress2 and FilteredWater1
+//Ready to brew using FrenchPress3 and FilteredWater1
+//Ready to brew using FrenchPress4 and FilteredWater1
+//Ready to brew using FrenchPress5 and FilteredWater1
+```
+
+
+
+## Why DI?
+
+*Skip to the Wiki page for documentation if you're already familiar with Di / Ioc.*
+
+Depenedency Injection addresses the creation of objects and their dependencies. This technique results in **loose coupling** between objects and their dependencies. Coupling between objects refers to the degree of knowledge that one object has of another one. So loose coupling means that objects are as independent of each other as possible. Using this technique results in **programs that are easily and safely modified**. A bonus side-effect is that your **code is more readable** because each object's dependencies are explicitly defined. 
+
+You don't need SmartDi to implement this technique. But if you do it by hand, you find yourself writing lots of boilerplate code. SmartDi manages all the objects in your app and their interdependencies in one place. This reduces the code-overhead, and reduces complexity. 
+
+The technique is best understood using a simple example. We start with a tightly coupled app, CoffeeRobot. We will program CoffeeRobot to brew us a plunger coffee using a French Press.
+
+```c#
+using System;
+
+public class FrenchPress
+{
+    public void Brew(string coffeeBeans)
+    {
+        Console.WriteLine("Plunging " + coffeeBeans);
+    }
+}
+
+public class CoffeeRobot
+{
+    public CoffeeRobot() { }
+
+    public void BrewCoffee(string coffeBeans)
+    {
+        var frenchPress = new FrenchPress();
+        frenchPress.Brew(coffeBeans);
+        Console.WriteLine("Here's your hit of caffeine!");
+    }
+}
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        var robot = new CoffeeRobot();
+        robot.BrewCoffee("Yirgacheffe Arabica");
+    }
+}
+```
+
+But we've just been given a [Chemex](https://www.chemexcoffeemaker.com), and want the Robot to make us pour-over coffee. This would result in a complete rewrite / duplication of code.
+
+If we had abstracted the brew method into an interface `IBrewEquipment` that has the `BrewCoffee(CoffeGrounds grounds)` method. Things would be alot simpler. Furthermore, if we pass `IBrewEquipment` to the CoffeRobot constructor, we can more easily swap it out for the Chemex. Below is the refactored code implementing the FrenchPress (changes indicated by `//<--`).
+
+```c#
+using System;
+
+public interface IBrewEquipment //<--
+{
+    void Brew(string coffeeBeans);
+}
+
+public class FrenchPress : IBrewEquipment
+{
+    public void Brew(string coffeeBeans)
+    {
+        Console.WriteLine("Plunging " + coffeeBeans);
+    }
+}
+
+public class CoffeeRobot
+{
+    IBrewEquipment equipment; //<--
+    public CoffeeRobot(IBrewEquipment equipment) //<--
+    {
+        this.equipment = equipment;
+    }
+
+    public void BrewCoffee(string coffeBeans)
+    {
+        equipment.Brew(coffeBeans); //<--
+        Console.WriteLine("Here's your hit of caffeine!");
+    }
+}
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        var robot = new CoffeeRobot(new FrenchPress()); //<--
+        robot.BrewCoffee("Yirgacheffe Arabica");
+    }
+}
+```
+
+Adding a few lines, we can implement the Chemex option:
+
+```c#
+public class Chemex : IBrewEquipment
+{
+    public void Brew(string coffeeBeans)
+    {
+      Console.WriteLine("Pouring " + coffeeBeans);
+    }
+}
+```
+
+And to get our Chemex coffee, we modify Program as follows:
+
+```c#
+public class Program
+{
+    static void Main(string[] args)
+    {
+        var robot = new CoffeeRobot(new Chemex()); //<--
+        robot.BrewCoffee("Yirgacheffe Arabica");
+    }
+}
+```
+
+Now, the overhead of doing this is pretty low for a simple application. But what if you had 5 CoffeeRobots serving customers? And we had a more realistic implementation where the robots share a single water-source, use a coffee grinder, and have filter papers for their Chemex. The implementation would look something like this:
+
+```c#
+public class Program
+{
+    static void Main(string[] args)
+    {
+        var water = new FilteredWater();
+
+        var robot1 =
+          new CoffeeRobot(new Chemex(new FilterPaper()), water, new Grinder());
+        var robot2 =
+          new CoffeeRobot(new Chemex(new FilterPaper()), water, new Grinder());
+        var robot3 =
+          new CoffeeRobot(new Chemex(new FilterPaper()), water, new Grinder());
+        var robot4 =
+          new CoffeeRobot(new Chemex(new FilterPaper()), water, new Grinder());
+        var robot5 =
+          new CoffeeRobot(new Chemex(new FilterPaper()), water, new Grinder());
+
+        robot1.BrewCoffee("Yirgacheffe Arabica");
+    }
+}
+```
+
+Ok, still not too bad... but what if we gave all our robots French Presses? This would result in refactoring 5 lines of code.... and for 100 robots, the refactoring would involve 100 lines. By using SmartDi, we can reduce this change to only one line, regardless of the number of robots. Also note how clean and readable the code looks.
+
+```c#
+public class Program
+{
+    static void Main(string[] args)
+    {
+        DiContainer.Register<Water, FilteredWater>().SingleInstance();
+
+        //SmartDi will automatically resolve the FilterPaper for the Chemex
+        DiContainer.Register<IBrewEquipment, Chemex>();
+        DiContainer.Register<Grinder>();
+        DiContainer.Register<CoffeeRobot>();
+
+        var robot1 = DiContainer.Resolve<CoffeeRobot>();
+        var robot2 = DiContainer.Resolve<CoffeeRobot>();
+        var robot3 = DiContainer.Resolve<CoffeeRobot>();
+        var robot4 = DiContainer.Resolve<CoffeeRobot>();
+        var robot5 = DiContainer.Resolve<CoffeeRobot>();
+
+        robot1.BrewCoffee("Yirgacheffe Arabica");
+    }
+}
+```
+
+To change to French Press, we only modify one line:
+
+```c#
+ SmartDi.Register<IBrewEquipment, FrenchPress>(); 
+```
+
+Its easy to give some robots a French Press and others a Chemex:
+
+```c#
+public class Program
+{
+    static void Main(string[] args)
+    {
+        DiContainer.Register<Water, FilteredWater>().SingleInstance();
+
+        DiContainer.RegisterExplicit(
+          c => new CoffeeRobot(
+                    new Chemex(new FilterPaper()),
+                    DiContainer.Resolve<Water>(),
+                    new Grinder()),
+          "pour_over");
+
+        DiContainer.RegisterExplicit(
+          c => new CoffeeRobot(
+                    new FrenchPress(),
+                    DiContainer.Resolve<Water>(),
+                    new Grinder()),
+          "plunger");
+
+        var robot1 = DiContainer.Resolve<CoffeeRobot>("pour_over");
+        var robot2 = DiContainer.Resolve<CoffeeRobot>("plunger");
+        var robot3 = DiContainer.Resolve<CoffeeRobot>("pour_over");
+        var robot4 = DiContainer.Resolve<CoffeeRobot>("plunger");
+        var robot5 = DiContainer.Resolve<CoffeeRobot>("plunger");
+
+        Console.WriteLine();
+
+        robot1.BrewCoffee("Yirgacheffe Arabica");
+        robot2.BrewCoffee("Columbian Arabica");
+        robot3.BrewCoffee("Honduran Arabica");
+        robot4.BrewCoffee("Yirgacheffe Arabica");
+        robot5.BrewCoffee("Guatemalan Arabica");
+    }
+}
+```
+
+
+
+Pulling it all together, here is the full executable code below:
+
+```c#
+using System;
+using SmartDi;
+
+//Expected Output:
+//Ready to brew using Chemex1 and FilteredWater1
+//Ready to brew using FrenchPress1 and FilteredWater1
+//Ready to brew using Chemex2 and FilteredWater1
+//Ready to brew using FrenchPress2 and FilteredWater1
+//Ready to brew using FrenchPress3 and FilteredWater1
+//
+//Pouring Yirgacheffe Arabica...Here's your hit of caffeine!
+//Plunging Columbian Arabica...Here's your hit of caffeine!
+//Pouring Honduran Arabica...Here's your hit of caffeine!
+//Plunging Yirgacheffe Arabica...Here's your hit of caffeine!
+//Plunging Guatemalan Arabica...Here's your hit of caffeine!
+
+public abstract class Water
+{
+    public abstract int Instances { get; }
+}
+
+public class FilteredWater : Water
+{
+    static int instances;
+    public override int Instances => instances;
+
+    public FilteredWater() { instances++; }
+}
+
+public class Grinder { }
+
+public interface IBrewEquipment
+{
+    int Instances { get; }
+    void Brew(string coffeeBeans);
+}
+
+public class FrenchPress : IBrewEquipment
+{
+    static int instances;
+    public int Instances => instances;
+    public FrenchPress() { instances++; }
+
+    public void Brew(string coffeeBeans)
+    {
+        Console.Write("Plunging " + coffeeBeans + "... ");
+    }
+}
+
+public class FilterPaper { }
+
+public class Chemex : IBrewEquipment
+{
+    static int instances;
+    public int Instances => instances;
+
+    public Chemex(FilterPaper paper)
+    {
+        _ = paper;
+        instances++;
+    }
+
+    public void Brew(string coffeeBeans)
+    {
+        Console.Write("Pouring " + coffeeBeans + "... ");
+    }
+}
+
+public class CoffeeRobot
+{
+    IBrewEquipment equipment;
+
+    public CoffeeRobot(IBrewEquipment equipment, Water water, Grinder grinder)
+    {
+        this.equipment = equipment;
+        _ = grinder;
+        Console.WriteLine("Ready to brew using "
+            + equipment + equipment.Instances
+            + " and "
+            + water + water.Instances);
+    }
+
+    public void BrewCoffee(string coffeBeans)
+    {
+        equipment.Brew(coffeBeans);
+        Console.WriteLine("Here's your hit of caffeine!");
+    }
+}
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        DiContainer.Register<Water, FilteredWater>().SingleInstance();
+
+        DiContainer.RegisterExplicit(
+          c => new CoffeeRobot(
+                    new Chemex(new FilterPaper()),
+                    DiContainer.Resolve<Water>(),
+                    new Grinder()),
+          "pour_over");
+
+        DiContainer.RegisterExplicit(
+          c => new CoffeeRobot(
+                    new FrenchPress(),
+                    DiContainer.Resolve<Water>(),
+                    new Grinder()),
+          "plunger");
+
+        var robot1 = DiContainer.Resolve<CoffeeRobot>("pour_over");
+        var robot2 = DiContainer.Resolve<CoffeeRobot>("plunger");
+        var robot3 = DiContainer.Resolve<CoffeeRobot>("pour_over");
+        var robot4 = DiContainer.Resolve<CoffeeRobot>("plunger");
+        var robot5 = DiContainer.Resolve<CoffeeRobot>("plunger");
+
+        Console.WriteLine();
+
+        robot1.BrewCoffee("Yirgacheffe Arabica");
+        robot2.BrewCoffee("Columbian Arabica");
+        robot3.BrewCoffee("Honduran Arabica");
+        robot4.BrewCoffee("Yirgacheffe Arabica");
+        robot5.BrewCoffee("Guatemalan Arabica");
+    }
+}
+```
 
