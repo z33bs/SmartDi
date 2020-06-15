@@ -30,6 +30,5 @@
         <!-- MANUALLY ADDED        -->
         <None Include="../../LICENSE" Pack="true" PackagePath="" />
         <None Include="../../SmartDi_icon.png" Pack="true" PackagePath="" />        
-      <PackageReference Include="System.Linq.Dynamic.Core" Version="1.1.2" />
     </ItemGroup>
 </Project>
