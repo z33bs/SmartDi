@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		README.md = README.md
 		LICENSE = LICENSE
 		azure-pipelines-master.yml = azure-pipelines-master.yml
+		SmartDi_icon.png = SmartDi_icon.png
+		SmartDi.sketch = SmartDi.sketch
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDiTests", "src\SmartDiTests\SmartDiTests.csproj", "{8F68F20F-EE50-45B1-900F-4AE14DD924EB}"
