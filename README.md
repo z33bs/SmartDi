@@ -1,9 +1,7 @@
 # <img align="left" src="https://raw.githubusercontent.com/z33bs/SmartDi/master/SmartDi_icon.png"/> SmartDi
 ### **Fast Friendly Dependency Injection** [![NuGet](https://buildstats.info/nuget/SmartDi?includePreReleases=true)](https://www.nuget.org/packages/SmartDi/)
-
-
-
-Why use SmartDi?
+<br/>
+<br/>
 
 * **Fast**. SmartDi was designed to be used in mobile apps. As such, quick resolving of dependencies is important.
 * **Feature-Rich**. SmartDi offers advanced features, without compromising on performance. SmartDi supports:
