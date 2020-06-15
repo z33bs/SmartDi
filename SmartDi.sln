@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		azure-pipelines-master.yml = azure-pipelines-master.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDiTests", "src\SmartDiTests\SmartDiTests.csproj", "{241F3389-82DE-486F-90F1-9FB27B0149D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDiTests", "src\SmartDiTests\SmartDiTests.csproj", "{8F68F20F-EE50-45B1-900F-4AE14DD924EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,9 +23,9 @@ Global
 		{C7E7F96B-8704-48E1-9C47-7AE4657E6941}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7E7F96B-8704-48E1-9C47-7AE4657E6941}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7E7F96B-8704-48E1-9C47-7AE4657E6941}.Release|Any CPU.Build.0 = Release|Any CPU
-		{241F3389-82DE-486F-90F1-9FB27B0149D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{241F3389-82DE-486F-90F1-9FB27B0149D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{241F3389-82DE-486F-90F1-9FB27B0149D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{241F3389-82DE-486F-90F1-9FB27B0149D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F68F20F-EE50-45B1-900F-4AE14DD924EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F68F20F-EE50-45B1-900F-4AE14DD924EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F68F20F-EE50-45B1-900F-4AE14DD924EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F68F20F-EE50-45B1-900F-4AE14DD924EB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
