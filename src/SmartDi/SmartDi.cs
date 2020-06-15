@@ -9,8 +9,6 @@ using System.Reflection;
 using System.Text;
 using System.Linq.Dynamic.Core;
 
-//todo Swap TResolve around
-//todo pass container around - might help child
 namespace SmartDi
 {
     /// <summary>
@@ -22,8 +20,10 @@ namespace SmartDi
         public Settings()
         {
             TryResolveUnregistered = true;
+            ResolveShouldBubbleUpContainers = true;
         }
         public bool TryResolveUnregistered { get; set; }
+        public bool ResolveShouldBubbleUpContainers { get; set; }
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -159,6 +159,7 @@ namespace SmartDi
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> parentContainer;
         //internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
+        IEnumerable<Type> assemblyTypesCache;
 
         public IDiContainer NewChildContainer()
         {
@@ -566,21 +567,56 @@ namespace SmartDi
                     $"smart resolve couldn't create an instance.");
             }
 
-            if (Parent != null)
+            if (Parent != null && Settings.ResolveShouldBubbleUpContainers == true)
                 return GetMetaObject(parentContainer, resolvedType, key);
-
-            if (resolvedType.IsInterface || resolvedType.IsAbstract)
-                throw new ResolveException(
-                    $"Could not Resolve or Create {resolvedType.Name}" +
-                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
-                    $"smart resolve couldn't create an instance.");
 
             if (!Settings.TryResolveUnregistered)
                 throw new ResolveException(
                     $"The type {resolvedType.Name} has not been registered. Either " +
                     $"register the class, or configure {nameof(Settings)}.");
 
-            metaObject = new MetaObject(resolvedType, LifeCycle.Transient);
+            if (resolvedType.IsInterface || resolvedType.IsAbstract)
+            {
+                IEnumerable<Type> implementations;
+
+                if (assemblyTypesCache is null)
+                    assemblyTypesCache = AppDomain
+                        .CurrentDomain
+                        .GetAssemblies()
+                        .SelectMany(a => a.GetTypes());
+
+                implementations = assemblyTypesCache
+                    .Where(t =>
+                        resolvedType.IsAssignableFrom(t)
+                        && t != resolvedType);
+
+                if(implementations.Count() != 1)
+                {
+                    var builder = new StringBuilder();
+                    builder.Append(
+                        $"Could not Resolve or Create {resolvedType.Name}" +
+                        $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
+                        $"smart resolve couldn't create an instance. ");
+                    if (implementations.Count() == 0)
+                        builder.AppendLine("No implementations were found.");
+                    else
+                    {
+                        builder.Append("Too many implementations were found: ");
+                        foreach (var implementation in implementations)
+                        {
+                            builder.Append($"{implementation.Name}; ");
+                        }
+                        builder.Remove(builder.Length - 2, 2);
+                    }
+
+                    throw new ResolveException(builder.ToString());
+                }
+
+                metaObject = new MetaObject(implementations.ToArray()[0], LifeCycle.Singleton);
+            }
+            else
+                metaObject = new MetaObject(resolvedType, LifeCycle.Transient);
+
             if (container.TryAdd(new Tuple<Type, string>(resolvedType, null), metaObject))
                 return metaObject;
 

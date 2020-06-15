@@ -976,20 +976,12 @@ namespace SmartDiTests
         }
 
         [Fact]
-        public void StaticResolve_InterfaceThatsNotRegistered_Throws()
+        public void StaticResolve_InterfaceThatsNotRegistered_Works()
         {
-            Assert.Throws<ResolveException>(() => DiContainer.Resolve<IService>());
+            Assert.IsAssignableFrom<IService>(DiContainer.Resolve<IService>());
 
             DiContainer.ResetContainer();
         }
-
-        [Fact]
-        public void StaticResolve_UnregisteredUnresolvable_Throws()
-        {
-            Assert.Throws<ResolveException>(
-                () => DiContainer.Resolve<ClassWithFlaggedCtor>());
-        }
-
 
 
         //Silly test - just a throw in the constructor

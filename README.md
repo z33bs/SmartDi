@@ -5,20 +5,36 @@ Why use SmartDi?
 
 * **Fast**. SmartDi was designed to be used in mobile apps. As such, quick resolving of dependencies is important.
 * **Feature-Rich**. SmartDi offers advanced features, without compromising on performance. SmartDi supports:
-  * Constructor selection: If multiple constructors, can control which one is used to build the object.
-  * Property Injection: Objects which require property injection are resolved
-  * Generics: Objects with a generic dependency are resolved
-  * IEnumerable: Several objects that implement the same interface are resolved into an Enumerable of that interface
-  * Conditional / Named dependencies: Objects with a conditional dependency are resolved
-  * Child Container: Objects can be scoped to a child container. Nesting of child containers is supported
+  * [Constructor selection](https://github.com/z33bs/SmartDi/wiki/Registration#constructor-selection): If multiple constructors, can control which one is used to build the object.
+  * [Property Injection](https://github.com/z33bs/SmartDi/wiki/Registration#linq-expressions): Objects which require property injection are resolved
+  * [Generics](https://github.com/z33bs/SmartDi/wiki/Registration#open-generic-types): Objects with a generic dependency are resolved
+  * [IEnumerables](https://github.com/z33bs/SmartDi/wiki/Registration#ienumerable): Several objects that implement the same interface are resolved into an Enumerable of that interface
+  * Conditional / [Named dependencies](https://github.com/z33bs/SmartDi/wiki/Registration#named-registrations): Objects with a conditional dependency are resolved
+  * [Child Containers](https://github.com/z33bs/SmartDi/wiki#child-containers): Objects can be scoped to a child container. Nesting of child containers is supported
 * **Friendly**. SmartDi offers a simple API and convenience:
-  * Smart-Resolve will attempt to resolve an unregistered dependency
-  * Singleton container option for simple applications
+  * [Smart-Resolve](https://github.com/z33bs/SmartDi/wiki/Resolution#smart-resolve) will attempt to resolve an unregistered dependency
+  * Singleton implementation for simple applications
   * Attribute decorators which simplify constructor selection and conditional resolution
 
 ## QuickStart
 
-The easiest way to get started is to use SmartDi's singleton implementation. This will give access to the container throughout your app by calling `SmartDi.`. The following example instantiates two coffee-making robots. Both CoffeeRobots share the same `FilteredWater` (registered as a singleton), and use their own`IBrewEquipment` to make coffee. In this implementation, we give the robots a `FrenchPress` which implements `IBrewEquipment`. Executable code below:
+The easiest way to get started is to use SmartDi's singleton implementation. This will give access to the container throughout your app by calling `DiContainer`. 
+
+```c#
+using SmartDi;
+
+//Register
+DiContainer.Register<IBrewEquipment,FrenchPress>();
+
+//Resolve
+var frenchPress = DiContainer.Resolve<IBrewEquipment>();
+```
+
+For more details, [browse the wiki](IBrewEquipment).
+
+### Example
+
+The following example instantiates two coffee-making robots. Both CoffeeRobots share the same `FilteredWater` (registered as a singleton), and use their own`IBrewEquipment` to make coffee. In this implementation, we give the robots a `FrenchPress` which implements `IBrewEquipment`. Executable code below:
 
 ```c#
 using System;
@@ -74,11 +90,36 @@ public class Program
 //Ready to brew using FrenchPress5 and FilteredWater1
 ```
 
+SmartDi has a convenient [Smart Resolve](https://github.com/z33bs/SmartDi/wiki/Resolution#smart-resolve) feature. This lets the user resolve instances that haven't been registered in the container. The above code can be reduced to:
 
+```c#
+//SMART-RESOLVE
+public class Program
+{
+  static void Main(string[] args)
+  {
+    //No Registration needed
+    var robot1 = DiContainer.Resolve<CoffeeRobot>();
+    var robot2 = DiContainer.Resolve<CoffeeRobot>();
+    var robot3 = DiContainer.Resolve<CoffeeRobot>();
+    var robot4 = DiContainer.Resolve<CoffeeRobot>();
+    var robot5 = DiContainer.Resolve<CoffeeRobot>();
+  }
+}
+
+//Output:
+//Ready to brew using FrenchPress1 and FilteredWater1
+//Ready to brew using FrenchPress1 and FilteredWater2
+//Ready to brew using FrenchPress1 and FilteredWater3
+//Ready to brew using FrenchPress1 and FilteredWater4
+//Ready to brew using FrenchPress1 and FilteredWater5
+```
+
+> :memo: Note that the SmartDi resolves in a different lifecycle for the objects. Interfaces will be assumed to be Singletons and Types assumed to be Transient.
 
 ## Why DI?
 
-*Skip to the Wiki page for documentation if you're already familiar with Di / Ioc.*
+> Skip to the [Wiki page](https://github.com/z33bs/SmartDi/wiki) for documentation if you're already familiar with Di / Ioc.
 
 Depenedency Injection addresses the creation of objects and their dependencies. This technique results in **loose coupling** between objects and their dependencies. Coupling between objects refers to the degree of knowledge that one object has of another one. So loose coupling means that objects are as independent of each other as possible. Using this technique results in **programs that are easily and safely modified**. A bonus side-effect is that your **code is more readable** because each object's dependencies are explicitly defined. 
 
