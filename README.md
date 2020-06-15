@@ -1,4 +1,4 @@
-# SmartDi
+# ![Logo](https://raw.githubusercontent.com/z33bs/SmartDi/master/SmartDi_icon.png) SmartDi
 ### **Fast Friendly Dependency Injection** [![NuGet](https://buildstats.info/nuget/SmartDi?includePreReleases=true)](https://www.nuget.org/packages/SmartDi/)
 
 Why use SmartDi?
