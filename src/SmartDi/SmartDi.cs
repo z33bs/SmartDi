@@ -438,7 +438,7 @@ namespace SmartDi
             return metaObject.NewExpression;
         }
 
-        private void MakeNewExpression(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
+        internal void MakeNewExpression(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
             var paramsInfo = metaObject.ConstructorCache?.GetParameters();
 
@@ -594,21 +594,6 @@ namespace SmartDi
                     listElements);
 
             throw new ResolveException($"Could not resolve {resolvedType.Name}");
-        }
-
-        internal IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
-        {
-            if (metaObject.ConstructorCache != null) //null if instanceDelegate was passed
-            {
-                foreach (var parameter in metaObject.ConstructorCache.GetParameters())
-                {
-                    var namedDependencyAttribute = parameter.GetCustomAttribute<ResolveNamedAttribute>();
-                    if (namedDependencyAttribute != null)
-                        yield return InternalResolve(container, parameter.ParameterType, namedDependencyAttribute.Key);
-                    else
-                        yield return InternalResolve(container, parameter.ParameterType, null);
-                }
-            }
         }
 
         #endregion
