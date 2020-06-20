@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Xunit;
 using SmartDi;
 using System.Collections.Concurrent;
@@ -372,6 +372,19 @@ namespace SmartDiTests
         }
 
         [Fact]
+        public void StaticRegisterWithCtorParametersWithKey_ResolvesWithSelectedCtor()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+
+            DiContainer.Register<ClassWith3Ctors>("test",typeof(IService));
+
+            Assert.Equal("(IService service)", DiContainer.Resolve<ClassWith3Ctors>("test").ConstructorUsed);
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
         public void RegisterConcreteTypeWithKey_RegistersWithExpectedKey()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
@@ -406,6 +419,32 @@ namespace SmartDiTests
             container.Register<IService, MyService>("test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
+        }
+
+        [Fact]
+        public void StaticRegisterResolvedWithCtorParameters_ResolvesWithSelectedCtor()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+
+            DiContainer.Register<IClassWith3Ctors, ClassWith3Ctors>(typeof(IService));
+
+            Assert.Equal("(IService service)", DiContainer.Resolve<IClassWith3Ctors>().ConstructorUsed);
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void StaticRegisterResolvedWithCtorParametersWithKey_ResolvesWithSelectedCtor()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+
+            DiContainer.Register<IClassWith3Ctors, ClassWith3Ctors>("test",typeof(IService));
+
+            Assert.Equal("(IService service)", DiContainer.Resolve<IClassWith3Ctors>("test").ConstructorUsed);
+
+            DiContainer.ResetContainer();
         }
 
         #endregion
