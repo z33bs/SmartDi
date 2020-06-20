@@ -702,7 +702,7 @@ namespace SmartDi
         public MetaObject(object instance) : this(instance?.GetType(), LifeCycle.Singleton)
         {
             Instance = instance;
-            ActivationExpression = c => instance; //I dont think we need this
+            ActivationExpression = c => instance; //Never called, but ActivationExpression cant be null
         }
 
         ///<param name="key">Need to know its full dictionary key to make its uncompiled expression</param>
@@ -891,14 +891,6 @@ namespace SmartDi
             : base(message)
         {
         }
-        /// <summary>
-        /// Exception thrown when <c>Resolve</c> is called for a type that has not been registered
-        /// </summary>
-        public ResolveException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
-
     }
     /// <summary>
     /// Will resolved the dependency associated with the named <see cref="Key"/>
