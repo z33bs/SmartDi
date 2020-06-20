@@ -6,6 +6,7 @@ name: 1.2.$(Rev:r)
 # Set project names here
 variables:
   projectName: SmartDi.csproj
+  testProjectName: SmartDiTests.csproj
 
 trigger:
 - master
@@ -14,14 +15,31 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-
-# Implicit Restore run before build
+## - Build Project -
+# Implicit Restore is run before build
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
     projects: '**/$(projectName)'
     arguments: '--configuration Release'
 
+## - Run Unit Tests -
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: '**/$(testProjectName)'
+    arguments: '--configuration Release'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run unit tests'
+  inputs:
+    command: 'test'
+    arguments: '--no-build --configuration Release --collect:"XPlat Code Coverage"'
+    publishTestResults: true
+    projects: '**/$(testProjectName)'
+
+
+## - Pack -
 # Package with -pre version for /beta
 - task: DotNetCoreCLI@2
   inputs:
