@@ -458,8 +458,9 @@ namespace SmartDi
                 metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
             }
 
-            else if (metaObject.TConcrete.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                metaObject.NewExpression = GetEnumerableExpression(container, metaObject.TConcrete);
+            else if (metaObject.TConcrete.IsGenericType
+                     && metaObject.TConcrete.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                        metaObject.NewExpression = GetEnumerableExpression(container, metaObject.TConcrete);
 
             else
                 throw new Exception($"{nameof(metaObject.ConstructorCache)} should not be null");
