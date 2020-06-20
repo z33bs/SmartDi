@@ -30,7 +30,8 @@ steps:
 #    projects: '**/$(testProjectName)'
 #    arguments: '--configuration Release'
 
-displayName: 'Restore packages for Unit Tests'
+- task: NuGetCommand@2
+  displayName: 'Restore packages for Unit Tests'
   inputs:
     command: 'restore'
     restoreSolution: '**/$(testProjectName)'
