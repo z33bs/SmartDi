@@ -4,6 +4,7 @@ using SmartDi;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using IocPerformance.Classes.Multiple;
+using System.Threading.Tasks;
 
 namespace SmartDiTests
 {
@@ -58,6 +59,13 @@ namespace SmartDiTests
 
         interface IService { }
         class MyService : IService { }
+
+        interface IServiceWithTwoImplementations { }
+        class ServiceTwo : IServiceWithTwoImplementations { }
+        class MockServiceTwo : IServiceWithTwoImplementations { }
+
+        interface IServiceWithNoImplementations { }
+
         class ConcreteOnly { }
 
         interface IClassWith3Ctors
@@ -858,52 +866,6 @@ namespace SmartDiTests
         #region Resolve
         #region Internal
 
-        //[Fact]
-        //public void GetActivator()
-        //{
-        //    var service = new MyService();
-        //    var ctor = typeof(ClassWith3Ctors).GetConstructor(new Type[] { typeof(IService) });
-        //    var createdActivator = NewDiContainer.GetActivator(ctor);
-        //    //.1967
-        //    int i = 0;
-        //    while (i < 100000)
-        //    {
-        //        var instance = createdActivator(service);
-        //        Assert.IsType<ClassWith3Ctors>(instance);
-        //        Assert.Equal(service, (instance as ClassWith3Ctors).Service);
-        //        i++;
-        //    }
-        //}
-
-        //delegate T InstanceDelegate<T>();
-        //delegate T ObjectActivator<T>(params object[] args);
-
-
-        //[Fact]
-        //public void CreateInstance()
-        //{
-        //    var service = new MyService();
-        //    var ctor = typeof(ClassWith3Ctors).GetConstructor(new Type[] { typeof(IService) });
-
-        //    //0.399
-        //    int i = 0;
-        //    while (i < 100000)
-        //    {
-        //        var instance = (ClassWith3Ctors)Activator.CreateInstance(
-        //            typeof(ClassWith3Ctors),
-        //            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-        //            null,
-        //            new object[] { service as IService },
-        //            CultureInfo.InvariantCulture);
-
-
-        //        Assert.IsType<ClassWith3Ctors>(instance);
-        //        Assert.Equal(service, instance.Service);
-        //        i++;
-        //    }
-        //}
-
-
         [Fact]
         public void GetConstructorParams_gt1Constructor_ReturnsFromGreediestPublic()
         {
@@ -956,6 +918,49 @@ namespace SmartDiTests
 
             Assert.Throws<ResolveException>(() => metaObj.
                                 GetBestConstructor(typeof(ClassWith2FlaggedCtors)));
+        }
+
+        [Fact]
+        public void GetMetaObject_IsGenericType_NotConstructedGeneric_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            Assert.Throws<ResolveException>(()=>container.GetMetaObject(mock, typeof(IEnumerable<int>), null));
+        }
+
+        [Fact]
+        public void GetMetaObject_UnregisteredInterface_Gt1Implementations_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            Assert.Throws<ResolveException>(() => container.GetMetaObject(mock, typeof(IServiceWithTwoImplementations), null));
+        }
+
+        [Fact]
+        public void GetMetaObject_UnregisteredInterface_NoImplementations_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            Assert.Throws<ResolveException>(() => container.GetMetaObject(mock, typeof(IServiceWithNoImplementations), null));
+        }
+
+        [Fact]
+        public void GetEnumerableException_Nothing_Registered_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            Assert.Throws<ResolveException>(()=>container.GetEnumerableExpression(mock, typeof(IEnumerable<IService>)));
+            
+        }
+
+        [Fact]
+        public void MakeNewExpression_ConstructorCacheNull_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            var metaObject = new MetaObject(new MyService());
+            Assert.Null(metaObject.ConstructorCache);
+            Assert.Throws<Exception>(() => container.MakeNewExpression(mock, metaObject));
         }
 
         #endregion
@@ -1407,6 +1412,22 @@ namespace SmartDiTests
             Assert.Empty(mock);
         }
 
+        [Fact]
+        public void Dispose()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            IDiContainer container = new DiContainer(mock);
+
+            container.Register<MyService>();
+            container.Register<ConcreteOnly>();
+            container.Register<ClassWith3Ctors>();
+
+            Assert.Equal(3, mock.Count);
+
+            container.Dispose();
+
+            Assert.Empty(mock);
+        }
 
         #endregion
 
