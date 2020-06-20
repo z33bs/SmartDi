@@ -31,12 +31,12 @@ steps:
     arguments: '--configuration Release'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Run unit tests'
+  displayName: 'Run unit tests with code coverage'
   inputs:
     command: 'test'
-    arguments: '--no-build --configuration Release --collect:"XPlat Code Coverage"'
-    publishTestResults: true
     projects: '**/$(testProjectName)'
+    arguments: '--no-build --configuration Debug /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
+    publishTestResults: true
 
 - task: DotNetCoreCLI@2
   displayName: 'Install ReportGenerator'
