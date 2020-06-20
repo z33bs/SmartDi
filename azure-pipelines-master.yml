@@ -56,14 +56,8 @@ steps:
     arguments: '--no-build --configuration Debug /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
     publishTestResults: true
 
-- task: DotNetCoreCLI@2
-  displayName: 'Install ReportGenerator'
-  inputs:
-    command: custom
-    custom: tool
-    arguments: 'install -g --global dotnet-reportgenerator-globaltool'
-
 - script: |
+    dotnet tool install -g dotnet-reportgenerator-globaltool
     reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines -reporttypes:Badges
   displayName: 'Create code coverage report'
 
