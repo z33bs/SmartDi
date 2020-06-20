@@ -61,7 +61,7 @@ steps:
   inputs:
     command: custom
     custom: tool
-    arguments: 'install --global dotnet-reportgenerator-globaltool'
+    arguments: 'install -g --global dotnet-reportgenerator-globaltool'
 
 - script: |
     reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines -reporttypes:Badges
