@@ -18,7 +18,7 @@
 
 ## QuickStart
 
-The easiest way to get started is to use SmartDi's singleton implementation. This will give access to the container throughout your app by calling `DiContainer`. 
+If you are new to DI, see [Why Di](#why-di?) below. The easiest way to get started is to use SmartDi's singleton implementation. This will give access to the container throughout your app by calling `DiContainer`. 
 
 ```c#
 using SmartDi;
@@ -30,7 +30,7 @@ DiContainer.Register<IBrewEquipment,FrenchPress>();
 var frenchPress = DiContainer.Resolve<IBrewEquipment>();
 ```
 
-For more details, [browse the wiki](IBrewEquipment).
+For more details, [browse the wiki](https://github.com/z33bs/SmartDi/wiki).
 
 ### Example
 
