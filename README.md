@@ -1,5 +1,5 @@
 # <img align="left" src="https://raw.githubusercontent.com/z33bs/SmartDi/master/SmartDi_icon.png"/> SmartDi
-### **Fast Friendly Dependency Injection** [![NuGet](https://buildstats.info/nuget/SmartDi?includePreReleases=true)](https://www.nuget.org/packages/SmartDi/)
+### **Fast Friendly Dependency Injection** [![NuGet](https://buildstats.info/nuget/SmartDi?includePreReleases=true)](https://www.nuget.org/packages/SmartDi/) ![Coverage](https://img.shields.io/azure-devops/coverage/guy-antoine/Smart%20Di/4?label=Coverage)
 <br/>
 <br/>
 
