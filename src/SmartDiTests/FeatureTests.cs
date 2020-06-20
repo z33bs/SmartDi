@@ -2,7 +2,6 @@
 using Xunit;
 using SmartDi;
 using IocPerformance.Classes.Generics;
-using System.Diagnostics;
 using Xunit.Abstractions;
 using IocPerformance.Classes.Multiple;
 using System.Collections.Generic;
@@ -11,6 +10,7 @@ using IocPerformance.Classes.Standard;
 using IocPerformance.Classes.Complex;
 using IocPerformance.Classes.Properties;
 using IocPerformance.Classes.Conditions;
+using IocPerformance.Classes.Child;
 
 namespace SmartDiTests
 {
@@ -75,55 +75,27 @@ namespace SmartDiTests
             DiContainer.Register<ISecondService, SecondService>();
             DiContainer.Register<IThirdService, ThirdService>();
 
-            DiContainer.RegisterExplicit<ISubObjectOne>(c => new SubObjectOne(DiContainer.Resolve<IFirstService>()));
-            DiContainer.RegisterExplicit<ISubObjectTwo>(c => new SubObjectTwo(DiContainer.Resolve<ISecondService>()));
-            DiContainer.RegisterExplicit<ISubObjectThree>(c => new SubObjectThree(DiContainer.Resolve<IThirdService>()));
+            DiContainer.Register<ISubObjectOne,SubObjectOne>();
+            DiContainer.Register<ISubObjectTwo,SubObjectTwo>();
+            DiContainer.Register<ISubObjectThree,SubObjectThree>();
 
-            DiContainer.RegisterExplicit<IComplex1>(c => new Complex1(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
-            DiContainer.RegisterExplicit<IComplex2>(c => new Complex2(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
-            DiContainer.RegisterExplicit<IComplex3>(c => new Complex3(DiContainer.Resolve<IFirstService>(), DiContainer.Resolve<ISecondService>(), DiContainer.Resolve<IThirdService>(), DiContainer.Resolve<ISubObjectOne>(), DiContainer.Resolve<ISubObjectTwo>(), DiContainer.Resolve<ISubObjectThree>()));
+            DiContainer.Register<IComplex1,Complex1>();
+            DiContainer.Register<IComplex2,Complex2>();
+            DiContainer.Register<IComplex3,Complex3>();
         }
 
         private void RegisterPropertyInjection()
         {
-            DiContainer.RegisterExplicit<IServiceA>(c => new ServiceA()).SingleInstance();
-            DiContainer.RegisterExplicit<IServiceB>(c => new ServiceB()).SingleInstance();
-            DiContainer.RegisterExplicit<IServiceC>(c => new ServiceC()).SingleInstance();
+            DiContainer.Register<IServiceA, ServiceA>().SingleInstance();
+            DiContainer.Register<IServiceB, ServiceB>().SingleInstance();
+            DiContainer.Register<IServiceC, ServiceC>().SingleInstance();
+            DiContainer.Register<ISubObjectA, SubObjectA>();
+            DiContainer.Register<ISubObjectB, SubObjectB>();
+            DiContainer.Register<ISubObjectC, SubObjectC>();
+            DiContainer.Register<IComplexPropertyObject1, ComplexPropertyObject1>();
+            DiContainer.Register<IComplexPropertyObject2, ComplexPropertyObject2>();
+            DiContainer.Register<IComplexPropertyObject3, ComplexPropertyObject3>();
 
-            DiContainer.RegisterExplicit<ISubObjectA>(c => new SubObjectA { ServiceA = DiContainer.Resolve<IServiceA>() });
-            DiContainer.RegisterExplicit<ISubObjectB>(c => new SubObjectB { ServiceB = DiContainer.Resolve<IServiceB>() });
-            DiContainer.RegisterExplicit<ISubObjectC>(c => new SubObjectC { ServiceC = DiContainer.Resolve<IServiceC>() });
-
-            DiContainer.RegisterExplicit<IComplexPropertyObject1>(c => new ComplexPropertyObject1
-            {
-                ServiceA = DiContainer.Resolve<IServiceA>(),
-                ServiceB = DiContainer.Resolve<IServiceB>(),
-                ServiceC = DiContainer.Resolve<IServiceC>(),
-                SubObjectA = DiContainer.Resolve<ISubObjectA>(),
-                SubObjectB = DiContainer.Resolve<ISubObjectB>(),
-                SubObjectC = DiContainer.Resolve<ISubObjectC>()
-            });
-
-
-            DiContainer.RegisterExplicit<IComplexPropertyObject2>(c => new ComplexPropertyObject2
-            {
-                ServiceA = DiContainer.Resolve<IServiceA>(),
-                ServiceB = DiContainer.Resolve<IServiceB>(),
-                ServiceC = DiContainer.Resolve<IServiceC>(),
-                SubObjectA = DiContainer.Resolve<ISubObjectA>(),
-                SubObjectB = DiContainer.Resolve<ISubObjectB>(),
-                SubObjectC = DiContainer.Resolve<ISubObjectC>()
-            });
-
-            DiContainer.RegisterExplicit<IComplexPropertyObject3>(c => new ComplexPropertyObject3
-            {
-                ServiceA = DiContainer.Resolve<IServiceA>(),
-                ServiceB = DiContainer.Resolve<IServiceB>(),
-                ServiceC = DiContainer.Resolve<IServiceC>(),
-                SubObjectA = DiContainer.Resolve<ISubObjectA>(),
-                SubObjectB = DiContainer.Resolve<ISubObjectB>(),
-                SubObjectC = DiContainer.Resolve<ISubObjectC>()
-            });
         }
 
         private void RegisterOpenGeneric()
@@ -139,13 +111,11 @@ namespace SmartDiTests
             DiContainer.Register<ISimpleAdapter, SimpleAdapterThree>("3");
             DiContainer.Register<ISimpleAdapter, SimpleAdapterFour>("4");
             DiContainer.Register<ISimpleAdapter, SimpleAdapterFive>("5");
+            DiContainer.Register<IEnumerable<ISimpleAdapter>>();
 
-            //todo make alternative
-            //DiContainer.EnumerableBindingLifeCycle<ISimpleAdapter>(LifeCycle.Singleton);
-
-            DiContainer.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-            DiContainer.RegisterExplicit<ImportMultiple2>(c => new ImportMultiple2(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-            DiContainer.RegisterExplicit<ImportMultiple3>(c => new ImportMultiple3(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
+            DiContainer.Register<ImportMultiple1>();
+            DiContainer.Register<ImportMultiple2>();
+            DiContainer.Register<ImportMultiple3>();
         }
 
         private void RegisterConditional()
@@ -154,46 +124,9 @@ namespace SmartDiTests
             DiContainer.Register<IExportConditionInterface, ExportConditionalObject2>("ExportConditionalObject2");
             DiContainer.Register<IExportConditionInterface, ExportConditionalObject3>("ExportConditionalObject3");
 
-            DiContainer.RegisterExplicit<ImportConditionObject1>(c => new ImportConditionObject1(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject1")));
-            DiContainer.RegisterExplicit<ImportConditionObject2>(c => new ImportConditionObject2(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject2")));
-            DiContainer.RegisterExplicit<ImportConditionObject3>(c => new ImportConditionObject3(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject3")));
-        }
-
-        private readonly ITestOutputHelper output;
-
-        public FeatureTests(ITestOutputHelper output)
-        {
-            this.output = output;
-        }
-        private static void DisplayGenericParameter(Type tp)
-        {
-            Console.WriteLine("      Type parameter: {0} position {1}",
-                tp.Name, tp.GenericParameterPosition);
-        }
-
-        [Fact]
-        public void IEnumerable()
-        {
-            //todo test for abstract too
-            DiContainer.ResetContainer();
-
-            DiContainer.Register<ISimpleAdapter, SimpleAdapterOne>();
-            DiContainer.Register<ISimpleAdapter, SimpleAdapterTwo>("2");
-            DiContainer.Register<ISimpleAdapter, SimpleAdapterThree>("3");
-            DiContainer.Register<ISimpleAdapter, SimpleAdapterFour>("4");
-            DiContainer.Register<ISimpleAdapter, SimpleAdapterFive>("5");
-            DiContainer.Register<IEnumerable<ISimpleAdapter>>();
-
-            DiContainer.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-            DiContainer.RegisterExplicit<ImportMultiple2>(c => new ImportMultiple2(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-            DiContainer.RegisterExplicit<ImportMultiple3>(c => new ImportMultiple3(DiContainer.Resolve<IEnumerable<ISimpleAdapter>>()));
-
-
-            var importMultiple1 = (ImportMultiple1)DiContainer.Resolve(typeof(ImportMultiple1));
-            var importMultiple2 = (ImportMultiple2)DiContainer.Resolve(typeof(ImportMultiple2));
-            var importMultiple3 = (ImportMultiple3)DiContainer.Resolve(typeof(ImportMultiple3));
-
-            DiContainer.ResetContainer();
+            DiContainer.RegisterExplicit(c=>new ImportConditionObject1(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject1")));
+            DiContainer.RegisterExplicit(c => new ImportConditionObject2(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject2")));
+            DiContainer.RegisterExplicit(c => new ImportConditionObject3(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject3")));
         }
 
         [Fact]
@@ -305,10 +238,168 @@ namespace SmartDiTests
 
         }
 
+        [Fact]
+        public void Singleton()
+        {
+            ResetInstanceCounters();
+            RegisterStandard();
+
+            for (int i = 0; i < 2; i++)
+            {
+
+                var singleton1 = (ISingleton1)DiContainer.Resolve(typeof(ISingleton1));
+                var singleton2 = (ISingleton2)DiContainer.Resolve(typeof(ISingleton2));
+                var singleton3 = (ISingleton3)DiContainer.Resolve(typeof(ISingleton3));
+            }
+
+            Assert.Equal(1, Singleton1.Instances);
+            Assert.Equal(1, Singleton2.Instances);
+            Assert.Equal(1, Singleton3.Instances);
+
+            DiContainer.ResetContainer();
+
+        }
+
+        [Fact]
+        public void Complex()
+        {
+            ResetInstanceCounters();
+            RegisterComplexObject();
+
+            for (int i = 0; i < 2; i++)
+            {
+                var complex1 = (IComplex1)DiContainer.Resolve(typeof(IComplex1));
+                var complex2 = (IComplex2)DiContainer.Resolve(typeof(IComplex2));
+                var complex3 = (IComplex3)DiContainer.Resolve(typeof(IComplex3));
+            }
+
+            Assert.Equal(2, Complex1.Instances);
+            Assert.Equal(2, Complex2.Instances);
+            Assert.Equal(2, Complex3.Instances);
+
+            DiContainer.ResetContainer();
+
+        }
+
+        [Fact]
+        public void Property()
+        {
+            ResetInstanceCounters();
+            RegisterPropertyInjection();
+
+            for (int i = 0; i < 2; i++)
+            {
+                var complex1 = (IComplexPropertyObject1)DiContainer.Resolve(typeof(IComplexPropertyObject1));
+                var complex2 = (IComplexPropertyObject2)DiContainer.Resolve(typeof(IComplexPropertyObject2));
+                var complex3 = (IComplexPropertyObject3)DiContainer.Resolve(typeof(IComplexPropertyObject3));
+            }
+
+            Assert.Equal(2, ComplexPropertyObject1.Instances);
+            Assert.Equal(2, ComplexPropertyObject2.Instances);
+            Assert.Equal(2, ComplexPropertyObject3.Instances);
+
+            DiContainer.ResetContainer();
+
+        }
+
+        [Fact]
+        public void Generics()
+        {
+            ResetInstanceCounters();
+            RegisterOpenGeneric();
+
+            for (int i = 0; i < 2; i++)
+            {
+                var generic1 = (ImportGeneric<int>)DiContainer.Resolve(typeof(ImportGeneric<int>));
+                var generic2 = (ImportGeneric<float>)DiContainer.Resolve(typeof(ImportGeneric<float>));
+                var generic3 = (ImportGeneric<object>)DiContainer.Resolve(typeof(ImportGeneric<object>));
+            }
+
+            Assert.Equal(2, ImportGeneric<int>.Instances);
+            Assert.Equal(2, ImportGeneric<float>.Instances);
+            Assert.Equal(2, ImportGeneric<object>.Instances);
+
+            DiContainer.ResetContainer();
+
+        }
+
+        [Fact]
+        public void IEnumerable()
+        {
+            ResetInstanceCounters();
+            RegisterMultiple();
+
+            for (int i = 0; i < 2; i++)
+            {
+                var importMultiple1 = (ImportMultiple1)DiContainer.Resolve(typeof(ImportMultiple1));
+                var importMultiple2 = (ImportMultiple2)DiContainer.Resolve(typeof(ImportMultiple2));
+                var importMultiple3 = (ImportMultiple3)DiContainer.Resolve(typeof(ImportMultiple3));
+            }
+
+            Assert.Equal(2, ImportMultiple1.Instances);
+            Assert.Equal(2, ImportMultiple2.Instances);
+            Assert.Equal(2, ImportMultiple3.Instances);
+
+            DiContainer.ResetContainer();
+
+        }
+
+        [Fact]
+        public void Conditional()
+        {
+            ResetInstanceCounters();
+            RegisterConditional();
+
+            for (int i = 0; i < 2; i++)
+            {
+                var importConditionObject1 = (ImportConditionObject1)DiContainer.Resolve(typeof(ImportConditionObject1));
+                var importConditionObject2 = (ImportConditionObject2)DiContainer.Resolve(typeof(ImportConditionObject2));
+                var importConditionObject3 = (ImportConditionObject3)DiContainer.Resolve(typeof(ImportConditionObject3));
+            }
+
+            Assert.Equal(2, ImportConditionObject1.Instances);
+            Assert.Equal(2, ImportConditionObject2.Instances);
+            Assert.Equal(2, ImportConditionObject3.Instances);
+
+            DiContainer.ResetContainer();
+
+        }
+
+        [Fact]
+        public void ChildContainer()
+        {
+            ResetInstanceCounters();
+
+            IDiContainer container = new DiContainer();
+            container.Register<ISingleton1, Singleton1>().SingleInstance();
+            container.Register<ISingleton2, Singleton2>().SingleInstance();
+            container.Register<ISingleton3, Singleton3>().SingleInstance();
+
+            var child = container.NewChildContainer();
+            child.Register<ITransient1, ScopedTransient>();
+            child.Register<ICombined1, ScopedCombined1>();
+            child.Register<ICombined2, ScopedCombined2>();
+            child.Register<ICombined3, ScopedCombined3>();
+
+            for (int i = 0; i < 2; i++)
+            {
+                var scopedCombined1 = (ICombined1)child.Resolve(typeof(ICombined1));
+                var scopedCombined2 = (ICombined2)child.Resolve(typeof(ICombined2));
+                var scopedCombined3 = (ICombined3)child.Resolve(typeof(ICombined3));
+            }
+
+            Assert.Equal(2, ScopedCombined1.Instances);
+            Assert.Equal(2, ScopedCombined2.Instances);
+            Assert.Equal(2, ScopedCombined3.Instances);
+
+        }
+
         private void ResetInstanceCounters()
         {
             Transient1.Instances = Transient2.Instances = Transient3.Instances = 0;
             Singleton1.Instances = Singleton2.Instances = Singleton3.Instances = 0;
+            Complex1.Instances = Complex2.Instances = Complex3.Instances = 0;
+            ImportMultiple1.Instances = ImportMultiple2.Instances = ImportMultiple3.Instances = 0;
         }
     }
 }
