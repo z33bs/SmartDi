@@ -24,7 +24,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -89,14 +88,8 @@ namespace SmartDi
             where TConcrete : notnull, TResolved;
 
         // ... Expression
-        RegisterOptions RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
-            where TConcrete : notnull;
-
         RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
             where TConcrete : notnull, TResolved;
-
-        RegisterOptions RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
-            where TConcrete : notnull;
 
         RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
             where TConcrete : notnull, TResolved;
@@ -138,28 +131,18 @@ namespace SmartDi
 
     public class DiContainer : IDiContainer
     {
-        public class EnumerableBinding
-        {
-            public List<string> Implementations { get; } = new List<string>();
-            public LifeCycle LifeCycle { get; set; } = LifeCycle.Transient;
-        }
-
         public static Settings Settings { get; } = new Settings();
-
 
         public DiContainer()
         {
             container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
-            //enumerableLookup = new ConcurrentDictionary<Type, EnumerableBinding>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public DiContainer(
-            ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
-            ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup = null)
+            ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
         {
             this.container = container;
-            //this.enumerableLookup = enumerableLookup ?? new ConcurrentDictionary<Type, EnumerableBinding>();
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -176,10 +159,8 @@ namespace SmartDi
 
         public IDiContainer Parent { get; set; }
 
-        //todo if key is string, string - don't need separate generic container
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> parentContainer;
-        //internal readonly ConcurrentDictionary<Type, EnumerableBinding> enumerableLookup;
         IEnumerable<Type> assemblyTypesCache;
 
         public IDiContainer NewChildContainer()
@@ -281,17 +262,6 @@ namespace SmartDi
 
 
 
-        public static RegisterOptions RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
-            where TConcrete : notnull
-            => (Instance as IDiContainer).RegisterExplicit<TConcrete>(instanceDelegate);
-
-        RegisterOptions IDiContainer.RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
-            => new RegisterOptions(
-                container,
-                InternalRegister(container, null, null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TConcrete), null))));
-
-
-
         public static RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
             where TConcrete : notnull, TResolved
             => (Instance as IDiContainer).RegisterExplicit<TResolved, TConcrete>(instanceDelegate);
@@ -302,16 +272,6 @@ namespace SmartDi
                 InternalRegister(container, typeof(TResolved), null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TResolved), null))));
 
 
-
-        public static RegisterOptions RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>>
- instanceDelegate, string key)
-            where TConcrete : notnull
-                => (Instance as IDiContainer).RegisterExplicit<TConcrete>(instanceDelegate, key);
-
-        RegisterOptions IDiContainer.RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
-            => new RegisterOptions(
-                container,
-                InternalRegister(container, null, key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TConcrete), key))));
 
         public static RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>>
  instanceDelegate, string key)
@@ -377,14 +337,6 @@ namespace SmartDi
 
         IRegisterOptions IDiContainer.RegisterType(Type concreteType, Type resolvedType, string key, params Type[] constructorParameters)
         {
-            //if (concreteType.IsGenericTypeDefinition)
-            //    return new GenericRegisterOptions(
-            //        openGenericContainer,
-            //        InternalRegisterOpenGeneric(openGenericContainer, resolvedType, key,
-            //            new GenericMetaObject(
-            //                concreteType,
-            //                LifeCycle.Transient)));
-            //else
             return new RegisterOptions(
                 container,
                 InternalRegister(container, resolvedType, key,
@@ -394,16 +346,6 @@ namespace SmartDi
                         constructorParameters)));
         }
         //todo validatee resolvedType:TConcrete
-        //todo investigate possibility of ctor params
-
-        //public void EnumerableBindingLifeCycle<T>(LifeCycle lifeCycle) where T : notnull
-        //{
-        //    if (enumerableLookup.TryGetValue(typeof(T), out EnumerableBinding binding))
-        //        binding.LifeCycle = lifeCycle;
-        //    else
-        //        enumerableLookup.TryAdd(typeof(T), new EnumerableBinding());
-        //    //staticEnumerableLookup[typeof(T)].Item2 = lifeCycle;
-        //}
 
         #endregion
 
@@ -419,7 +361,6 @@ namespace SmartDi
                     MakeNewExpression(container, keyValuePair.Value);
             }
         }
-
 
         internal Tuple<Type, string> InternalRegister(
             ConcurrentDictionary<Tuple<Type, string>, MetaObject> container,
@@ -441,40 +382,8 @@ namespace SmartDi
                 throw new RegisterException(builder.ToString());
             }
 
-            ////the way its setup resolved type should only be interface / abstract
-            //if (resolvedType != null && (resolvedType.IsInterface || resolvedType.IsAbstract))
-            //{
-            //    //staticEnumerableLookup.AddOrUpdate(resolvedType, new List<string>() { key }, (k, oldvalue) => { oldvalue.Add(key); return oldvalue; });
-            //    enumerableLookup.TryAdd(resolvedType, new EnumerableBinding());
-            //    enumerableLookup[resolvedType].Implementations.Add(key);
-            //}
-
             return containerKey;
         }
-
-        //internal Tuple<Type, string> InternalRegisterOpenGeneric(
-        //    ConcurrentDictionary<Tuple<Type, string>, GenericMetaObject> container,
-        //    Type resolvedType,
-        //    string key,
-        //    GenericMetaObject metaObject
-        //    )
-        //{
-        //    var containerKey = new Tuple<Type, string>(
-        //        resolvedType?.Name ?? metaObject.TConcrete.Name, key);
-
-        //    if (!container.TryAdd(containerKey, metaObject))
-        //    {
-        //        var builder = new StringBuilder();
-        //        builder.Append($"{nameof(containerKey.Item1)} is already registered");
-        //        if (containerKey.Item2 != null)
-        //            builder.Append($" with key '{nameof(containerKey.Item2)}'");
-        //        builder.Append(".");
-        //        throw new RegisterException(builder.ToString());
-        //    }
-
-        //    return containerKey;
-        //}
-
 
         #endregion
 
@@ -529,7 +438,7 @@ namespace SmartDi
             return metaObject.NewExpression;
         }
 
-        private void MakeNewExpression(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
+        internal void MakeNewExpression(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
             var paramsInfo = metaObject.ConstructorCache?.GetParameters();
 
@@ -549,8 +458,9 @@ namespace SmartDi
                 metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
             }
 
-            else if (metaObject.TConcrete.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                metaObject.NewExpression = GetEnumerableExpression(container, metaObject.TConcrete);
+            else if (metaObject.TConcrete.IsGenericType
+                     && metaObject.TConcrete.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                        metaObject.NewExpression = GetEnumerableExpression(container, metaObject.TConcrete);
 
             else
                 throw new Exception($"{nameof(metaObject.ConstructorCache)} should not be null");
@@ -686,32 +596,6 @@ namespace SmartDi
             throw new ResolveException($"Could not resolve {resolvedType.Name}");
         }
 
-        //private IEnumerable<ElementInit> GetListElementExpressionsForEnumerable(Type resolvedType, List<string> implementations)
-        //{
-        //    var addMethod = typeof(List<>).MakeGenericType(resolvedType).GetMethod("Add");
-        //    foreach (var implementation in implementations)
-        //    {
-        //        var expression = GetExpression(resolvedType, implementation);
-        //        var elementInit = Expression.ElementInit(addMethod, expression);
-        //        yield return elementInit; //InternalResolve(container, resolvedType, implementation);
-        //    }
-        //}
-
-        internal IEnumerable<object> ResolveDependencies(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
-        {
-            if (metaObject.ConstructorCache != null) //null if instanceDelegate was passed
-            {
-                foreach (var parameter in metaObject.ConstructorCache.GetParameters())
-                {
-                    var namedDependencyAttribute = parameter.GetCustomAttribute<ResolveNamedAttribute>();
-                    if (namedDependencyAttribute != null)
-                        yield return InternalResolve(container, parameter.ParameterType, namedDependencyAttribute.Key);
-                    else
-                        yield return InternalResolve(container, parameter.ParameterType, null);
-                }
-            }
-        }
-
         #endregion
         #region Unregister
         public static void Unregister<T>()
@@ -817,19 +701,9 @@ namespace SmartDi
         #region Constructors
         public MetaObject(object instance) : this(instance?.GetType(), LifeCycle.Singleton)
         {
-            //this( ctor will throw if instance is null
-            //lazy = new Lazy<object>(() => instance);
             Instance = instance;
-            ActivationExpression = c => instance; //todo I dont think we need this
+            ActivationExpression = c => instance; //Never called, but ActivationExpression cant be null
         }
-
-        //public MetaObject(Type concreteType, LifeCycle lifeCycle, Func<object> staticInstanceDelegate) : this(concreteType, lifeCycle)
-        //{
-        //    if (staticInstanceDelegate is null)
-        //        throw new ArgumentNullException(nameof(staticInstanceDelegate));
-
-        //    StaticActivationExpression = staticInstanceDelegate;
-        //}
 
         ///<param name="key">Need to know its full dictionary key to make its uncompiled expression</param>
         public MetaObject(Type concreteType, LifeCycle lifeCycle, Expression<Func<IDiContainer, object>> instanceDelegate, Tuple<Type, string> key) : this(concreteType, lifeCycle)
@@ -865,7 +739,8 @@ namespace SmartDi
 
         #region Properties
 
-        //todo test whether static causes problem for child containers. Me thinks shouldn't
+        internal object Instance { get; set; }
+
         public static ParameterExpression IDiContainerParameter { get; } = Expression.Parameter(typeof(IDiContainer), "c");
 
         Expression newExpression;
@@ -875,9 +750,6 @@ namespace SmartDi
             set
             {
                 newExpression = value;
-
-                //lazy = new Lazy<object>(Expression.Lambda<Func<object>>(newExpression, null).Compile());
-
 
                 ActivationExpression = Expression.Lambda(
                     newExpression,
@@ -889,52 +761,15 @@ namespace SmartDi
 
         public Type TConcrete { get; }
 
-        //Lazy<object> lazy;
-        //object instance;
-        public object Instance
-        {
-            get; set;
-            //get => lazy?.Value;
-            //            set
-            //            {
-            //#if DEBUG
-            //                if (LifeCycle is LifeCycle.Singleton)
-            //                    instance = value;
-            //                else
-            //                    throw new Exception("Should only set Instance if LifeCycle is Singleton");
-            //#else
-            //                instance = value;
-            //#endif
-            //            }
-        }
-
-        LifeCycle lifeCycle;
-        public LifeCycle LifeCycle
-        {
-            get => lifeCycle;
-            set
-            {
-                //todo check this logic when clean up
-
-                //if (value is LifeCycle.Transient)
-                //    instance = null; //Can only have instance if Singleton
-
-                lifeCycle = value;
-            }
-        }
+        public LifeCycle LifeCycle { get; set; }
 
         public ConstructorInfo ConstructorCache { get; }
-
-        //todo can we translate this into an ActivationExpression?
-        public ObjectActivator ObjectActivator { get; }
-
-        //public Func<object> StaticActivationExpression { get; }
 
         public Func<IDiContainer, object> ActivationExpression { get; private set; }
 
         #endregion
 
-        #region Internal methods
+        #region Methods
 
         public object GetObject(IDiContainer container)
         {
@@ -1009,108 +844,14 @@ namespace SmartDi
             return constructors[0];
         }
 
-
-        //todo - don't compile on register. On first resolve compile by substituting each expression.
-        internal string TestExpressionCreator(ConstructorInfo ctor)
-        {
-            var builder = new StringBuilder();
-            builder.Append($"new {ctor.DeclaringType.Name}(");
-            var paramsInfo = ctor.GetParameters();
-            var argsExp =
-    new Expression[paramsInfo.Length];
-
-
-
-            //var p = Expression.Parameter(typeof(IDiContainer), "c");
-
-            int i = 0;
-            foreach (var item in paramsInfo)
-            {
-                var namedAttribute = item.GetCustomAttribute<ResolveNamedAttribute>();
-                if (namedAttribute != null)
-                {
-                    //todo: only need to do once
-                    var get = typeof(IDiContainer).GetMethods().Where(m => m.Name == "Resolve" && m.GetParameters().Count() == 1 && m.IsGenericMethod).ToArray();
-                    MethodInfo method = get[0].MakeGenericMethod(item.ParameterType);
-                    argsExp[i] = Expression.Call(IDiContainerParameter, method, Expression.Constant(namedAttribute.Key));
-                }
-                else
-                {
-                    var get = typeof(IDiContainer).GetMethods().Where(m => m.Name == "Resolve" && m.GetParameters().Count() == 0 && m.IsGenericMethod).ToArray();
-                    MethodInfo method = get[0].MakeGenericMethod(item.ParameterType);
-                    argsExp[i] = Expression.Call(IDiContainerParameter, method);
-                }
-                builder.Append($"c.Resolve<{item.ParameterType.Name}>(),");
-                i++;
-            }
-            builder.Remove(builder.Length - 1, 1);
-            builder.Append(")");
-
-            //const string exp = @"(Person.Age > 3 AND Person.Weight > 50) OR Person.Age < 3";
-
-            //var e = DynamicExpression.ParseLambda(new[] { p }, null, exp);
-            //DynamicExpression.
-            //var lambda = DynamicExpressionParser.ParseLambda(new[] { p }, null, builder.ToString());
-            var test = Expression.Lambda(Expression.New(ctor, argsExp), IDiContainerParameter);
-            //todo somehow need the parameter in here
-            ActivationExpression = test.Compile() as Func<IDiContainer, object>;
-
-            return builder.ToString();
-        }
-
-        //## Also using:
-        //https://rogerjohansson.blog/2008/02/28/linq-expressions-creating-objects/
-        internal ObjectActivator GetActivator
-            (ConstructorInfo ctor)
-        {
-            Debug.WriteLine(TestExpressionCreator(ctor));
-            var paramsInfo = ctor.GetParameters();
-
-            //create a single param of type object[]
-            var param =
-                Expression.Parameter(typeof(object[]), "args");
-
-            var argsExp =
-                new Expression[paramsInfo.Length];
-
-            //pick each arg from the params array 
-            //and create a typed expression of them
-            for (int i = 0; i < paramsInfo.Length; i++)
-            {
-                var index = Expression.Constant(i);
-                var paramType = paramsInfo[i].ParameterType;
-
-                var paramAccessorExp =
-                    Expression.ArrayIndex(param, index);
-
-                var paramCastExp =
-                    Expression.Convert(paramAccessorExp, paramType);
-
-                argsExp[i] = paramCastExp;
-            }
-
-            //make a NewExpression that calls the
-            //ctor with the args we just created
-            var newExp = Expression.New(ctor, argsExp);
-
-            //create a lambda with the New
-            //Expression as body and our param object[] as arg
-            var lambda =
-                Expression.Lambda(typeof(ObjectActivator), newExp, param);
-
-            //compile it
-            ObjectActivator compiled = (ObjectActivator)lambda.Compile();
-            return compiled;
-        }
-
-        #endregion
-
         public void Dispose()
         {
             if (Instance != null
                 && Instance is IDisposable disposable)
                 disposable.Dispose();
         }
+
+        #endregion
     }
 
     /// <summary>
@@ -1150,14 +891,6 @@ namespace SmartDi
             : base(message)
         {
         }
-        /// <summary>
-        /// Exception thrown when <c>Resolve</c> is called for a type that has not been registered
-        /// </summary>
-        public ResolveException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
-
     }
     /// <summary>
     /// Will resolved the dependency associated with the named <see cref="Key"/>

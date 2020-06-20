@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using Xunit;
 using SmartDi;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using IocPerformance.Classes.Multiple;
+using System.Threading.Tasks;
 
 namespace SmartDiTests
 {
@@ -58,6 +59,13 @@ namespace SmartDiTests
 
         interface IService { }
         class MyService : IService { }
+
+        interface IServiceWithTwoImplementations { }
+        class ServiceTwo : IServiceWithTwoImplementations { }
+        class MockServiceTwo : IServiceWithTwoImplementations { }
+
+        interface IServiceWithNoImplementations { }
+
         class ConcreteOnly { }
 
         interface IClassWith3Ctors
@@ -372,6 +380,19 @@ namespace SmartDiTests
         }
 
         [Fact]
+        public void StaticRegisterWithCtorParametersWithKey_ResolvesWithSelectedCtor()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+
+            DiContainer.Register<ClassWith3Ctors>("test",typeof(IService));
+
+            Assert.Equal("(IService service)", DiContainer.Resolve<ClassWith3Ctors>("test").ConstructorUsed);
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
         public void RegisterConcreteTypeWithKey_RegistersWithExpectedKey()
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
@@ -406,6 +427,32 @@ namespace SmartDiTests
             container.Register<IService, MyService>("test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
+        }
+
+        [Fact]
+        public void StaticRegisterResolvedWithCtorParameters_ResolvesWithSelectedCtor()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+
+            DiContainer.Register<IClassWith3Ctors, ClassWith3Ctors>(typeof(IService));
+
+            Assert.Equal("(IService service)", DiContainer.Resolve<IClassWith3Ctors>().ConstructorUsed);
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void StaticRegisterResolvedWithCtorParametersWithKey_ResolvesWithSelectedCtor()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+
+            DiContainer.Register<IClassWith3Ctors, ClassWith3Ctors>("test",typeof(IService));
+
+            Assert.Equal("(IService service)", DiContainer.Resolve<IClassWith3Ctors>("test").ConstructorUsed);
+
+            DiContainer.ResetContainer();
         }
 
         #endregion
@@ -518,7 +565,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             DiContainer.SetContainer(mock);
 
-            DiContainer.RegisterExplicit<MyService>(c => new MyService());
+            DiContainer.RegisterExplicit<MyService,MyService>(c => new MyService());
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
 
@@ -531,7 +578,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             IDiContainer container = new DiContainer(mock);
 
-            container.RegisterExplicit<MyService>(c => new MyService());
+            container.RegisterExplicit<MyService,MyService>(c => new MyService());
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), null)));
         }
@@ -542,7 +589,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             DiContainer.SetContainer(mock);
 
-            DiContainer.RegisterExplicit<IService>(c => new MyService());
+            DiContainer.RegisterExplicit<IService,MyService>(c => new MyService());
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), null)));
 
@@ -555,7 +602,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             IDiContainer container = new DiContainer(mock);
 
-            container.RegisterExplicit<IService>(c => new MyService());
+            container.RegisterExplicit<IService,MyService>(c => new MyService());
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), null)));
         }
@@ -566,7 +613,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             DiContainer.SetContainer(mock);
 
-            DiContainer.RegisterExplicit<MyService>(c => new MyService(), "test");
+            DiContainer.RegisterExplicit<MyService,MyService>(c => new MyService(), "test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), "test")));
 
@@ -579,7 +626,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             IDiContainer container = new DiContainer(mock);
 
-            container.RegisterExplicit<MyService>(c => new MyService(), "test");
+            container.RegisterExplicit<MyService,MyService>(c => new MyService(), "test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(MyService), "test")));
         }
@@ -590,7 +637,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             DiContainer.SetContainer(mock);
 
-            DiContainer.RegisterExplicit<IService>(c => new MyService(), "test");
+            DiContainer.RegisterExplicit<IService,MyService>(c => new MyService(), "test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
 
@@ -603,7 +650,7 @@ namespace SmartDiTests
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             IDiContainer container = new DiContainer(mock);
 
-            container.RegisterExplicit<IService>(c => new MyService(), "test");
+            container.RegisterExplicit<IService,MyService>(c => new MyService(), "test");
 
             Assert.True(mock.ContainsKey(new Tuple<Type, string>(typeof(IService), "test")));
         }
@@ -819,52 +866,6 @@ namespace SmartDiTests
         #region Resolve
         #region Internal
 
-        //[Fact]
-        //public void GetActivator()
-        //{
-        //    var service = new MyService();
-        //    var ctor = typeof(ClassWith3Ctors).GetConstructor(new Type[] { typeof(IService) });
-        //    var createdActivator = NewDiContainer.GetActivator(ctor);
-        //    //.1967
-        //    int i = 0;
-        //    while (i < 100000)
-        //    {
-        //        var instance = createdActivator(service);
-        //        Assert.IsType<ClassWith3Ctors>(instance);
-        //        Assert.Equal(service, (instance as ClassWith3Ctors).Service);
-        //        i++;
-        //    }
-        //}
-
-        //delegate T InstanceDelegate<T>();
-        //delegate T ObjectActivator<T>(params object[] args);
-
-
-        //[Fact]
-        //public void CreateInstance()
-        //{
-        //    var service = new MyService();
-        //    var ctor = typeof(ClassWith3Ctors).GetConstructor(new Type[] { typeof(IService) });
-
-        //    //0.399
-        //    int i = 0;
-        //    while (i < 100000)
-        //    {
-        //        var instance = (ClassWith3Ctors)Activator.CreateInstance(
-        //            typeof(ClassWith3Ctors),
-        //            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-        //            null,
-        //            new object[] { service as IService },
-        //            CultureInfo.InvariantCulture);
-
-
-        //        Assert.IsType<ClassWith3Ctors>(instance);
-        //        Assert.Equal(service, instance.Service);
-        //        i++;
-        //    }
-        //}
-
-
         [Fact]
         public void GetConstructorParams_gt1Constructor_ReturnsFromGreediestPublic()
         {
@@ -917,6 +918,49 @@ namespace SmartDiTests
 
             Assert.Throws<ResolveException>(() => metaObj.
                                 GetBestConstructor(typeof(ClassWith2FlaggedCtors)));
+        }
+
+        [Fact]
+        public void GetMetaObject_IsGenericType_NotConstructedGeneric_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            Assert.Throws<ResolveException>(()=>container.GetMetaObject(mock, typeof(IEnumerable<int>), null));
+        }
+
+        [Fact]
+        public void GetMetaObject_UnregisteredInterface_Gt1Implementations_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            Assert.Throws<ResolveException>(() => container.GetMetaObject(mock, typeof(IServiceWithTwoImplementations), null));
+        }
+
+        [Fact]
+        public void GetMetaObject_UnregisteredInterface_NoImplementations_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            Assert.Throws<ResolveException>(() => container.GetMetaObject(mock, typeof(IServiceWithNoImplementations), null));
+        }
+
+        [Fact]
+        public void GetEnumerableException_Nothing_Registered_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            Assert.Throws<ResolveException>(()=>container.GetEnumerableExpression(mock, typeof(IEnumerable<IService>)));
+            
+        }
+
+        [Fact]
+        public void MakeNewExpression_ConstructorCacheNull_Throws()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            var container = new DiContainer();
+            var metaObject = new MetaObject(new MyService());
+            Assert.Null(metaObject.ConstructorCache);
+            Assert.Throws<Exception>(() => container.MakeNewExpression(mock, metaObject));
         }
 
         #endregion
@@ -1083,7 +1127,7 @@ namespace SmartDiTests
         public void StaticResolve_Expression_ReturnsInstance()
         {
             DiContainer.Register<IService, MyService>();
-            DiContainer.RegisterExplicit<ClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()));
+            DiContainer.RegisterExplicit<ClassWith3Ctors,ClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()));
 
             var resolved = DiContainer.Resolve<ClassWith3Ctors>();
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1096,7 +1140,7 @@ namespace SmartDiTests
         {
             IDiContainer container = new DiContainer();
             container.Register<IService, MyService>();
-            container.RegisterExplicit<ClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()));
+            container.RegisterExplicit<ClassWith3Ctors,ClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()));
 
             var resolved = container.Resolve<ClassWith3Ctors>();
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1106,7 +1150,7 @@ namespace SmartDiTests
         public void StaticResolve_ExpressionWithResolveType_ReturnsInstance()
         {
             DiContainer.Register<IService, MyService>();
-            DiContainer.RegisterExplicit<IClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()));
+            DiContainer.RegisterExplicit<IClassWith3Ctors,ClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()));
 
             var resolved = DiContainer.Resolve<IClassWith3Ctors>();
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1119,7 +1163,7 @@ namespace SmartDiTests
         {
             IDiContainer container = new DiContainer();
             container.Register<IService, MyService>();
-            container.RegisterExplicit<IClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()));
+            container.RegisterExplicit<IClassWith3Ctors,ClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()));
 
             var resolved = container.Resolve<IClassWith3Ctors>();
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1130,7 +1174,7 @@ namespace SmartDiTests
         public void StaticResolve_ExpressionWithKey_ReturnsInstance()
         {
             DiContainer.Register<IService, MyService>();
-            DiContainer.RegisterExplicit<ClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()), "test");
+            DiContainer.RegisterExplicit<ClassWith3Ctors,ClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()), "test");
 
             var resolved = DiContainer.Resolve<ClassWith3Ctors>("test");
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1143,7 +1187,7 @@ namespace SmartDiTests
         {
             IDiContainer container = new DiContainer();
             container.Register<IService, MyService>();
-            container.RegisterExplicit<ClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()), "test");
+            container.RegisterExplicit<ClassWith3Ctors,ClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()), "test");
 
             var resolved = container.Resolve<ClassWith3Ctors>("test");
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1153,7 +1197,7 @@ namespace SmartDiTests
         public void StaticResolve_ExpressionWithResolveTypeWithKey_ReturnsInstance()
         {
             DiContainer.Register<IService, MyService>();
-            DiContainer.RegisterExplicit<IClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()), "test");
+            DiContainer.RegisterExplicit<IClassWith3Ctors,ClassWith3Ctors>(c => new ClassWith3Ctors(DiContainer.Resolve<IService>()), "test");
 
             var resolved = DiContainer.Resolve<IClassWith3Ctors>("test");
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1166,7 +1210,7 @@ namespace SmartDiTests
         {
             IDiContainer container = new DiContainer();
             container.Register<IService, MyService>();
-            container.RegisterExplicit<IClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()), "test");
+            container.RegisterExplicit<IClassWith3Ctors,ClassWith3Ctors>(c => new ClassWith3Ctors(c.Resolve<IService>()), "test");
 
             var resolved = container.Resolve<IClassWith3Ctors>("test");
             Assert.IsType<ClassWith3Ctors>(resolved);
@@ -1368,6 +1412,22 @@ namespace SmartDiTests
             Assert.Empty(mock);
         }
 
+        [Fact]
+        public void Dispose()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            IDiContainer container = new DiContainer(mock);
+
+            container.Register<MyService>();
+            container.Register<ConcreteOnly>();
+            container.Register<ClassWith3Ctors>();
+
+            Assert.Equal(3, mock.Count);
+
+            container.Dispose();
+
+            Assert.Empty(mock);
+        }
 
         #endregion
 
