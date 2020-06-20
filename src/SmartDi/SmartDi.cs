@@ -88,14 +88,8 @@ namespace SmartDi
             where TConcrete : notnull, TResolved;
 
         // ... Expression
-        RegisterOptions RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
-            where TConcrete : notnull;
-
         RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
             where TConcrete : notnull, TResolved;
-
-        RegisterOptions RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
-            where TConcrete : notnull;
 
         RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
             where TConcrete : notnull, TResolved;
@@ -268,17 +262,6 @@ namespace SmartDi
 
 
 
-        public static RegisterOptions RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
-            where TConcrete : notnull
-            => (Instance as IDiContainer).RegisterExplicit<TConcrete>(instanceDelegate);
-
-        RegisterOptions IDiContainer.RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
-            => new RegisterOptions(
-                container,
-                InternalRegister(container, null, null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TConcrete), null))));
-
-
-
         public static RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
             where TConcrete : notnull, TResolved
             => (Instance as IDiContainer).RegisterExplicit<TResolved, TConcrete>(instanceDelegate);
@@ -289,16 +272,6 @@ namespace SmartDi
                 InternalRegister(container, typeof(TResolved), null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TResolved), null))));
 
 
-
-        public static RegisterOptions RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>>
- instanceDelegate, string key)
-            where TConcrete : notnull
-                => (Instance as IDiContainer).RegisterExplicit<TConcrete>(instanceDelegate, key);
-
-        RegisterOptions IDiContainer.RegisterExplicit<TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
-            => new RegisterOptions(
-                container,
-                InternalRegister(container, null, key, new MetaObject(typeof(TConcrete), LifeCycle.Transient, CastToUntypedOutput(instanceDelegate), new Tuple<Type, string>(typeof(TConcrete), key))));
 
         public static RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>>
  instanceDelegate, string key)

@@ -124,9 +124,9 @@ namespace SmartDiTests
             DiContainer.Register<IExportConditionInterface, ExportConditionalObject2>("ExportConditionalObject2");
             DiContainer.Register<IExportConditionInterface, ExportConditionalObject3>("ExportConditionalObject3");
 
-            DiContainer.RegisterExplicit(c=>new ImportConditionObject1(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject1")));
-            DiContainer.RegisterExplicit(c => new ImportConditionObject2(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject2")));
-            DiContainer.RegisterExplicit(c => new ImportConditionObject3(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject3")));
+            DiContainer.RegisterExplicit<ImportConditionObject1,ImportConditionObject1>(c=>new ImportConditionObject1(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject1")));
+            DiContainer.RegisterExplicit<ImportConditionObject2,ImportConditionObject2>(c => new ImportConditionObject2(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject2")));
+            DiContainer.RegisterExplicit<ImportConditionObject3,ImportConditionObject3>(c => new ImportConditionObject3(DiContainer.Resolve<IExportConditionInterface>("ExportConditionalObject3")));
         }
 
         [Fact]
@@ -141,9 +141,9 @@ namespace SmartDiTests
             container.Register<ISimpleAdapter, SimpleAdapterFive>("5");
             container.Register<IEnumerable<ISimpleAdapter>>();
 
-            container.RegisterExplicit<ImportMultiple1>(c => new ImportMultiple1(c.Resolve<IEnumerable<ISimpleAdapter>>()));
-            container.RegisterExplicit<ImportMultiple2>(c => new ImportMultiple2(c.Resolve<IEnumerable<ISimpleAdapter>>()));
-            container.RegisterExplicit<ImportMultiple3>(c => new ImportMultiple3(c.Resolve<IEnumerable<ISimpleAdapter>>()));
+            container.RegisterExplicit<ImportMultiple1, ImportMultiple1>(c => new ImportMultiple1(c.Resolve<IEnumerable<ISimpleAdapter>>()));
+            container.RegisterExplicit<ImportMultiple2, ImportMultiple2>(c => new ImportMultiple2(c.Resolve<IEnumerable<ISimpleAdapter>>()));
+            container.RegisterExplicit<ImportMultiple3, ImportMultiple3>(c => new ImportMultiple3(c.Resolve<IEnumerable<ISimpleAdapter>>()));
 
 
             var importMultiple1 = (ImportMultiple1)container.Resolve(typeof(ImportMultiple1));
