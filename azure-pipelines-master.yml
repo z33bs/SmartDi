@@ -21,7 +21,7 @@ steps:
   inputs:
     command: 'build'
     projects: '**/$(projectName)'
-    arguments: '--configuration Release'
+    arguments: '--configuration Debug'
 
 ## - Run Unit Tests -
 #- task: DotNetCoreCLI@2
@@ -44,7 +44,7 @@ steps:
   displayName: 'Build Unit Tests project'
   inputs:
     solution: '**/$(testProjectName)'
-    configuration: 'Release'
+    configuration: 'Debug'
     msbuildArguments: '/t:restore;clean;build'
 
 
@@ -53,7 +53,7 @@ steps:
   inputs:
     command: 'test'
     projects: '**/$(testProjectName)'
-    arguments: '--no-build --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
+    arguments: '--no-build --configuration Debug /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
     publishTestResults: true
 
 - task: DotNetCoreCLI@2
