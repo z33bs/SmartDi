@@ -295,14 +295,14 @@ public class Program
     {
         DiContainer.Register<Water, FilteredWater>().SingleInstance();
 
-        DiContainer.RegisterExplicit(
+        DiContainer.RegisterExplicit<CoffeeRobot,CoffeeRobot>(
           c => new CoffeeRobot(
                     new Chemex(new FilterPaper()),
                     DiContainer.Resolve<Water>(),
                     new Grinder()),
           "pour_over");
 
-        DiContainer.RegisterExplicit(
+        DiContainer.RegisterExplicit<CoffeeRobot,CoffeeRobot>(
           c => new CoffeeRobot(
                     new FrenchPress(),
                     DiContainer.Resolve<Water>(),
@@ -426,14 +426,14 @@ public class Program
     {
         DiContainer.Register<Water, FilteredWater>().SingleInstance();
 
-        DiContainer.RegisterExplicit(
+        DiContainer.RegisterExplicit<CoffeeRobot,CoffeeRobot>(
           c => new CoffeeRobot(
                     new Chemex(new FilterPaper()),
                     DiContainer.Resolve<Water>(),
                     new Grinder()),
           "pour_over");
 
-        DiContainer.RegisterExplicit(
+        DiContainer.RegisterExplicit<CoffeeRobot,CoffeeRobot>(
           c => new CoffeeRobot(
                     new FrenchPress(),
                     DiContainer.Resolve<Water>(),
