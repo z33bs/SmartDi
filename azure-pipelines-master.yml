@@ -25,6 +25,7 @@ steps:
 ## - Build Project -
 # Implicit Restore is run before build
 - task: DotNetCoreCLI@2
+  displayName: 'Build Project'
   inputs:
     command: 'build'
     projects: '**/$(projectName)'
@@ -32,6 +33,7 @@ steps:
 
 ## - Run Unit Tests -
 - task: DotNetCoreCLI@2
+  displayName: 'Build Test Project'
   inputs:
     command: 'build'
     projects: '**/$(testProjectName)'
@@ -59,6 +61,7 @@ steps:
 ## - Pack -
 # Package with -pre version for /beta
 - task: DotNetCoreCLI@2
+  displayName: 'Pack -pre version'
   inputs:
     command: 'pack'
     packagesToPack: '**/$(projectName)'
@@ -70,6 +73,7 @@ steps:
 
 # Package public version off same build
 - task: DotNetCoreCLI@2
+  displayName: 'Pack public version'
   inputs:
     command: 'pack'
     packagesToPack: '**/$(projectName)'
@@ -81,6 +85,7 @@ steps:
 
 
 - task: PublishBuildArtifacts@1
+  displayName: 'Publish artifacts'
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'
