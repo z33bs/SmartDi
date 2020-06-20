@@ -15,6 +15,13 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+# Needed for when install reportgenerator and use it immediately
+- task: UseDotNet@2
+  displayName: 'Use .NET Core SDK 3.x'
+  inputs:
+    packageType: 'sdk'
+    version: '3.x'
+
 ## - Build Project -
 # Implicit Restore is run before build
 - task: DotNetCoreCLI@2
