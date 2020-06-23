@@ -333,7 +333,11 @@ namespace SmartDi
         #region Registration
         #region Register
 
-        ///<inheritdoc cref="IDiContainer.Register{TConcrete}"/>
+        /// <summary>
+        /// Register a Type in the container
+        /// </summary>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TConcrete>()
             where TConcrete : notnull
             => (Instance as IDiContainer).Register<TConcrete>(Type.EmptyTypes);
