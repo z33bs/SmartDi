@@ -37,6 +37,9 @@ namespace SmartDi
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class Settings
     {
+        /// <summary>
+        /// Constructs the <see cref="Settings"/> class
+        /// </summary>
         public Settings()
         {
             TryResolveUnregistered = true;
@@ -63,6 +66,9 @@ namespace SmartDi
     //todo documentation
     //todo list registrations
     //todo autoregister (with flags like bindingflags) and exclusion like Tiny
+    /// <summary>
+    /// Interface for the dependency injection container
+    /// </summary>
     public interface IDiContainer : IDisposable
     {
         /// <summary>
@@ -282,7 +288,9 @@ namespace SmartDi
     }
 
 
-
+    /// <summary>
+    /// Dependency injection container
+    /// </summary>
     public class DiContainer : IDiContainer
     {
         /// <summary>
@@ -298,6 +306,10 @@ namespace SmartDi
             container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
         }
 
+        /// <summary>
+        /// Constructs the container with the given dictionary
+        /// </summary>
+        /// <param name="container"></param>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public DiContainer(
             ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
@@ -305,10 +317,17 @@ namespace SmartDi
             this.container = container;
         }
 
+        /// <summary>
+        /// Sets the dictionary to the provided dictionary
+        /// </summary>
+        /// <param name="container"></param>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void SetContainer(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container)
             => Instance.container = container;
 
+        /// <summary>
+        /// Resets the container to the default container.
+        /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void ResetContainer()
         {
@@ -347,6 +366,12 @@ namespace SmartDi
             => (this as IDiContainer).Register<TConcrete>(Type.EmptyTypes);
 
 
+        /// <summary>
+        /// Register a Type in the container while specifying a constructor.
+        /// </summary>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="constructorParameters">Will specify the specific contructor to be used to instantiate the <typeparamref name="TConcrete"/>. A constructor with matching parameters will be used.</param>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TConcrete>(params Type[] constructorParameters)
             where TConcrete : notnull
             => (Instance as IDiContainer).Register<TConcrete>(constructorParameters);
@@ -358,7 +383,12 @@ namespace SmartDi
                 InternalRegister(container, null, null, new MetaObject(typeof(TConcrete), LifeCycle.Transient, constructorParameters)));
 
 
-
+        /// <summary>
+        /// Register a Type in the container
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TResolved, TConcrete>()
             where TConcrete : notnull, TResolved
             => (Instance as IDiContainer).Register<TResolved, TConcrete>(Type.EmptyTypes);
@@ -367,6 +397,13 @@ namespace SmartDi
         RegisterOptions IDiContainer.Register<TResolved, TConcrete>()
             => (this as IDiContainer).Register<TResolved, TConcrete>(Type.EmptyTypes);
 
+        /// <summary>
+        /// Register a Type in the container, specifying a constructor.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="constructorParameters">Will specify the specific contructor to be used to instantiate the <typeparamref name="TConcrete"/>. A constructor with matching parameters will be used.</param>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TResolved, TConcrete>(params Type[] constructorParameters)
             where TConcrete : notnull, TResolved
             => (Instance as IDiContainer).Register<TResolved, TConcrete>(constructorParameters);
@@ -381,7 +418,12 @@ namespace SmartDi
 
         #endregion
         #region Register with Key
-
+        /// <summary>
+        /// Register a Type in the container, with a key.
+        /// </summary>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TConcrete>(string key)
             where TConcrete : notnull
             => (Instance as IDiContainer).Register<TConcrete>(key, Type.EmptyTypes);
@@ -390,6 +432,13 @@ namespace SmartDi
         RegisterOptions IDiContainer.Register<TConcrete>(string key)
             => (this as IDiContainer).Register<TConcrete>(key, Type.EmptyTypes);
 
+        /// <summary>
+        /// Register a Type in the container, with a key and specifying a constructor.
+        /// </summary>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="constructorParameters">Will specify the specific contructor to be used to instantiate the <typeparamref name="TConcrete"/>. A constructor with matching parameters will be used.</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TConcrete>(string key, params Type[] constructorParameters)
             where TConcrete : notnull
             => (Instance as IDiContainer).Register<TConcrete>(key, constructorParameters);
@@ -402,6 +451,13 @@ namespace SmartDi
 
 
 
+        /// <summary>
+        /// Register a Type in the container, with a key.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TResolved, TConcrete>(string key)
             where TConcrete : notnull, TResolved
             => (Instance as IDiContainer).Register<TResolved, TConcrete>(key, Type.EmptyTypes);
@@ -410,6 +466,14 @@ namespace SmartDi
         RegisterOptions IDiContainer.Register<TResolved, TConcrete>(string key)
             => (this as IDiContainer).Register<TResolved, TConcrete>(key, Type.EmptyTypes);
 
+        /// <summary>
+        /// Register a Type in the container, with a key and specifying a constructor.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="constructorParameters">Will specify the specific contructor to be used to instantiate the <typeparamref name="TConcrete"/>. A constructor with matching parameters will be used.</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TResolved, TConcrete>(string key, params Type[] constructorParameters)
             where TConcrete : notnull, TResolved
             => (Instance as IDiContainer).Register<TResolved, TConcrete>(key, constructorParameters);
@@ -439,6 +503,13 @@ namespace SmartDi
 
 
 
+        /// <summary>
+        /// Register a lambda expression that returns an instance.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="instanceDelegate">The lambda expression</param>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
             where TConcrete : notnull, TResolved
             => (Instance as IDiContainer).RegisterExplicit<TResolved, TConcrete>(instanceDelegate);
@@ -451,6 +522,14 @@ namespace SmartDi
 
 
 
+        /// <summary>
+        /// Register a lambda expression that returns an instance, with a key.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="instanceDelegate">The lambda expression</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
         public static RegisterOptions RegisterExplicit<TResolved, TConcrete>(Expression<Func<IDiContainer, TConcrete>>
  instanceDelegate, string key)
             where TConcrete : notnull, TResolved
@@ -466,6 +545,10 @@ namespace SmartDi
 
         #region Register Instance
 
+        /// <summary>
+        /// Register an object that has already been instantiated
+        /// </summary>
+        /// <param name="instance">The object instance</param>
         public static void RegisterInstance(object instance)
             => (Instance as IDiContainer).RegisterInstance(instance);
 
@@ -477,6 +560,11 @@ namespace SmartDi
 
 
 
+        /// <summary>
+        /// Register an object that has already been instantiated
+        /// </summary>
+        /// <typeparam name="TResolved">Type to be resolved as</typeparam>
+        /// <param name="instance">The object instance</param>
         public static void RegisterInstance<TResolved>(object instance)
             where TResolved : notnull
             => (Instance as IDiContainer).RegisterInstance<TResolved>(instance);
@@ -489,7 +577,11 @@ namespace SmartDi
                 , InternalRegister(container, typeof(TResolved), null, new MetaObject(instance)));
 
 
-
+        /// <summary>
+        /// Register an object that has already been instantiated, with a key
+        /// </summary>
+        /// <param name="instance">The object instance</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
         public static void RegisterInstance(object instance, string key)
             => (Instance as IDiContainer).RegisterInstance(instance, key);
 
@@ -500,7 +592,12 @@ namespace SmartDi
                 , InternalRegister(container, null, key, new MetaObject(instance)));
 
 
-
+        /// <summary>
+        /// Register an object that has already been instantiated, with a key
+        /// </summary>
+        /// <typeparam name="TResolved">Type to be resolved as</typeparam>
+        /// <param name="instance">The object instance</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
         public static void RegisterInstance<TResolved>(object instance, string key)
             where TResolved : notnull
             => (Instance as IDiContainer).RegisterInstance<TResolved>(instance, key);
@@ -516,6 +613,15 @@ namespace SmartDi
         #endregion
 
         #region Register Type
+
+        /// <summary>
+        /// Registers a Type in the container.
+        /// </summary>
+        /// <param name="concreteType">Type to be instantiated</param>
+        /// <param name="resolvedType">Type to be resolved if different from <paramref name="concreteType"/></param>
+        /// <param name="key">Optional key which allows multiple registrations with the same <paramref name="resolvedType"/></param>
+        /// <param name="constructorParameters">If provided, will specify the specific contructor to be used to instantiate the <paramref name="concreteType"/>. A constructor with matching parameters will be used.</param>
+        /// <returns>Fluent API</returns>
         public static IRegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters)
             => (Instance as IDiContainer).RegisterType(concreteType, resolvedType, key, constructorParameters);
 
@@ -534,7 +640,10 @@ namespace SmartDi
 
         #endregion
 
-
+        /// <summary>
+        /// Pre-compile the container to enable faster
+        ///  first-time resolution
+        /// </summary>
         public static void Compile()
             => (Instance as IDiContainer).Compile();
 
@@ -575,6 +684,11 @@ namespace SmartDi
 
         #region Resolve
 
+        /// <summary>
+        /// Resolve a Type from the container
+        /// </summary>
+        /// <typeparam name="T">Type to Resolve</typeparam>
+        /// <returns>An instance of type <typeparamref name="T"/></returns>
         public static T Resolve<T>() where T : notnull
             => (Instance as IDiContainer).Resolve<T>();
 
@@ -582,7 +696,12 @@ namespace SmartDi
         T IDiContainer.Resolve<T>()
             => (T)InternalResolve(container, typeof(T), null);
 
-
+        /// <summary>
+        /// Resolve a Type from the container that has the specified key
+        /// </summary>
+        /// <typeparam name="T">Type to Resolve</typeparam>
+        /// <param name="key">The key with which it was registered</param>
+        /// <returns>An instance of type <typeparamref name="T"/></returns>
         public static T Resolve<T>(string key) where T : notnull
             => (Instance as IDiContainer).Resolve<T>(key);
 
@@ -590,6 +709,11 @@ namespace SmartDi
         T IDiContainer.Resolve<T>(string key)
             => (T)InternalResolve(container, typeof(T), key);
 
+        /// <summary>
+        /// Resolve the specified <c>Type</c>
+        /// </summary>
+        /// <param name="type">The Type to resolve</param>
+        /// <returns>An object of the specified type</returns>
         public static object Resolve(Type type)
             => (Instance as IDiContainer).Resolve(type);
 
@@ -597,6 +721,12 @@ namespace SmartDi
         object IDiContainer.Resolve(Type type)
             => InternalResolve(container, type, null);
 
+        /// <summary>
+        /// Resolve the specified <c>Type</c>, with the specified key
+        /// </summary>
+        /// <param name="type">The Type to resolve</param>
+        /// <param name="key">The key with which it was registered</param>
+        /// <returns>An object of the specified type</returns>
         public static object Resolve(Type type, string key)
             => (Instance as IDiContainer).Resolve(type, key);
 
@@ -656,7 +786,13 @@ namespace SmartDi
                 throw new Exception($"{nameof(metaObject.ConstructorCache)} should not be null");
         }
 
-        ///<param name="container">Needed so we can call with ParentContainer</param>
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="container">Needed so we can call with ParentContainer</param>
+        /// <param name="resolvedType"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
         internal MetaObject GetMetaObject(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolvedType, string key)
         {
             if (container.TryGetValue(new Tuple<Type, string>(resolvedType, key), out MetaObject metaObject))
@@ -788,6 +924,13 @@ namespace SmartDi
 
         #endregion
         #region Unregister
+
+        /// <summary>
+        /// De-register a Type from the container.
+        ///  <c>IDisposable</c> will be called if it's
+        ///  implemented.
+        /// </summary>
+        /// <typeparam name="T">The Type to de-register</typeparam>
         public static void Unregister<T>()
             where T : notnull
                 => (Instance as IDiContainer).Unregister<T>();
@@ -796,7 +939,13 @@ namespace SmartDi
         void IDiContainer.Unregister<T>()
             => InternalUnregister(container, typeof(T), null);
 
-
+        /// <summary>
+        /// De-register a Type from the container, with the specified key
+        ///  <c>IDisposable</c> will be called if it's
+        ///  implemented.
+        /// </summary>
+        /// <typeparam name="T">The Type to de-register</typeparam>
+        /// <param name="key">The key with which it was registered</param>
         public static void Unregister<T>(string key)
             where T : notnull
                 => (Instance as IDiContainer).Unregister<T>(key);
@@ -821,6 +970,11 @@ namespace SmartDi
             }
         }
 
+        /// <summary>
+        /// De-register everything in the container, calling
+        ///  <c>IDisposable</c> on all objects that implement
+        ///  it.
+        /// </summary>
         public static void UnregisterAll()
             => (Instance as IDiContainer).UnregisterAll();
 
@@ -857,48 +1011,80 @@ namespace SmartDi
         }
     }
 
+    /// <summary>
+    /// Fluent API
+    /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public interface IRegisterOptions : ILifeCycleOptions
     {
     }
 
-
+    /// <summary>
+    /// Fluent API
+    /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public interface ILifeCycleOptions
     {
+        /// <summary>
+        /// Ensure singleton lifecycle
+        /// </summary>
         void SingleInstance();
     }
 
+    /// <summary>
+    /// Fluent API
+    /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class RegisterOptions : IRegisterOptions
     {
         readonly ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         readonly Tuple<Type, string> key;
 
+        /// <summary>
+        /// Constructs the RegisterOptions class
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="key"></param>
         public RegisterOptions(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Tuple<Type, string> key)
         {
             this.container = container;
             this.key = key;
         }
 
+        /// <summary>
+        /// Ensures a singleton lifecycle
+        /// </summary>
         public void SingleInstance()
         {
             container[key].LifeCycle = LifeCycle.Singleton;
         }
     }
 
-
+    /// <summary>
+    /// MetaObject that holds all the info needed to instantiate an object
+    /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public class MetaObject : IDisposable
     {
         #region Constructors
+        /// <summary>
+        /// Construct the <see cref="MetaObject"/>
+        /// </summary>
+        /// <param name="instance"></param>
         public MetaObject(object instance) : this(instance?.GetType(), LifeCycle.Singleton)
         {
             Instance = instance;
             ActivationExpression = c => instance; //Never called, but ActivationExpression cant be null
         }
 
-        ///<param name="key">Need to know its full dictionary key to make its uncompiled expression</param>
+
+        /// <summary>
+        /// Construct the <see cref="MetaObject"/>
+        /// </summary>
+        /// <param name="concreteType"></param>
+        /// <param name="lifeCycle"></param>
+        /// <param name="instanceDelegate"></param>
+        /// <param name="key">Need to know its full dictionary key to make its uncompiled expression</param>
         public MetaObject(Type concreteType, LifeCycle lifeCycle, Expression<Func<IDiContainer, object>> instanceDelegate, Tuple<Type, string> key) : this(concreteType, lifeCycle)
         {
             if (instanceDelegate is null)
@@ -916,6 +1102,9 @@ namespace SmartDi
             ActivationExpression = instanceDelegate.Compile();
         }
 
+        /// <summary>
+        /// Construct the <see cref="MetaObject"/>
+        /// </summary>
         public MetaObject(Type concreteType, LifeCycle lifeCycle, params Type[] args) : this(concreteType, lifeCycle)
         {
             ConstructorCache = args != Type.EmptyTypes
@@ -934,10 +1123,10 @@ namespace SmartDi
 
         internal object Instance { get; set; }
 
-        public static ParameterExpression IDiContainerParameter { get; } = Expression.Parameter(typeof(IDiContainer), "c");
+        internal static ParameterExpression IDiContainerParameter { get; } = Expression.Parameter(typeof(IDiContainer), "c");
 
         Expression newExpression;
-        public Expression NewExpression
+        internal Expression NewExpression
         {
             get => newExpression;
             set
@@ -952,19 +1141,19 @@ namespace SmartDi
         }
 
 
-        public Type TConcrete { get; }
+        internal Type TConcrete { get; }
 
-        public LifeCycle LifeCycle { get; set; }
+        internal LifeCycle LifeCycle { get; set; }
 
-        public ConstructorInfo ConstructorCache { get; }
+        internal ConstructorInfo ConstructorCache { get; }
 
-        public Func<IDiContainer, object> ActivationExpression { get; private set; }
+        internal Func<IDiContainer, object> ActivationExpression { get; private set; }
 
         #endregion
 
         #region Methods
 
-        public object GetObject(IDiContainer container)
+        internal object GetObject(IDiContainer container)
         {
             if (LifeCycle is LifeCycle.Singleton)
             {
@@ -1037,6 +1226,9 @@ namespace SmartDi
             return constructors[0];
         }
 
+        /// <summary>
+        /// Implements IDisposable
+        /// </summary>
         public void Dispose()
         {
             if (Instance != null
