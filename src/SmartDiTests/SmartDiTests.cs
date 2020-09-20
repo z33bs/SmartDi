@@ -3,8 +3,6 @@ using Xunit;
 using SmartDi;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using IocPerformance.Classes.Multiple;
-using System.Threading.Tasks;
 
 namespace SmartDiTests
 {
