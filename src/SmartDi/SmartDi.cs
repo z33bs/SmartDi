@@ -871,11 +871,6 @@ namespace SmartDi
                         return specificMetaObject;
                     }
                 }
-
-                throw new ResolveException(
-                    $"Could not Resolve or Create {resolvedType.Name}" +
-                    $". It is not registered in {nameof(DiContainer)}. Furthermore, " +
-                    $"smart resolve couldn't create an instance.");
             }
 
             if (Parent != null && options.ResolveShouldBubbleUpContainers == true)
