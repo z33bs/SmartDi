@@ -1524,8 +1524,21 @@ namespace SmartDiTests
             DiContainer child = container.NewChildContainer() as DiContainer;
 
             Assert.Equal(container, child.Parent);
-
         }
+
+        [Fact]
+        public void NewChildContainer_SetsChild()
+        {
+            using var container = new DiContainer();
+            var child = container.NewChildContainer();
+
+            Assert.Equal(child, container.GetChildren()[0]);
+            
+            //Repeat for Static implementation
+            child = DiContainer.NewChildContainer();
+            Assert.Equal(child, DiContainer.GetChildren()[0]);
+        }
+
         #endregion
 
         #region Exceptions

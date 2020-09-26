@@ -94,6 +94,12 @@ namespace SmartDi
         IDiContainer Parent { get; }
 
         /// <summary>
+        /// Get the current container's child container. 
+        ///  Will be <c>null</c> if no child has been created.
+        /// </summary>
+        IReadOnlyList<IDiContainer> GetChildren();
+
+        /// <summary>
         /// Registers a new child container and sets
         ///  its <see cref="Parent"/> to the current
         ///  instance.
@@ -304,6 +310,13 @@ namespace SmartDi
 
     internal static class IDiContainerExtensions
     {
+        /// <summary>
+        /// Get the current container's child container. 
+        ///  Will be <c>null</c> if no child has been created.
+        /// </summary>
+        public static IReadOnlyList<IDiContainer> GetChildren(this IDiContainer diContainer)
+            => diContainer.GetChildren();
+
         /// <summary>
         /// Registers a new child container and sets
         ///  its <see cref="IDiContainer.Parent"/> to the current
@@ -657,9 +670,22 @@ namespace SmartDi
         ///<inheritdoc/>
         public IDiContainer Parent { get; private set; }
 
+        private readonly List<IDiContainer> children = new List<IDiContainer>();
+        /// <summary>
+        /// Get the current container's child container. 
+        ///  Will be <c>null</c> if no child has been created.
+        /// </summary>
+        public static IReadOnlyList<IDiContainer> GetChildren()
+            => (Instance as IDiContainer).GetChildren();
+        ///<inheritdoc/>
+        IReadOnlyList<IDiContainer> IDiContainer.GetChildren()
+            => children;
+
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> parentContainer;
         IEnumerable<Type> assemblyTypesCache;
+
+        //todo Are containerOptions really global = applied across all children?
 
         /// <summary>
         /// Registers a new child container and sets
@@ -672,7 +698,17 @@ namespace SmartDi
             => (Instance as IDiContainer).NewChildContainer();
         ///<inheritdoc/>
         IDiContainer IDiContainer.NewChildContainer()
-            => new DiContainer() { parentContainer = this.container, Parent = this };
+        {
+            var child = new DiContainer()
+            {
+                parentContainer = this.container,
+                Parent = this
+            };
+
+            this.children.Add(child);
+
+            return child;
+        }
 
 
         #region Registration
