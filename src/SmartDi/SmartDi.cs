@@ -37,7 +37,7 @@ namespace SmartDi
     public class ContainerOptions
     {
         private static readonly Lazy<ContainerOptions> DefaultOptions =
-            new Lazy<ContainerOptions>(CreateDefaultContainerOptions);
+            new Lazy<ContainerOptions>(()=>new ContainerOptions());
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContainerOptions"/> class.
@@ -76,8 +76,6 @@ namespace SmartDi
         /// The default value is true.
         /// </remarks>
         public bool ResolveShouldBubbleUpContainers { get; set; }
-
-        private static ContainerOptions CreateDefaultContainerOptions() => new ContainerOptions();
     }
 
     //todo list registrations
@@ -585,12 +583,15 @@ namespace SmartDi
     /// </summary>
     public class DiContainer : IDiContainer
     {
-        readonly ContainerOptions options;
+        /// <summary>
+        /// Global settings applied across all containers
+        /// </summary>
+        internal static readonly ContainerOptions options = new ContainerOptions();
 
         /// <summary>
         /// Instantiate a new container
         /// </summary>
-        public DiContainer() : this(ContainerOptions.Default)
+        public DiContainer()
         {
         }
 
@@ -613,9 +614,7 @@ namespace SmartDi
         /// <param name="configureOptions">A delegate used to configure <see cref="ContainerOptions"/>.</param>
         public DiContainer(Action<ContainerOptions> configureOptions)
         {
-            this.options = new ContainerOptions();
             configureOptions(options);
-            this.container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
         }
 
         /// <summary>
@@ -681,11 +680,9 @@ namespace SmartDi
         IReadOnlyList<IDiContainer> IDiContainer.GetChildren()
             => children;
 
-        internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
+        internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> parentContainer;
         IEnumerable<Type> assemblyTypesCache;
-
-        //todo Are containerOptions really global = applied across all children?
 
         /// <summary>
         /// Registers a new child container and sets

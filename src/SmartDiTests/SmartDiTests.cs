@@ -219,6 +219,20 @@ namespace SmartDiTests
                 ResolveShouldBubbleUpContainers = false});
         }
 
+        [Fact]
+        public void ContainerOptions_AreGlobal()
+        {
+            ContainerOptions options = new ContainerOptions
+            {
+                TryResolveUnregistered = false
+            };
+            using var container = new DiContainer(options);
+            using var secondContainer = new DiContainer();
+
+            Assert.False(DiContainer.options.TryResolveUnregistered);
+        }
+
+
         #region MetaObject
 
         [Fact]
@@ -1035,7 +1049,7 @@ namespace SmartDiTests
         [Fact]
         public void Resolve_Unregistered_Works()
         {
-            var container = new DiContainer();
+            var container = new DiContainer(ContainerOptions.Default);
             var obj = container.Resolve<ClassThatsResolvableWithoutRegistering>();
 
             Assert.IsType<ClassThatsResolvableWithoutRegistering>(obj);
@@ -1537,7 +1551,23 @@ namespace SmartDiTests
             //Repeat for Static implementation
             child = DiContainer.NewChildContainer();
             Assert.Equal(child, DiContainer.GetChildren()[0]);
+
+            DiContainer.Initialize(ContainerOptions.Default); //Reset options to default
         }
+
+        [Fact]
+        public void NewChildContainer_ContainerOptions_AreGlobal()
+        {
+            ContainerOptions options = new ContainerOptions
+            {
+                TryResolveUnregistered = false
+            };
+            using var container = new DiContainer(options);
+            var child = container.NewChildContainer();
+
+            Assert.False(DiContainer.options.TryResolveUnregistered);
+        }
+
 
         #endregion
 
