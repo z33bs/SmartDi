@@ -87,11 +87,11 @@ namespace SmartDi
     public interface IDiContainer : IDisposable
     {
         /// <summary>
-        /// Reference to the container's parent container.
-        ///  Will be <c>null</c> if instance is not a child
-        ///  container.
+        /// Get the current container's parent container.
+        ///  Will be <c>null</c> if the current instance
+        ///  is not a child container.
         /// </summary>
-        IDiContainer Parent { get; set; }
+        IDiContainer Parent { get; }
 
         /// <summary>
         /// Registers a new child container and sets
@@ -304,6 +304,16 @@ namespace SmartDi
 
     internal static class IDiContainerExtensions
     {
+        /// <summary>
+        /// Registers a new child container and sets
+        ///  its <see cref="IDiContainer.Parent"/> to the current
+        ///  instance.
+        /// </summary>
+        /// <returns>A new <see cref="IDiContainer"/> child
+        ///  container</returns>
+        public static IDiContainer NewChildContainer(this IDiContainer container)
+            => container.NewChildContainer();
+
         /// <summary>
         /// Registers a Type in the container.
         /// </summary>
@@ -645,17 +655,25 @@ namespace SmartDi
         internal static DiContainer Instance { get; private set; } = new DiContainer();
 
         ///<inheritdoc/>
-        public IDiContainer Parent { get; set; }
+        public IDiContainer Parent { get; private set; }
 
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> container;
         internal ConcurrentDictionary<Tuple<Type, string>, MetaObject> parentContainer;
         IEnumerable<Type> assemblyTypesCache;
 
+        /// <summary>
+        /// Registers a new child container and sets
+        ///  its <see cref="IDiContainer.Parent"/> to the current
+        ///  instance.
+        /// </summary>
+        /// <returns>A new <see cref="IDiContainer"/> child
+        ///  container</returns>
+        public static IDiContainer NewChildContainer()
+            => (Instance as IDiContainer).NewChildContainer();
         ///<inheritdoc/>
-        public IDiContainer NewChildContainer()
-        {
-            return new DiContainer() { Parent = this, parentContainer = this.container };
-        }
+        IDiContainer IDiContainer.NewChildContainer()
+            => new DiContainer() { parentContainer = this.container, Parent = this };
+
 
         #region Registration
         #region Register
@@ -1088,7 +1106,7 @@ namespace SmartDi
 
             else if (metaObject.TConcrete.IsGenericType
                      && metaObject.TConcrete.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                        metaObject.NewExpression = GetEnumerableExpression(container, metaObject.TConcrete);
+                metaObject.NewExpression = GetEnumerableExpression(container, metaObject.TConcrete);
 
             else
                 throw new Exception($"{nameof(metaObject.ConstructorCache)} should not be null");
@@ -1127,7 +1145,7 @@ namespace SmartDi
                 }
             }
 
-            if (Parent != null && options.ResolveShouldBubbleUpContainers == true)
+            if ((this as IDiContainer).Parent != null && options.ResolveShouldBubbleUpContainers == true)
                 return GetMetaObject(parentContainer, resolvedType, key);
 
             if (!options.TryResolveUnregistered)
@@ -1151,7 +1169,7 @@ namespace SmartDi
                         resolvedType.IsAssignableFrom(t)
                         && t != resolvedType);
 
-                if(implementations.Count() != 1)
+                if (implementations.Count() != 1)
                 {
                     var builder = new StringBuilder();
                     builder.Append(
@@ -1206,7 +1224,7 @@ namespace SmartDi
             {
                 if (key.Item1 == resolvableType)
                 {
-                    var expression = GetExpression(container,resolvableType, key.Item2);
+                    var expression = GetExpression(container, resolvableType, key.Item2);
                     listElements.Add(Expression.ElementInit(addMethod, expression));
                 }
             }
@@ -1218,11 +1236,11 @@ namespace SmartDi
 
             // Create a ListInitExpression that represents initializing
             // a new Dictionary<> instance with two key-value pairs.
-            if(listElements.Any())
-            return
-                Expression.ListInit(
-                    newDictionaryExpression,
-                    listElements);
+            if (listElements.Any())
+                return
+                    Expression.ListInit(
+                        newDictionaryExpression,
+                        listElements);
 
             throw new ResolveException($"Could not resolve {resolvedType.Name}");
         }

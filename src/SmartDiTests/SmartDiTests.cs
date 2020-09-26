@@ -14,6 +14,7 @@ namespace SmartDiTests
         {
         }
 
+        #region CLASSES
         public abstract class DisposableBase : IDisposable
         {
             public bool Disposed { get; private set; }
@@ -201,6 +202,7 @@ namespace SmartDiTests
             protected override void DisposeImplicit()
                 => _onImplicitDispose?.DynamicInvoke();
         }
+        #endregion
 
         [Fact]
         public void Constructor()
@@ -1481,6 +1483,49 @@ namespace SmartDiTests
             Assert.Empty(mock);
         }
 
+        #endregion
+
+        #region ChildContainers
+
+        [Fact]
+        public void NewChildContainer_CreatesNewContainer()
+        {
+            using var container = new DiContainer();
+            var child = container.NewChildContainer();
+
+            Assert.IsAssignableFrom<IDiContainer>(child);
+
+            //Repeat for Static implementation
+            child = DiContainer.NewChildContainer();
+
+            Assert.IsAssignableFrom<IDiContainer>(child);
+        }
+
+        [Fact]
+        public void NewChildContainer_SetsNewContainersParent()
+        {
+            using var container = new DiContainer();
+            var child = container.NewChildContainer();
+
+            Assert.Equal(container, child.Parent);
+
+            //Repeat for Static implementation
+            child = DiContainer.NewChildContainer();
+            Assert.Equal(DiContainer.Instance, child.Parent);
+        }
+
+
+        [Fact]
+        public void Parent_ReturnsParentContainer()
+        {
+            using var container = new DiContainer();
+
+            //Cast in order to test IDicontainerExtensions
+            DiContainer child = container.NewChildContainer() as DiContainer;
+
+            Assert.Equal(container, child.Parent);
+
+        }
         #endregion
 
         #region Exceptions
