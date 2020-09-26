@@ -302,6 +302,260 @@ namespace SmartDi
         void UnregisterAll();
     }
 
+    internal static class IDiContainerExtensions
+    {
+        /// <summary>
+        /// Registers a Type in the container.
+        /// </summary>
+        /// <param name="concreteType">Type to be instantiated</param>
+        /// <param name="resolvedType">Type to be resolved if different from <paramref name="concreteType"/></param>
+        /// <param name="key">Optional key which allows multiple registrations with the same <paramref name="resolvedType"/></param>
+        /// <param name="constructorParameters">If provided, will specify the specific contructor to be used to instantiate the <paramref name="concreteType"/>. A constructor with matching parameters will be used.</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static IRegisterOptions RegisterType(this IDiContainer diContainer, Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters)
+            => diContainer.RegisterType(concreteType, resolvedType, key, constructorParameters);
+
+        /// <summary>
+        /// Register a Type in the container
+        /// </summary>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions Register<TConcrete>(this IDiContainer diContainer)
+            where TConcrete : notnull
+            => diContainer.Register<TConcrete>();
+        /// <summary>
+        /// Register a Type in the container
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions Register<TResolved, TConcrete>(this IDiContainer diContainer)
+            where TConcrete : notnull, TResolved
+            => diContainer.Register<TResolved, TConcrete>();
+
+        /// <summary>
+        /// Register a Type in the container, with a key.
+        /// </summary>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions Register<TConcrete>(this IDiContainer diContainer, string key)
+            where TConcrete : notnull
+            => diContainer.Register<TConcrete>(key);
+
+        /// <summary>
+        /// Register a Type in the container, with a key.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions Register<TResolved, TConcrete>(this IDiContainer diContainer, string key)
+            where TConcrete : notnull, TResolved
+            => diContainer.Register<TResolved, TConcrete>(key);
+
+
+        /// <summary>
+        /// Register a Type in the container while specifying a constructor.
+        /// </summary>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="constructorParameters">Will specify the specific contructor to be used to instantiate the <typeparamref name="TConcrete"/>. A constructor with matching parameters will be used.</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions Register<TConcrete>(this IDiContainer diContainer, params Type[] constructorParameters)
+            where TConcrete : notnull
+            => diContainer.Register<TConcrete>(constructorParameters);
+
+        /// <summary>
+        /// Register a Type in the container, specifying a constructor.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="constructorParameters">Will specify the specific contructor to be used to instantiate the <typeparamref name="TConcrete"/>. A constructor with matching parameters will be used.</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions Register<TResolved, TConcrete>(this IDiContainer diContainer, params Type[] constructorParameters)
+            where TConcrete : notnull, TResolved
+            => diContainer.Register<TResolved, TConcrete>(constructorParameters);
+
+        /// <summary>
+        /// Register a Type in the container, with a key and specifying a constructor.
+        /// </summary>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="constructorParameters">Will specify the specific contructor to be used to instantiate the <typeparamref name="TConcrete"/>. A constructor with matching parameters will be used.</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions Register<TConcrete>(this IDiContainer diContainer, string key, params Type[] constructorParameters)
+            where TConcrete : notnull
+            => diContainer.Register<TConcrete>(key, constructorParameters);
+
+        /// <summary>
+        /// Register a Type in the container, with a key and specifying a constructor.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="constructorParameters">Will specify the specific contructor to be used to instantiate the <typeparamref name="TConcrete"/>. A constructor with matching parameters will be used.</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions Register<TResolved, TConcrete>(this IDiContainer diContainer, string key, params Type[] constructorParameters)
+            where TConcrete : notnull, TResolved
+            => diContainer.Register<TResolved, TConcrete>(key, constructorParameters);
+
+        /// <summary>
+        /// Register a lambda expression that returns an instance.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="instanceDelegate">The lambda expression</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions RegisterExplicit<TResolved, TConcrete>(this IDiContainer diContainer, Expression<Func<IDiContainer, TConcrete>> instanceDelegate)
+            where TConcrete : notnull, TResolved
+            => diContainer.RegisterExplicit<TResolved, TConcrete>(instanceDelegate);
+
+        /// <summary>
+        /// Register a lambda expression that returns an instance, with a key.
+        /// </summary>
+        /// <typeparam name="TResolved">Type that will be called to resolve</typeparam>
+        /// <typeparam name="TConcrete">Type to be instantiated</typeparam>
+        /// <param name="instanceDelegate">The lambda expression</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static RegisterOptions RegisterExplicit<TResolved, TConcrete>(this IDiContainer diContainer, Expression<Func<IDiContainer, TConcrete>> instanceDelegate, string key)
+            where TConcrete : notnull, TResolved
+            => diContainer.RegisterExplicit<TResolved, TConcrete>(instanceDelegate, key);
+
+        /// <summary>
+        /// Register an object that has already been instantiated
+        /// </summary>
+        /// <param name="instance">The object instance</param>
+        ///  <param name="diContainer"></param>
+        public static void RegisterInstance(this IDiContainer diContainer, object instance)
+            => diContainer.RegisterInstance(instance);
+
+        /// <summary>
+        /// Register an object that has already been instantiated
+        /// </summary>
+        /// <typeparam name="TResolved">Type to be resolved as</typeparam>
+        /// <param name="instance">The object instance</param>
+        ///  <param name="diContainer"></param>
+        public static void RegisterInstance<TResolved>(this IDiContainer diContainer, object instance)
+            where TResolved : notnull
+            => diContainer.RegisterInstance<TResolved>(instance);
+
+        /// <summary>
+        /// Register an object that has already been instantiated, with a key
+        /// </summary>
+        /// <param name="instance">The object instance</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        ///  <param name="diContainer"></param>
+        public static void RegisterInstance(this IDiContainer diContainer, object instance, string key)
+            => diContainer.RegisterInstance(instance, key);
+
+        /// <summary>
+        /// Register an object that has already been instantiated, with a key
+        /// </summary>
+        /// <typeparam name="TResolved">Type to be resolved as</typeparam>
+        /// <param name="instance">The object instance</param>
+        /// <param name="key">Named Type which allows for multiple registrations of the same Type, identified with different keys</param>
+        ///  <param name="diContainer"></param>
+        public static void RegisterInstance<TResolved>(this IDiContainer diContainer, object instance, string key)
+            where TResolved : notnull
+            => diContainer.RegisterInstance<TResolved>(instance, key);
+
+        /// <summary>
+        /// Pre-compile the container to enable faster
+        ///  first-time resolution
+        /// </summary>
+        ///  <param name="diContainer"></param>
+        public static void Compile(this IDiContainer diContainer)
+            => diContainer.Compile();
+
+        /// <summary>
+        /// Resolve a Type from the container
+        /// </summary>
+        /// <typeparam name="T">Type to Resolve</typeparam>
+        /// <returns>An instance of type <typeparamref name="T"/></returns>
+        ///  <param name="diContainer"></param>
+        public static T Resolve<T>(this IDiContainer diContainer) where T : notnull
+            => diContainer.Resolve<T>();
+
+        /// <summary>
+        /// Resolve a Type from the container that has the specified key
+        /// </summary>
+        /// <typeparam name="T">Type to Resolve</typeparam>
+        /// <param name="key">The key with which it was registered</param>
+        /// <returns>An instance of type <typeparamref name="T"/></returns>
+        ///  <param name="diContainer"></param>
+        public static T Resolve<T>(this IDiContainer diContainer, string key) where T : notnull
+            => diContainer.Resolve<T>(key);
+
+        /// <summary>
+        /// Resolve the specified <c>Type</c>
+        /// </summary>
+        /// <param name="type">The Type to resolve</param>
+        /// <returns>An object of the specified type</returns>
+        ///  <param name="diContainer"></param>
+        public static object Resolve(this IDiContainer diContainer, Type type)
+            => diContainer.Resolve(type);
+
+        /// <summary>
+        /// Resolve the specified <c>Type</c>, with the specified key
+        /// </summary>
+        /// <param name="type">The Type to resolve</param>
+        /// <param name="key">The key with which it was registered</param>
+        /// <returns>An object of the specified type</returns>
+        ///  <param name="diContainer"></param>
+        public static object Resolve(this IDiContainer diContainer, Type type, string key)
+            => diContainer.Resolve(type, key);
+
+        /// <summary>
+        /// De-register a Type from the container.
+        ///  <c>IDisposable</c> will be called if it's
+        ///  implemented.
+        /// </summary>
+        /// <typeparam name="T">The Type to de-register</typeparam>
+        ///  <param name="diContainer"></param>
+        public static void Unregister<T>(this IDiContainer diContainer)
+            where T : notnull
+            => diContainer.Unregister<T>();
+
+        /// <summary>
+        /// De-register a Type from the container, with the specified key
+        ///  <c>IDisposable</c> will be called if it's
+        ///  implemented.
+        /// </summary>
+        /// <typeparam name="T">The Type to de-register</typeparam>
+        /// <param name="key">The key with which it was registered</param>
+        ///  <param name="diContainer"></param>
+        public static void Unregister<T>(this IDiContainer diContainer, string key)
+            where T : notnull
+            => diContainer.Unregister<T>(key);
+
+        /// <summary>
+        /// De-register everything in the container, calling
+        ///  <c>IDisposable</c> on all objects that implement
+        ///  it.
+        /// </summary>
+        ///  <param name="diContainer"></param>
+        public static void UnregisterAll(this IDiContainer diContainer)
+            => diContainer.UnregisterAll();
+
+        /// <summary>
+        /// Disposes the container and all its registrations
+        /// </summary>
+        /// <param name="diContainer"></param>
+        public static void Dispose(this IDiContainer diContainer)
+            => diContainer.Dispose();
+    }
 
     /// <summary>
     /// Dependency injection container

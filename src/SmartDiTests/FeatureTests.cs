@@ -133,7 +133,7 @@ namespace SmartDiTests
         public void InstanceIEnumerable()
         {
             //todo test for abstract too
-            IDiContainer container = new DiContainer();
+            var container = new DiContainer();
             container.Register<ISimpleAdapter, SimpleAdapterOne>();
             container.Register<ISimpleAdapter, SimpleAdapterTwo>("2");
             container.Register<ISimpleAdapter, SimpleAdapterThree>("3");
@@ -370,11 +370,11 @@ namespace SmartDiTests
         {
             ResetInstanceCounters();
 
-            IDiContainer container = new DiContainer();
+            var container = new DiContainer();
             container.Register<ISingleton1, Singleton1>().SingleInstance();
             container.Register<ISingleton2, Singleton2>().SingleInstance();
             container.Register<ISingleton3, Singleton3>().SingleInstance();
-
+            
             var child = container.NewChildContainer();
             child.Register<ITransient1, ScopedTransient>();
             child.Register<ICombined1, ScopedCombined1>();
