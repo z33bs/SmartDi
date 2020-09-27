@@ -327,6 +327,15 @@ namespace SmartDi
     public static class IDiContainerExtensions
     {
         /// <summary>
+        /// Retrieves a container, identified by its <see cref="IDiContainer.Name"/>
+        /// </summary>
+        /// <param name="name">The container's name</param>
+        /// <returns></returns>
+        /// <param name="diContainer"></param>
+        public static IDiContainer GetContainer(this IDiContainer diContainer, string name)
+            => diContainer.GetContainer(name);
+
+        /// <summary>
         /// Get the current container's child container. 
         ///  Will be <c>null</c> if no child has been created.
         /// </summary>
