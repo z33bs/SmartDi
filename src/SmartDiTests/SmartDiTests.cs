@@ -1521,11 +1521,11 @@ namespace SmartDiTests
             using var container = new DiContainer();
             var child = container.NewChildContainer();
 
-            Assert.Equal(container, child.Parent);
+            Assert.Equal(container, child.GetParent());
 
             //Repeat for Static implementation
             child = DiContainer.NewChildContainer();
-            Assert.Equal(DiContainer.Instance, child.Parent);
+            Assert.Equal(DiContainer.Instance, child.GetParent());
         }
 
 
@@ -1537,7 +1537,7 @@ namespace SmartDiTests
             //Cast in order to test IDicontainerExtensions
             DiContainer child = container.NewChildContainer() as DiContainer;
 
-            Assert.Equal(container, child.Parent);
+            Assert.Equal(container, child.GetParent());
         }
 
         [Fact]

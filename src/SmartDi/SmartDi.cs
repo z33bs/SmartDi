@@ -89,7 +89,7 @@ namespace SmartDi
         ///  Will be <c>null</c> if the current instance
         ///  is not a child container.
         /// </summary>
-        IDiContainer Parent { get; }
+        IDiContainer GetParent();
 
         /// <summary>
         /// Get the current container's child container. 
@@ -99,7 +99,7 @@ namespace SmartDi
 
         /// <summary>
         /// Registers a new child container and sets
-        ///  its <see cref="Parent"/> to the current
+        ///  its Parent to the current
         ///  instance.
         /// </summary>
         /// <returns>A new <see cref="IDiContainer"/> child
@@ -317,7 +317,7 @@ namespace SmartDi
 
         /// <summary>
         /// Registers a new child container and sets
-        ///  its <see cref="IDiContainer.Parent"/> to the current
+        ///  its Parent to the current
         ///  instance.
         /// </summary>
         /// <returns>A new <see cref="IDiContainer"/> child
@@ -666,8 +666,10 @@ namespace SmartDi
 
         internal static DiContainer Instance { get; private set; } = new DiContainer();
 
+        private IDiContainer parent;
         ///<inheritdoc/>
-        public IDiContainer Parent { get; private set; }
+        public IDiContainer GetParent()
+            => parent;
 
         private readonly List<IDiContainer> children = new List<IDiContainer>();
         /// <summary>
@@ -686,7 +688,7 @@ namespace SmartDi
 
         /// <summary>
         /// Registers a new child container and sets
-        ///  its <see cref="IDiContainer.Parent"/> to the current
+        ///  its Parent to the current
         ///  instance.
         /// </summary>
         /// <returns>A new <see cref="IDiContainer"/> child
@@ -699,7 +701,7 @@ namespace SmartDi
             var child = new DiContainer()
             {
                 parentContainer = this.container,
-                Parent = this
+                parent = this
             };
 
             this.children.Add(child);
@@ -1178,7 +1180,7 @@ namespace SmartDi
                 }
             }
 
-            if ((this as IDiContainer).Parent != null && options.ResolveShouldBubbleUpContainers == true)
+            if (parent != null && options.ResolveShouldBubbleUpContainers == true)
                 return GetMetaObject(parentContainer, resolvedType, key);
 
             if (!options.TryResolveUnregistered)
