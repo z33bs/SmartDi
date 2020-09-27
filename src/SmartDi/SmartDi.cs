@@ -37,7 +37,7 @@ namespace SmartDi
     public class ContainerOptions
     {
         private static readonly Lazy<ContainerOptions> DefaultOptions =
-            new Lazy<ContainerOptions>(()=>new ContainerOptions());
+            new Lazy<ContainerOptions>(() => new ContainerOptions());
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContainerOptions"/> class.
@@ -84,6 +84,19 @@ namespace SmartDi
     /// </summary>
     public interface IDiContainer : IDisposable
     {
+        /// <summary>
+        /// Optional name to identify the container with. Useful if using more than one container.
+        /// See <see cref="GetContainer"/> method and <see cref="ResolveFromAttribute"/>.
+        /// </summary> 
+        string Name { get; set; }
+
+        /// <summary>
+        /// Retrieves a container, identified by its <see cref="Name"/>
+        /// </summary>
+        /// <param name="name">The container's name</param>
+        /// <returns></returns>
+        IDiContainer GetContainer(string name);
+
         /// <summary>
         /// Get the current container's parent container.
         ///  Will be <c>null</c> if the current instance
@@ -583,6 +596,40 @@ namespace SmartDi
     /// </summary>
     public class DiContainer : IDiContainer
     {
+        string name;
+        ///<inheritdoc/>
+        public string Name
+        {
+            get => name;
+            set
+            {
+                if (name != null)
+                    containers.TryRemove(name, out _);
+
+                if (containers.TryAdd(value, this))
+                    name = value;
+                else throw new Exception("Could not set Name. Ensure the container's name is unique. " +
+                    "Less common reason could be that the operation is blocked in a multi-threaded application.");
+            }
+        }
+
+        internal static readonly ConcurrentDictionary<string, IDiContainer> containers = new ConcurrentDictionary<string, IDiContainer>();
+
+        /// <summary>
+        /// Retrieves a container, identified by its <see cref="Name"/>
+        /// </summary>
+        /// <param name="name">The container's name</param>
+        /// <returns></returns>
+        public static IDiContainer GetContainer(string name)
+            => (Instance as IDiContainer).GetContainer(name);
+        ///<inheritdoc/>
+        IDiContainer IDiContainer.GetContainer(string name)
+        => containers.TryGetValue(name, out IDiContainer container)
+            ? container
+            : throw new KeyNotFoundException(
+                "Couldn't retrieve container. Is the name correct?");
+
+
         /// <summary>
         /// Global settings applied across all containers
         /// </summary>
@@ -593,6 +640,7 @@ namespace SmartDi
         /// </summary>
         public DiContainer()
         {
+            Name = Guid.NewGuid().ToString();
         }
 
         /// <summary>
@@ -612,7 +660,7 @@ namespace SmartDi
         /// Initializes a new instance of the <see cref="DiContainer"/> class.
         /// </summary>
         /// <param name="configureOptions">A delegate used to configure <see cref="ContainerOptions"/>.</param>
-        public DiContainer(Action<ContainerOptions> configureOptions)
+        public DiContainer(Action<ContainerOptions> configureOptions) : this()
         {
             configureOptions(options);
         }
@@ -1132,8 +1180,12 @@ namespace SmartDi
                 {
                     var param = paramsInfo[i];
                     var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
+                    var resolveFromAttribute = param.GetCustomAttribute<ResolveFromAttribute>();
 
-                    argsExp[i] = GetExpression(container, param.ParameterType, namedAttribute?.Key);
+                    argsExp[i] = GetExpression(
+                        resolveFromAttribute?.DiContainer.container ?? container,
+                        param.ParameterType,
+                        namedAttribute?.Key);
                 }
 
                 metaObject.NewExpression = Expression.New(metaObject.ConstructorCache, argsExp);
@@ -1679,4 +1731,28 @@ namespace SmartDi
         }
     }
 
+    /// <summary>
+    /// Attribute to mark which container the parameter should be resolved from.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Constructor, AllowMultiple = false)]
+    public class ResolveFromAttribute : Attribute
+    {
+        /// <summary>
+        /// The container that the parameter should be resolved from
+        /// </summary>
+        public DiContainer DiContainer { get; }
+
+        /// <summary>
+        /// Attribute to mark which container the parameter should be resolved from.
+        /// </summary>
+        /// <param name="containerName">The container's name</param>
+        public ResolveFromAttribute(string containerName)
+        {
+            DiContainer = DiContainer.containers.TryGetValue(containerName, out IDiContainer container)
+                ? container as DiContainer
+                : throw new ResolveException(
+                    "Could not find the container associated with the " +
+                    $"name '{containerName}', specified in the {nameof(ResolveFromAttribute)}");
+        }                
+    }
 }
