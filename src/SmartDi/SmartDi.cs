@@ -1419,6 +1419,9 @@ namespace SmartDi
         void IDisposable.Dispose()
         {
             InternalUnregisterAll(container);
+            if(!containers.TryRemove(Name, out _))
+                Console.WriteLine("SmartDi Error: Could not remove registration of container " +
+                    $"named '{Name}' when disposing");
         }
     }
 
