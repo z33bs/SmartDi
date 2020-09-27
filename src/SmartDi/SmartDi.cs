@@ -117,7 +117,7 @@ namespace SmartDi
         /// </summary>
         /// <returns>A new <see cref="IDiContainer"/> child
         ///  container</returns>
-        IDiContainer NewChildContainer();
+        IDiContainer NewChildContainer(string name = null);
 
         /// <summary>
         /// Registers a Type in the container.
@@ -319,7 +319,11 @@ namespace SmartDi
         void UnregisterAll();
     }
 
-    [EditorBrowsable(EditorBrowsableState.Never)]
+    /// <summary>
+    /// Extensions to avoid having to cast DiContainer instance
+    /// to IDiContainer when trying to access its methods.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]    
     public static class IDiContainerExtensions
     {
         /// <summary>
@@ -336,8 +340,8 @@ namespace SmartDi
         /// </summary>
         /// <returns>A new <see cref="IDiContainer"/> child
         ///  container</returns>
-        public static IDiContainer NewChildContainer(this IDiContainer container)
-            => container.NewChildContainer();
+        public static IDiContainer NewChildContainer(this IDiContainer container, string name = null)
+            => container.NewChildContainer(name);
 
         /// <summary>
         /// Registers a Type in the container.
@@ -639,20 +643,22 @@ namespace SmartDi
         /// <summary>
         /// Instantiate a new container
         /// </summary>
-        public DiContainer()
+        /// <param name="name">Optional name for the container. Helpful if you plan on using many containers.</param>
+        public DiContainer(string name = null)
         {
-            Name = Guid.NewGuid().ToString();
+            Name = name ?? Guid.NewGuid().ToString();
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DiContainer"/> class.
         /// </summary>
         /// <param name="options">The <see cref="ContainerOptions"/> instances that represents the configurable options.</param>
-        public DiContainer(ContainerOptions options) : this(o =>
+        /// <param name="name">Optional name for the container. Helpful if you plan on using many containers.</param>
+        public DiContainer(ContainerOptions options, string name = null) : this(o =>
         {
             o.TryResolveUnregistered = options.TryResolveUnregistered;
             o.ResolveShouldBubbleUpContainers = options.ResolveShouldBubbleUpContainers;
-        })
+        }, name)
         {
         }
 
@@ -661,7 +667,8 @@ namespace SmartDi
         /// Initializes a new instance of the <see cref="DiContainer"/> class.
         /// </summary>
         /// <param name="configureOptions">A delegate used to configure <see cref="ContainerOptions"/>.</param>
-        public DiContainer(Action<ContainerOptions> configureOptions) : this()
+        /// <param name="name">Optional name for the container. Helpful if you plan on using many containers.</param>
+        public DiContainer(Action<ContainerOptions> configureOptions, string name = null) : this(name)
         {
             configureOptions(options);
         }
@@ -742,12 +749,12 @@ namespace SmartDi
         /// </summary>
         /// <returns>A new <see cref="IDiContainer"/> child
         ///  container</returns>
-        public static IDiContainer NewChildContainer()
-            => (Instance as IDiContainer).NewChildContainer();
+        public static IDiContainer NewChildContainer(string name = null)
+            => (Instance as IDiContainer).NewChildContainer(name);
         ///<inheritdoc/>
-        IDiContainer IDiContainer.NewChildContainer()
+        IDiContainer IDiContainer.NewChildContainer(string name)
         {
-            var child = new DiContainer()
+            var child = new DiContainer(name)
             {
                 parentContainer = this.container,
                 parent = this
