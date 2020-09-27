@@ -708,6 +708,7 @@ namespace SmartDi
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void ResetContainer()
         {
+            DiContainer.containers.Clear();
             Instance = new DiContainer();
         }
 
@@ -718,7 +719,10 @@ namespace SmartDi
         /// <remarks>Will only apply to the singleton, and will recreate the container (erasing any registrations)</remarks>
         /// <param name="options">The <see cref="ContainerOptions"/> instances that represents the configurable options.</param>
         public static void Initialize(ContainerOptions options)
-            => Instance = new DiContainer(options);
+        {
+            DiContainer.containers.Clear();
+            Instance = new DiContainer(options);
+        }
 
         /// <summary>
         /// Initializes the Singleton intance of the <see cref="DiContainer"/>
@@ -727,7 +731,10 @@ namespace SmartDi
         /// <remarks>Will only apply to the singleton, and will recreate the container (erasing any registrations)</remarks>
         /// <param name="configureOptions">A delegate used to configure <see cref="ContainerOptions"/>.</param>
         public static void Initialize(Action<ContainerOptions> configureOptions)
-            => Instance = new DiContainer(configureOptions);
+        {
+            DiContainer.containers.Clear();
+            Instance = new DiContainer(configureOptions);
+        }
 
         internal static DiContainer Instance { get; private set; } = new DiContainer();
 
