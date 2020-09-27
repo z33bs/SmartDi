@@ -86,7 +86,7 @@ namespace SmartDi
     {
         /// <summary>
         /// Optional name to identify the container with. Useful if using more than one container.
-        /// See <see cref="GetContainer"/> method and <see cref="ResolveFromAttribute"/>.
+        /// See <see cref="GetContainer"/> method.
         /// </summary> 
         string Name { get; set; }
 
@@ -1197,10 +1197,9 @@ namespace SmartDi
                 {
                     var param = paramsInfo[i];
                     var namedAttribute = param.GetCustomAttribute<ResolveNamedAttribute>();
-                    var resolveFromAttribute = param.GetCustomAttribute<ResolveFromAttribute>();
 
                     argsExp[i] = GetExpression(
-                        resolveFromAttribute?.DiContainer.container ?? container,
+                        container,
                         param.ParameterType,
                         namedAttribute?.Key);
                 }
@@ -1749,30 +1748,5 @@ namespace SmartDi
         public ResolveUsingAttribute()
         {
         }
-    }
-
-    /// <summary>
-    /// Attribute to mark which container the parameter should be resolved from.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Constructor, AllowMultiple = false)]
-    public class ResolveFromAttribute : Attribute
-    {
-        /// <summary>
-        /// The container that the parameter should be resolved from
-        /// </summary>
-        public DiContainer DiContainer { get; }
-
-        /// <summary>
-        /// Attribute to mark which container the parameter should be resolved from.
-        /// </summary>
-        /// <param name="containerName">The container's name</param>
-        public ResolveFromAttribute(string containerName)
-        {
-            DiContainer = DiContainer.containers.TryGetValue(containerName, out IDiContainer container)
-                ? container as DiContainer
-                : throw new ResolveException(
-                    "Could not find the container associated with the " +
-                    $"name '{containerName}', specified in the {nameof(ResolveFromAttribute)}");
-        }                
     }
 }
