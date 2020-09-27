@@ -319,7 +319,8 @@ namespace SmartDi
         void UnregisterAll();
     }
 
-    internal static class IDiContainerExtensions
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static class IDiContainerExtensions
     {
         /// <summary>
         /// Get the current container's child container. 
