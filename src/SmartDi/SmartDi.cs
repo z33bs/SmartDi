@@ -622,7 +622,7 @@ namespace SmartDi
 
                 if (containers.TryAdd(value, this))
                     name = value;
-                else throw new Exception("Could not set Name. Ensure the container's name is unique. " +
+                else throw new ArgumentException("Could not set Name. Ensure the container's name is unique. " +
                     "Less common reason could be that the operation is blocked in a multi-threaded application.");
             }
         }
