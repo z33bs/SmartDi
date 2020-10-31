@@ -3,6 +3,7 @@ using Xunit;
 using SmartDi;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SmartDiTests
 {
@@ -202,6 +203,12 @@ namespace SmartDiTests
             protected override void DisposeImplicit()
                 => _onImplicitDispose?.DynamicInvoke();
         }
+
+        public abstract class ClassThatsAbstract { }
+        public class ClassInheritsAbstract1 : ClassThatsAbstract { }
+        public class ClassInheritsAbstract2 : ClassThatsAbstract { }
+
+        public class ClassThatsGeneric<T> { }
         #endregion
 
         [Fact]
@@ -811,6 +818,151 @@ namespace SmartDiTests
         }
         #endregion
 
+        #region RegisterTypesOf
+        [Fact]
+        public void RegisterTypesOf_NotInterfaceAbstract_Throws()
+        {
+            Assert.Throws<RegisterException>(() => DiContainer.RegisterTypesOf<MyService>());
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterTypesOf_Abstract_Singleton()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+          DiContainer.RegisterTypesOf<ClassThatsAbstract>(LifeCycle.Singleton);
+
+            Assert.Equal(3, mock.Count);
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(ClassThatsAbstract), nameof(ClassInheritsAbstract1)))
+                && r.Value.TConcrete.Equals(typeof(ClassInheritsAbstract1))
+                && r.Value.LifeCycle.Equals(LifeCycle.Singleton)
+                );
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(ClassThatsAbstract), nameof(ClassInheritsAbstract2)))
+                && r.Value.TConcrete.Equals(typeof(ClassInheritsAbstract2))
+                && r.Value.LifeCycle.Equals(LifeCycle.Singleton)
+                );
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(IEnumerable<ClassThatsAbstract>), null))
+                && r.Value.TConcrete.Equals(typeof(IEnumerable<ClassThatsAbstract>))
+                && r.Value.LifeCycle.Equals(LifeCycle.Singleton)
+                );
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterTypesOf_Interface_Singleton()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+            DiContainer.RegisterTypesOf<IServiceWithTwoImplementations>(LifeCycle.Singleton);
+
+            Assert.Equal(3, mock.Count);
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(IServiceWithTwoImplementations), nameof(MockServiceTwo)))
+                && r.Value.TConcrete.Equals(typeof(MockServiceTwo))
+                && r.Value.LifeCycle.Equals(LifeCycle.Singleton)
+                );
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(IServiceWithTwoImplementations), nameof(ServiceTwo)))
+                && r.Value.TConcrete.Equals(typeof(ServiceTwo))
+                && r.Value.LifeCycle.Equals(LifeCycle.Singleton)
+                );
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(IEnumerable<IServiceWithTwoImplementations>), null))
+                && r.Value.TConcrete.Equals(typeof(IEnumerable<IServiceWithTwoImplementations>))
+                && r.Value.LifeCycle.Equals(LifeCycle.Singleton)
+                );
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void RegisterTypesOf_Interface()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+            DiContainer.RegisterTypesOf<IServiceWithTwoImplementations>();
+
+            Assert.Equal(3, mock.Count);
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(IServiceWithTwoImplementations), nameof(MockServiceTwo)))
+                && r.Value.TConcrete.Equals(typeof(MockServiceTwo))
+                && r.Value.LifeCycle.Equals(LifeCycle.Transient)
+                );
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(IServiceWithTwoImplementations), nameof(ServiceTwo)))
+                && r.Value.TConcrete.Equals(typeof(ServiceTwo))
+                && r.Value.LifeCycle.Equals(LifeCycle.Transient)
+                );
+
+            Assert.Contains(mock, r =>
+                r.Key.Equals(new Tuple<Type, string>(typeof(IEnumerable<IServiceWithTwoImplementations>), null))
+                && r.Value.TConcrete.Equals(typeof(IEnumerable<IServiceWithTwoImplementations>))
+                && r.Value.LifeCycle.Equals(LifeCycle.Transient)
+                );
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void ResolveIEnumerableInterface_NotRegistered()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+            
+            var enumerable = DiContainer.Resolve<IEnumerable<IServiceWithTwoImplementations>>();
+
+            Assert.Equal(2, enumerable.Count());
+            Assert.Contains(enumerable, t => t.GetType().Equals(typeof(ServiceTwo)));
+            Assert.Contains(enumerable, t => t.GetType().Equals(typeof(MockServiceTwo)));
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void ResolveIEnumerableInterface_NotRegistered_SomeMembersRegistered()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+            DiContainer.Register<IServiceWithTwoImplementations, MockServiceTwo>(nameof(MockServiceTwo)).SingleInstance();
+
+            Assert.Throws<RegisterException>(()=>
+                DiContainer.Resolve<IEnumerable<IServiceWithTwoImplementations>>());
+
+            DiContainer.ResetContainer();
+        }
+
+        [Fact]
+        public void ResolveIEnumerableAbstract_NotRegistered()
+        {
+            var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
+            DiContainer.SetContainer(mock);
+
+            var enumerable = DiContainer.Resolve<IEnumerable<ClassThatsAbstract>>();
+
+            Assert.Equal(2, enumerable.Count());
+            Assert.Contains(enumerable, t => t.GetType().Equals(typeof(ClassInheritsAbstract1)));
+            Assert.Contains(enumerable, t => t.GetType().Equals(typeof(ClassInheritsAbstract2)));
+
+            DiContainer.ResetContainer();
+        }
+
+
+        #endregion
+
         #region RegisterOptions
         [Fact]
         public void StaticRegisterConcreteType_OptionsSingleInstance_RegistersAsSingleInstance()
@@ -996,8 +1148,17 @@ namespace SmartDiTests
         {
             var mock = new ConcurrentDictionary<Tuple<Type, string>, MetaObject>();
             using var container = new DiContainer();
-            Assert.Throws<ResolveException>(()=>container.GetMetaObject(mock, typeof(IEnumerable<int>), null));
+            Assert.Throws<ResolveException>(()=>container.GetMetaObject(mock, typeof(ClassThatsGeneric<>), null));
         }
+
+        [Fact]
+        public void Resolve_IsConstructedGeneric_NotRegistered()
+        {
+            using var container = new DiContainer();
+
+            Assert.IsType<ClassThatsGeneric<MyService>>(container.Resolve<ClassThatsGeneric<MyService>>());
+        }
+
 
         [Fact]
         public void GetMetaObject_UnregisteredInterface_Gt1Implementations_Throws()

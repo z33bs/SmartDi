@@ -257,6 +257,13 @@ namespace SmartDi
             where TResolved : notnull;
 
         /// <summary>
+        /// Register all implementations of an interface, or all derived classes from an abstract class.
+        /// </summary>
+        /// <typeparam name="TResolved">The interface / abstract class</typeparam>
+        /// <param name="lifeCycle"></param>
+        void RegisterTypesOf<TResolved>(LifeCycle lifeCycle =  LifeCycle.Transient) where TResolved : class;
+
+        /// <summary>
         /// Pre-compile the container to enable faster
         ///  first-time resolution
         /// </summary>
@@ -518,6 +525,16 @@ namespace SmartDi
         public static void RegisterInstance<TResolved>(this IDiContainer diContainer, object instance, string key)
             where TResolved : notnull
             => diContainer.RegisterInstance<TResolved>(instance, key);
+
+        /// <summary>
+        /// Register all implementations of an interface, or all derived classes from an abstract class.
+        /// </summary>
+        /// <typeparam name="TResolved">The interface / abstract class</typeparam>
+        /// <param name="lifeCycle"></param>
+        ///  <param name="diContainer"></param>
+        public static void RegisterTypesOf<TResolved>(this IDiContainer diContainer, LifeCycle lifeCycle)
+            where TResolved : notnull
+            => diContainer.RegisterTypesOf<TResolved>(lifeCycle);
 
         /// <summary>
         /// Pre-compile the container to enable faster
@@ -1042,6 +1059,50 @@ namespace SmartDi
                 , InternalRegister(container, typeof(TResolved), key, new MetaObject(instance)));
 
 
+        /// <summary>
+        /// Register all implementations of an interface, or all derived classes from an abstract class.
+        /// </summary>
+        /// <typeparam name="TResolved">The interface / abstract class</typeparam>
+        /// <param name="lifeCycle"></param>
+        public static void RegisterTypesOf<TResolved>(LifeCycle lifeCycle = LifeCycle.Transient) where TResolved : class
+            => (Instance as IDiContainer).RegisterTypesOf<TResolved>(lifeCycle);
+        ///<inheritdoc/>
+        void IDiContainer.RegisterTypesOf<TResolved>(LifeCycle lifeCycle)
+            => InternalRegisterTypesOf(typeof(TResolved), lifeCycle);
+
+        void InternalRegisterTypesOf(Type resolved, LifeCycle lifeCycle)
+        {
+            IRegisterOptions registerOptions;
+            IEnumerable<Type> types;
+
+            if (resolved.IsInterface)
+                types = resolved.Assembly
+                .GetTypes()
+                .Where(t => t
+                    .GetInterfaces()
+                    .Contains(resolved));
+            else if (resolved.IsAbstract)
+                types = resolved.Assembly
+                .GetTypes()
+                .Where(t => t
+                    .IsSubclassOf(resolved));
+            else
+                throw new RegisterException($"{nameof(RegisterTypesOf)} : {resolved} should be an interace or abstract class");
+
+            foreach (Type type in types)
+            {
+                //Register each type
+                registerOptions = (Instance as IDiContainer).RegisterType(type, resolved, type.Name);
+                if (lifeCycle == LifeCycle.Singleton)
+                    registerOptions.SingleInstance();
+            }
+
+            //Register the IEnumerable
+            registerOptions = (Instance as IDiContainer).RegisterType(Type.GetType($"System.Collections.Generic.IEnumerable`1[[{resolved.AssemblyQualifiedName}]]"));
+            if (lifeCycle == LifeCycle.Singleton)
+                registerOptions.SingleInstance();
+        }
+
 
         #endregion
 
@@ -1102,6 +1163,8 @@ namespace SmartDi
 
             if (!container.TryAdd(containerKey, metaObject))
             {
+                //todo ContainerOption to not throw if already contains
+
                 var builder = new StringBuilder();
                 builder.Append($"{containerKey.Item1} is already registered");
                 if (containerKey.Item2 != null)
@@ -1191,6 +1254,7 @@ namespace SmartDi
             return metaObject.NewExpression;
         }
 
+        //todo might read easier as an extension method
         internal void MakeNewExpression(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, MetaObject metaObject)
         {
             var paramsInfo = metaObject.ConstructorCache?.GetParameters();
@@ -1236,7 +1300,9 @@ namespace SmartDi
 
             if (resolvedType.IsGenericType)
             {
-                if (resolvedType.IsConstructedGenericType) //if Generic
+                if (!resolvedType.IsConstructedGenericType)
+                    throw new ResolveException($"{resolvedType.Name} is not a Constructed Generic Type");
+                else if (resolvedType.GetGenericTypeDefinition() != typeof(IEnumerable<>)) //if Constructed Generic
                 {
                     var genericTypeDefinition = resolvedType.GetGenericTypeDefinition();
 
@@ -1264,7 +1330,16 @@ namespace SmartDi
                     $"register the class, or configure the container options differently " +
                     $"when initialising the conatiner.");
 
-            if (resolvedType.IsInterface || resolvedType.IsAbstract)
+            if (resolvedType.IsGenericType
+                && resolvedType.GetGenericTypeDefinition() == typeof(IEnumerable<>)) //Register as Singleton
+            {
+                Instance.InternalRegisterTypesOf(
+                    resolvedType.GetGenericArguments()[0],
+                    LifeCycle.Singleton);
+
+                return GetMetaObject(container, resolvedType, null);
+            }
+            else if (resolvedType.IsInterface || resolvedType.IsAbstract) //register as Singleton
             {
                 IEnumerable<Type> implementations;
 
@@ -1304,7 +1379,7 @@ namespace SmartDi
                 metaObject = new MetaObject(implementations.ToArray()[0], LifeCycle.Singleton);
             }
             else
-                metaObject = new MetaObject(resolvedType, LifeCycle.Transient);
+                metaObject = new MetaObject(resolvedType, LifeCycle.Transient); //Register as Transient
 
             if (container.TryAdd(new Tuple<Type, string>(resolvedType, null), metaObject))
                 return metaObject;
