@@ -809,11 +809,11 @@ namespace SmartDi
         /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TConcrete>()
             where TConcrete : notnull
-            => (Instance as IDiContainer).Register<TConcrete>(Type.EmptyTypes);
+            => (Instance as IDiContainer).Register<TConcrete>(constructorParameters:null);
 
         ///<inheritdoc/>
         RegisterOptions IDiContainer.Register<TConcrete>()
-            => (this as IDiContainer).Register<TConcrete>(Type.EmptyTypes);
+            => (this as IDiContainer).Register<TConcrete>(constructorParameters:null);
 
 
         /// <summary>
@@ -841,11 +841,11 @@ namespace SmartDi
         /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TResolved, TConcrete>()
             where TConcrete : notnull, TResolved
-            => (Instance as IDiContainer).Register<TResolved, TConcrete>(Type.EmptyTypes);
+            => (Instance as IDiContainer).Register<TResolved, TConcrete>(constructorParameters:null);
 
         ///<inheritdoc/>
         RegisterOptions IDiContainer.Register<TResolved, TConcrete>()
-            => (this as IDiContainer).Register<TResolved, TConcrete>(Type.EmptyTypes);
+            => (this as IDiContainer).Register<TResolved, TConcrete>(constructorParameters:null);
 
         /// <summary>
         /// Register a Type in the container, specifying a constructor.
@@ -876,11 +876,11 @@ namespace SmartDi
         /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TConcrete>(string key)
             where TConcrete : notnull
-            => (Instance as IDiContainer).Register<TConcrete>(key, Type.EmptyTypes);
+            => (Instance as IDiContainer).Register<TConcrete>(key, constructorParameters:null);
 
         ///<inheritdoc/>
         RegisterOptions IDiContainer.Register<TConcrete>(string key)
-            => (this as IDiContainer).Register<TConcrete>(key, Type.EmptyTypes);
+            => (this as IDiContainer).Register<TConcrete>(key, constructorParameters:null);
 
         /// <summary>
         /// Register a Type in the container, with a key and specifying a constructor.
@@ -910,11 +910,11 @@ namespace SmartDi
         /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TResolved, TConcrete>(string key)
             where TConcrete : notnull, TResolved
-            => (Instance as IDiContainer).Register<TResolved, TConcrete>(key, Type.EmptyTypes);
+            => (Instance as IDiContainer).Register<TResolved, TConcrete>(key, constructorParameters:null);
 
         ///<inheritdoc/>
         RegisterOptions IDiContainer.Register<TResolved, TConcrete>(string key)
-            => (this as IDiContainer).Register<TResolved, TConcrete>(key, Type.EmptyTypes);
+            => (this as IDiContainer).Register<TResolved, TConcrete>(key, constructorParameters:null);
 
         /// <summary>
         /// Register a Type in the container, with a key and specifying a constructor.
@@ -1313,7 +1313,7 @@ namespace SmartDi
                         Type makeableType = genericMetaObject.TConcrete.MakeGenericType(closedTypeArgs);
 
                         //todo - investigate if specify constructor with generic type and pass params here or constructorcache
-                        var specificMetaObject = new MetaObject(makeableType, genericMetaObject.LifeCycle);
+                        var specificMetaObject = new MetaObject(makeableType, genericMetaObject.LifeCycle, constructorParams:null);
                         InternalRegister(container, resolvableType, key, specificMetaObject);
 
                         return specificMetaObject;
@@ -1376,10 +1376,10 @@ namespace SmartDi
                     throw new ResolveException(builder.ToString());
                 }
 
-                metaObject = new MetaObject(implementations.ToArray()[0], LifeCycle.Singleton);
+                metaObject = new MetaObject(implementations.ToArray()[0], LifeCycle.Singleton, constructorParams:null);
             }
             else
-                metaObject = new MetaObject(resolvedType, LifeCycle.Transient); //Register as Transient
+                metaObject = new MetaObject(resolvedType, LifeCycle.Transient, constructorParams:null); //Register as Transient
 
             if (container.TryAdd(new Tuple<Type, string>(resolvedType, null), metaObject))
                 return metaObject;
@@ -1616,11 +1616,14 @@ namespace SmartDi
         /// <summary>
         /// Construct the <see cref="MetaObject"/>
         /// </summary>
-        public MetaObject(Type concreteType, LifeCycle lifeCycle, params Type[] args) : this(concreteType, lifeCycle)
+        public MetaObject(Type concreteType, LifeCycle lifeCycle, Type[] constructorParams) : this(concreteType, lifeCycle)
         {
-            ConstructorCache = args != Type.EmptyTypes
-                    ? GetSpecificConstructor(concreteType, args)
-                    : GetBestConstructor(concreteType);
+            if (constructorParams == Type.EmptyTypes) //specificaly select paramaterless constructor
+                ConstructorCache = concreteType.GetConstructor(constructorParams);
+            else
+                ConstructorCache = constructorParams != null//params are specified
+                        ? GetSpecificConstructor(concreteType, constructorParams)
+                        : GetBestConstructor(concreteType);
         }
 
         private MetaObject(Type concreteType, LifeCycle lifeCycle)
