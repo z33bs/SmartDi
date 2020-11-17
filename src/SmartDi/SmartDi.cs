@@ -76,6 +76,16 @@ namespace SmartDi
         /// The default value is true.
         /// </remarks>
         public bool ResolveShouldBubbleUpContainers { get; set; }
+
+        /// <summary>
+        /// If no constructor is specified and more than one 
+        /// constructor is available, resolve will pick the
+        /// one with the most parameters if <see cref="ShouldPickGreediestConstructor"/> is true.
+        /// Otherwise the constructor with the least parameters
+        /// will be selected.
+        /// </summary>
+        /// <remarks>Default is true</remarks>
+        public bool ShouldPickGreediestConstructor { get; set; }
     }
 
     //todo list registrations
@@ -261,7 +271,7 @@ namespace SmartDi
         /// </summary>
         /// <typeparam name="TResolved">The interface / abstract class</typeparam>
         /// <param name="lifeCycle"></param>
-        void RegisterTypesOf<TResolved>(LifeCycle lifeCycle =  LifeCycle.Transient) where TResolved : class;
+        void RegisterTypesOf<TResolved>(LifeCycle lifeCycle = LifeCycle.Transient) where TResolved : class;
 
         /// <summary>
         /// Pre-compile the container to enable faster
@@ -330,7 +340,7 @@ namespace SmartDi
     /// Extensions to avoid having to cast DiContainer instance
     /// to IDiContainer when trying to access its methods.
     /// </summary>
-    [EditorBrowsable(EditorBrowsableState.Never)]    
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static class IDiContainerExtensions
     {
         /// <summary>
@@ -809,11 +819,11 @@ namespace SmartDi
         /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TConcrete>()
             where TConcrete : notnull
-            => (Instance as IDiContainer).Register<TConcrete>(constructorParameters:null);
+            => (Instance as IDiContainer).Register<TConcrete>(constructorParameters: null);
 
         ///<inheritdoc/>
         RegisterOptions IDiContainer.Register<TConcrete>()
-            => (this as IDiContainer).Register<TConcrete>(constructorParameters:null);
+            => (this as IDiContainer).Register<TConcrete>(constructorParameters: null);
 
 
         /// <summary>
@@ -841,11 +851,11 @@ namespace SmartDi
         /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TResolved, TConcrete>()
             where TConcrete : notnull, TResolved
-            => (Instance as IDiContainer).Register<TResolved, TConcrete>(constructorParameters:null);
+            => (Instance as IDiContainer).Register<TResolved, TConcrete>(constructorParameters: null);
 
         ///<inheritdoc/>
         RegisterOptions IDiContainer.Register<TResolved, TConcrete>()
-            => (this as IDiContainer).Register<TResolved, TConcrete>(constructorParameters:null);
+            => (this as IDiContainer).Register<TResolved, TConcrete>(constructorParameters: null);
 
         /// <summary>
         /// Register a Type in the container, specifying a constructor.
@@ -876,11 +886,11 @@ namespace SmartDi
         /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TConcrete>(string key)
             where TConcrete : notnull
-            => (Instance as IDiContainer).Register<TConcrete>(key, constructorParameters:null);
+            => (Instance as IDiContainer).Register<TConcrete>(key, constructorParameters: null);
 
         ///<inheritdoc/>
         RegisterOptions IDiContainer.Register<TConcrete>(string key)
-            => (this as IDiContainer).Register<TConcrete>(key, constructorParameters:null);
+            => (this as IDiContainer).Register<TConcrete>(key, constructorParameters: null);
 
         /// <summary>
         /// Register a Type in the container, with a key and specifying a constructor.
@@ -910,11 +920,11 @@ namespace SmartDi
         /// <returns>Fluent API</returns>
         public static RegisterOptions Register<TResolved, TConcrete>(string key)
             where TConcrete : notnull, TResolved
-            => (Instance as IDiContainer).Register<TResolved, TConcrete>(key, constructorParameters:null);
+            => (Instance as IDiContainer).Register<TResolved, TConcrete>(key, constructorParameters: null);
 
         ///<inheritdoc/>
         RegisterOptions IDiContainer.Register<TResolved, TConcrete>(string key)
-            => (this as IDiContainer).Register<TResolved, TConcrete>(key, constructorParameters:null);
+            => (this as IDiContainer).Register<TResolved, TConcrete>(key, constructorParameters: null);
 
         /// <summary>
         /// Register a Type in the container, with a key and specifying a constructor.
@@ -1313,7 +1323,7 @@ namespace SmartDi
                         Type makeableType = genericMetaObject.TConcrete.MakeGenericType(closedTypeArgs);
 
                         //todo - investigate if specify constructor with generic type and pass params here or constructorcache
-                        var specificMetaObject = new MetaObject(makeableType, genericMetaObject.LifeCycle, constructorParams:null);
+                        var specificMetaObject = new MetaObject(makeableType, genericMetaObject.LifeCycle, constructorParams: null);
                         InternalRegister(container, resolvableType, key, specificMetaObject);
 
                         return specificMetaObject;
@@ -1376,10 +1386,10 @@ namespace SmartDi
                     throw new ResolveException(builder.ToString());
                 }
 
-                metaObject = new MetaObject(implementations.ToArray()[0], LifeCycle.Singleton, constructorParams:null);
+                metaObject = new MetaObject(implementations.ToArray()[0], LifeCycle.Singleton, constructorParams: null);
             }
             else
-                metaObject = new MetaObject(resolvedType, LifeCycle.Transient, constructorParams:null); //Register as Transient
+                metaObject = new MetaObject(resolvedType, LifeCycle.Transient, constructorParams: null); //Register as Transient
 
             if (container.TryAdd(new Tuple<Type, string>(resolvedType, null), metaObject))
                 return metaObject;
@@ -1516,7 +1526,7 @@ namespace SmartDi
         void IDisposable.Dispose()
         {
             InternalUnregisterAll(container);
-            if(!containers.TryRemove(Name, out _))
+            if (!containers.TryRemove(Name, out _))
                 Console.WriteLine("SmartDi Error: Could not remove registration of container " +
                     $"named '{Name}' when disposing");
         }
@@ -1730,13 +1740,22 @@ namespace SmartDi
                     constructors = flaggedConstructors;
                 }
 
-                return constructors
-                    .Aggregate((i, j)
-                        => i.GetParameters().Count() > j.GetParameters().Count()
-                        ? i
-                        : j);
-            }
+                //use aggregator to find greediest / leanest
+                if (DiContainer.options.ShouldPickGreediestConstructor)
+                    return constructors
+                        .Aggregate((i, j)
+                            => i.GetParameters().Count() > j.GetParameters().Count()
+                            ? i
+                            : j);
+                else
+                    return constructors
+                        .Aggregate((i, j)
+                            => i.GetParameters().Count() < j.GetParameters().Count()
+                            ? i
+                            : j);
 
+            }
+            //else has to be only one
             return constructors[0];
         }
 
