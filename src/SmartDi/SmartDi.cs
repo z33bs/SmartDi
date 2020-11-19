@@ -135,6 +135,15 @@ namespace SmartDi
         /// <param name="concreteType">Type to be instantiated</param>
         /// <param name="resolvedType">Type to be resolved if different from <paramref name="concreteType"/></param>
         /// <param name="key">Optional key which allows multiple registrations with the same <paramref name="resolvedType"/></param>
+        /// <returns>Fluent API</returns>
+        IRegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null);
+
+        /// <summary>
+        /// Registers a Type in the container.
+        /// </summary>
+        /// <param name="concreteType">Type to be instantiated</param>
+        /// <param name="resolvedType">Type to be resolved if different from <paramref name="concreteType"/></param>
+        /// <param name="key">Optional key which allows multiple registrations with the same <paramref name="resolvedType"/></param>
         /// <param name="constructorParameters">If provided, will specify the specific contructor to be used to instantiate the <paramref name="concreteType"/>. A constructor with matching parameters will be used.</param>
         /// <returns>Fluent API</returns>
         IRegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null, params Type[] constructorParameters);
@@ -368,6 +377,17 @@ namespace SmartDi
         ///  container</returns>
         public static IDiContainer NewChildContainer(this IDiContainer container, string name = null)
             => container.NewChildContainer(name);
+
+        /// <summary>
+        /// Registers a Type in the container.
+        /// </summary>
+        /// <param name="concreteType">Type to be instantiated</param>
+        /// <param name="resolvedType">Type to be resolved if different from <paramref name="concreteType"/></param>
+        /// <param name="key">Optional key which allows multiple registrations with the same <paramref name="resolvedType"/></param>
+        /// <returns>Fluent API</returns>
+        ///  <param name="diContainer"></param>
+        public static IRegisterOptions RegisterType(this IDiContainer diContainer, Type concreteType, Type resolvedType = null, string key = null)
+            => diContainer.RegisterType(concreteType, resolvedType, key);
 
         /// <summary>
         /// Registers a Type in the container.
@@ -1140,6 +1160,21 @@ namespace SmartDi
         #endregion
 
         #region Register Type
+        /// <summary>
+        /// Registers a Type in the container.
+        /// </summary>
+        /// <param name="concreteType">Type to be instantiated</param>
+        /// <param name="resolvedType">Type to be resolved if different from <paramref name="concreteType"/></param>
+        /// <param name="key">Optional key which allows multiple registrations with the same <paramref name="resolvedType"/></param>
+        /// <returns>Fluent API</returns>
+        public static IRegisterOptions RegisterType(Type concreteType, Type resolvedType = null, string key = null)
+            => (Instance as IDiContainer).RegisterType(concreteType, resolvedType, key);
+
+        ///<inheritdoc/>
+        IRegisterOptions IDiContainer.RegisterType(Type concreteType, Type resolvedType, string key)
+            => (this as IDiContainer).RegisterType(concreteType, resolvedType, key, constructorParameters: null);
+
+
 
         /// <summary>
         /// Registers a Type in the container.
