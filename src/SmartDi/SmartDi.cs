@@ -1078,9 +1078,9 @@ namespace SmartDi
             => (Instance as IDiContainer).RegisterTypesOf<TResolved>(lifeCycle);
         ///<inheritdoc/>
         void IDiContainer.RegisterTypesOf<TResolved>(LifeCycle lifeCycle)
-            => InternalRegisterTypesOf(typeof(TResolved), lifeCycle);
+            => InternalRegisterTypesOf(container, typeof(TResolved), lifeCycle);
 
-        void InternalRegisterTypesOf(Type resolved, LifeCycle lifeCycle)
+        void InternalRegisterTypesOf(ConcurrentDictionary<Tuple<Type, string>, MetaObject> container, Type resolved, LifeCycle lifeCycle)
         {
             IRegisterOptions registerOptions;
             IEnumerable<Type> types;
@@ -1102,13 +1102,36 @@ namespace SmartDi
             foreach (Type type in types)
             {
                 //Register each type
-                registerOptions = (Instance as IDiContainer).RegisterType(type, resolved, type.Name);
+                registerOptions =
+                    new RegisterOptions(
+                        container,
+                        InternalRegister(
+                            container,
+                            resolved,
+                            type.Name,
+                            new MetaObject(
+                                type,
+                                LifeCycle.Transient,
+                                null)));
                 if (lifeCycle == LifeCycle.Singleton)
                     registerOptions.SingleInstance();
             }
 
             //Register the IEnumerable
-            registerOptions = (Instance as IDiContainer).RegisterType(Type.GetType($"System.Collections.Generic.IEnumerable`1[[{resolved.AssemblyQualifiedName}]]"));
+            registerOptions =
+                new RegisterOptions(
+                    container,
+                    InternalRegister(
+                        container,
+                        null,
+                        null,
+                        new MetaObject(
+                            Type.GetType(
+                               $"System.Collections.Generic" +
+                               $".IEnumerable`1[[" +
+                               $"{resolved.AssemblyQualifiedName}]]"),
+                            LifeCycle.Transient,
+                            null)));
             if (lifeCycle == LifeCycle.Singleton)
                 registerOptions.SingleInstance();
         }
@@ -1343,7 +1366,7 @@ namespace SmartDi
             if (resolvedType.IsGenericType
                 && resolvedType.GetGenericTypeDefinition() == typeof(IEnumerable<>)) //Register as Singleton
             {
-                Instance.InternalRegisterTypesOf(
+                InternalRegisterTypesOf(container,
                     resolvedType.GetGenericArguments()[0],
                     LifeCycle.Singleton);
 
