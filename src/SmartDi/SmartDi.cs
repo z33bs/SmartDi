@@ -1110,7 +1110,8 @@ namespace SmartDi
                 .GetTypes()
                 .Where(t => t
                     .GetInterfaces()
-                    .Contains(resolved));
+                    .Contains(resolved)
+                    && !t.IsAbstract);
             else if (resolved.IsAbstract)
                 types = resolved.Assembly
                 .GetTypes()
