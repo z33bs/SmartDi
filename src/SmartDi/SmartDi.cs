@@ -46,6 +46,7 @@ namespace SmartDi
         {
             TryResolveUnregistered = true;
             ResolveShouldBubbleUpContainers = true;
+            ShouldPickGreediestConstructor = true;
         }
 
         /// <summary>

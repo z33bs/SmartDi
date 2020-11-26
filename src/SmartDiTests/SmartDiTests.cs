@@ -257,13 +257,13 @@ namespace SmartDiTests
         [Fact]
         public void MetaObject_UsingConstructor_TypeHasNoConstructor_Throws()
         {
-            Assert.Throws<RegisterException>(() => new MetaObject(typeof(ClassThatsUnresolvable), LifeCycle.Singleton, typeof(MyService)));
+            Assert.Throws<RegisterException>(() => new MetaObject(typeof(ClassThatsUnresolvable), LifeCycle.Singleton, new Type[] { typeof(MyService) }));
         }
 
         [Fact]
         public void MetaObject_UsingConstructor_NoMatchFound_Throws()
         {
-            Assert.Throws<RegisterException>(() => new MetaObject(typeof(ConcreteOnly), LifeCycle.Singleton, typeof(MyService)));
+            Assert.Throws<RegisterException>(() => new MetaObject(typeof(ConcreteOnly), LifeCycle.Singleton, new Type[] { typeof(MyService) }));
         }
 
 //#if DEBUG
@@ -290,7 +290,7 @@ namespace SmartDiTests
                 typeof(IService),
                 null,
                 new MetaObject(concreteType: null, //We need this at a minimum to justify registration 
-                               LifeCycle.Transient)
+                               LifeCycle.Transient, null)
                 ));
         }
 
@@ -1100,7 +1100,7 @@ namespace SmartDiTests
                 = typeof(ClassWith3Ctors)
                     .GetConstructor(new Type[] { typeof(IService) });//.GetParameters();
 
-            var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton);
+            var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton, null);
 
             var parameters
                 = metaObj.
@@ -1121,7 +1121,7 @@ namespace SmartDiTests
                 = typeof(ClassWithFlaggedCtor)
                     .GetConstructor(new Type[] { typeof(IService) });//.GetParameters();
 
-            var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton);
+            var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton, null);
 
             var parameters
                 = metaObj.
@@ -1137,7 +1137,7 @@ namespace SmartDiTests
                 = typeof(ClassWith2FlaggedCtors)
                     .GetConstructor(new Type[] { typeof(IService) }).GetParameters();
 
-            var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton);
+            var metaObj = new MetaObject(typeof(object), LifeCycle.Singleton, null);
 
             Assert.Throws<ResolveException>(() => metaObj.
                                 GetBestConstructor(typeof(ClassWith2FlaggedCtors)));
