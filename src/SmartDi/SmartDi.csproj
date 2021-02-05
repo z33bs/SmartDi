@@ -9,7 +9,7 @@
         <Title>SmartDi</Title>
         <Description>Fast Friendly Dependency Injection</Description>
         <PackageProjectUrl>https://github.com/z33bs/SmartDi</PackageProjectUrl>
-        <PackageReleaseNotes>See https://github.com/z33bs/SmartDi/releases</PackageReleaseNotes>
+        <PackageReleaseNotes>!Name Change! to ZenIoc. Goto https://www.nuget.org/packages/ZenIoc/</PackageReleaseNotes>
         <PackageTags>smartdi;di;ioc;dependencyinjection</PackageTags>
         <PackageIcon>SmartDi_icon.png</PackageIcon>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -31,6 +31,6 @@
         <!-- MANUALLY ADDED        -->
         <None Include="../../LICENSE" Pack="true" PackagePath="" />
         <None Include="../../SmartDi_icon.png" Pack="true" PackagePath="" />      
-        <None Include="../../name-change.txt" Pack="true" PackagePath="name-change.txt" Visible="false" />  
+        <None Include="../../nuspecs/SmartDi/name-change.txt" Pack="true" PackagePath="name-change.txt" Visible="false" />  
     </ItemGroup>
 </Project>
